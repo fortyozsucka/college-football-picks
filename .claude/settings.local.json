@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cfbfastr.sportsdataverse.org)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(psql:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String
+  totalScore    Int      @default(0)
+  isAdmin       Boolean  @default(false)
+  inviteCode    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  picks Pick[]
+}
+
+enum GameType {
+  REGULAR
+  CHAMPIONSHIP
+  BOWL
+  PLAYOFF
+  ARMY_NAVY
+}
+
+model Game {
+  id        String   @id @default(cuid())
+  cfbId     String   @unique
+  week      Int
+  season    Int
+  homeTeam  String
+  awayTeam  String
+  homeTeamId String?
+  awayTeamId String?
+  homeTeamLogo String?
+  awayTeamLogo String?
+  homeScore Int?
+  awayScore Int?
+  spread    Float    @default(0)
+  overUnder Float?
+  startTime DateTime
+  completed Boolean  @default(false)
+  winner    String?
+  gameType  GameType @default(REGULAR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  
+  picks Pick[]
+  
+  @@index([season, week])
+  @@index([cfbId])
+  @@index([gameType])
+}
+
+model Pick {
+  id           String   @id @default(cuid())
+  userId       String
+  gameId       String
+  pickedTeam   String
+  lockedSpread Float
+  isDoubleDown Boolean  @default(false)
+  points       Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, gameId])
+  @@index([userId])
+}
+
+model Week {
+  id        String   @id @default(cuid())
+  week      Int
+  season    Int
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([week, season])
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  email     String?
+  usedBy    String?
+  isUsed    Boolean  @default(false)
+  createdBy String
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+  
+  @@index([code])
+}
+
+model HistoricalStats {
+  id                String   @id @default(cuid())
+  season            Int
+  userId            String
+  userName          String
+  userEmail         String
+  finalScore        Int
+  totalPicks        Int
+  correctPicks      Int
+  winPercentage     Float
+  doubleDowns       Int
+  correctDoubleDowns Int
+  rank              Int
+  totalUsers        Int
+  archivedAt        DateTime @default(now())
+  
+  @@index([season])
+  @@index([season, rank])
+  @@unique([season, userId])
+}
