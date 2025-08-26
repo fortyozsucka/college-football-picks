@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { emailService, GameResult } from '@/lib/email'
 
-function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string | null {
+function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string {
   const scoreDiff = homeScore - awayScore
   const adjustedHomeDiff = scoreDiff + spread
   
@@ -123,7 +123,7 @@ export async function POST() {
     if (userPicksMap.size > 0) {
       console.log(`Sending game result emails to ${userPicksMap.size} users`)
       
-      for (const [userId, userData] of userPicksMap) {
+      for (const [userId, userData] of Array.from(userPicksMap.entries())) {
         try {
           const email = emailService.generateGameResultsEmail(
             userData.user.email,

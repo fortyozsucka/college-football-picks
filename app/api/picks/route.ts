@@ -79,7 +79,7 @@ export async function DELETE(request: Request) {
     })
   } catch (error) {
     console.error('Error deleting pick:', error)
-    if (error.code === 'P2025') {
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Pick not found' },
         { status: 404 }
