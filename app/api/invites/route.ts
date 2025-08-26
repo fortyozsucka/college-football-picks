@@ -28,10 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     const invites = await db.invite.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: true
-      }
+      orderBy: { createdAt: 'desc' }
     })
 
     return NextResponse.json(invites)
