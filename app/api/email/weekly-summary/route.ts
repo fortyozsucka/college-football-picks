@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
 
     // Send weekly summary emails
     for (const summary of userSummaries) {
+      if (!summary.user) continue
+      
       try {
         const email = emailService.generateWeeklySummaryEmail(
           summary.user.email,
