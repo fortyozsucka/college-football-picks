@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { apiTracker } from '@/lib/api-tracker'
 
 export async function GET(request: Request) {
   try {
