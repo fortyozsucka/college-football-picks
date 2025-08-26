@@ -71,7 +71,11 @@ export async function POST(request: NextRequest) {
 
       userSummaries.push({
         ...summary,
-        user
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        }
       })
     }
 

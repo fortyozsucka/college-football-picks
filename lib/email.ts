@@ -28,6 +28,11 @@ export interface WeeklySummary {
   rank: number
   totalUsers: number
   completedGames: GameResult[]
+  user?: {
+    id: string
+    email: string
+    name: string | null
+  }
 }
 
 export interface InviteInfo {
