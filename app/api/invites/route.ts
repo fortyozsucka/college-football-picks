@@ -4,6 +4,8 @@ import { verifyToken } from '@/lib/auth'
 import { emailService } from '@/lib/email'
 import crypto from 'crypto'
 
+export const dynamic = 'force-dynamic'
+
 // Get all invites (admin only)
 export async function GET(request: NextRequest) {
   try {
