@@ -14,8 +14,12 @@ export async function GET(request: NextRequest) {
     }
 
     const payload = await verifyToken(token)
+    if (!payload || !payload.userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+    
     const user = await db.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
       select: { isAdmin: true }
     })
 
@@ -47,8 +51,12 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = await verifyToken(token)
+    if (!payload || !payload.userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+    
     const user = await db.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
       select: { isAdmin: true, name: true }
     })
 
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
       data: {
         code,
         email: email || null,
-        createdBy: payload.userId,
+        createdBy: payload.userId as string,
         expiresAt
       }
     })
@@ -120,8 +128,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const payload = await verifyToken(token)
+    if (!payload || !payload.userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+    
     const user = await db.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: payload.userId as string },
       select: { isAdmin: true }
     })
 
