@@ -1,6 +1,13 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resend: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY || 're_demo_key_for_development')
+  }
+  return resend
+}
 
 export interface EmailTemplate {
   to: string | string[]
@@ -46,7 +53,8 @@ export class EmailService {
 
   async sendEmail(template: EmailTemplate): Promise<void> {
     try {
-      await resend.emails.send({
+      const client = getResendClient()
+      await client.emails.send({
         from: this.fromEmail,
         to: Array.isArray(template.to) ? template.to : [template.to],
         subject: template.subject,
