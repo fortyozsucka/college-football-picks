@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { emailService } from '@/lib/email'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     // Test game results email
