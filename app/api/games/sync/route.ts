@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       const awayTeamData = awayTeamId ? teamsMap.get(awayTeamId) : null
 
       // Classify the game type using our classification system
-      const gameClassification = classifyGame(homeTeam, awayTeam, week, season, cfbGame.notes)
+      const gameClassification = classifyGame(homeTeam, awayTeam, week, season)
       
       // Log special games for debugging
       if (gameClassification.gameType !== 'REGULAR') {
