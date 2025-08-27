@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
-        totalScore: user.totalScore
+        totalScore: user.totalScore,
+        isAdmin: user.isAdmin
       }
     })
 
