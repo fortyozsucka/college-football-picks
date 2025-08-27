@@ -195,13 +195,13 @@ export default function ChakraPicksPage() {
             >
               <Text fontSize="2xl">📈</Text>
               <Text 
-                bgGradient="linear(to-r, football.600, orange.500)"
+                bgGradient="linear(to-r, neutral.900, brand.600)"
                 bgClip="text"
               >
                 Pick Tracker
               </Text>
             </Heading>
-            <Text fontSize="lg" color="gray.600">
+            <Text fontSize="lg" color="neutral.600">
               Track your weekly picks and performance
             </Text>
           </Box>

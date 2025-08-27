@@ -364,7 +364,7 @@ export default function ChakraGamesPage() {
             ⚡ Weekly Games
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="gray.600">Loading games...</Text>
+          <Text color="neutral.600">Loading games...</Text>
         </VStack>
       </Container>
     )
@@ -391,13 +391,13 @@ export default function ChakraGamesPage() {
         <Box textAlign="center">
           <Heading 
             size="2xl" 
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
             mb={4}
           >
             ⚡ Weekly Games
           </Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="neutral.600">
             Make your weekly picks and track game results
           </Text>
         </Box>
@@ -427,7 +427,7 @@ export default function ChakraGamesPage() {
                     Admin Panel
                   </Button>
                   <Button
-                    colorScheme="football"
+                    colorScheme="brand"
                     size="sm"
                     isLoading={syncing}
                     loadingText="Syncing..."
@@ -449,7 +449,7 @@ export default function ChakraGamesPage() {
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
                   Team Search
                 </Text>
                 <InputGroup>
@@ -465,7 +465,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
                   Game Time
                 </Text>
                 <Select
@@ -480,7 +480,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
                   Point Spread
                 </Text>
                 <HStack>
@@ -500,7 +500,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
                   Game Status
                 </Text>
                 <Select
@@ -517,7 +517,7 @@ export default function ChakraGamesPage() {
 
             {/* Filter Summary */}
             <HStack justify="space-between" mt={4} wrap="wrap">
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize="sm" color="neutral.600">
                 Showing {filteredGames.length} of {games.length} games
                 {hasFilters && (
                   <Badge ml={2} colorScheme="blue" variant="subtle">
@@ -692,12 +692,12 @@ const GameCard = ({
           {/* Game Info */}
           <HStack justify="space-between">
             <VStack align="start" spacing={1}>
-              <Text fontSize="sm" color="gray.600">Spread</Text>
+              <Text fontSize="sm" color="neutral.600">Spread</Text>
               <Text fontWeight="semibold">{getSpreadDisplay(game)}</Text>
             </VStack>
             {game.overUnder && (
               <VStack align="center" spacing={1}>
-                <Text fontSize="sm" color="gray.600">O/U</Text>
+                <Text fontSize="sm" color="neutral.600">O/U</Text>
                 <Text fontWeight="semibold">{game.overUnder}</Text>
               </VStack>
             )}
@@ -714,7 +714,7 @@ const GameCard = ({
               {!userPick ? (
                 <>
                   <VStack spacing={3} w="full">
-                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                    <Text fontSize="sm" color="neutral.600" textAlign="center">
                       Make your pick:
                     </Text>
                     
@@ -788,7 +788,7 @@ const GameCard = ({
           {/* Game Result */}
           {game.completed && spreadWinner && (
             <VStack spacing={2}>
-              <Text fontSize="sm" color="gray.600">Spread Winner:</Text>
+              <Text fontSize="sm" color="neutral.600">Spread Winner:</Text>
               <Badge 
                 colorScheme={spreadWinner === 'Push' ? 'gray' : 'green'} 
                 variant="solid"

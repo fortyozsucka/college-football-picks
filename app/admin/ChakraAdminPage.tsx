@@ -368,12 +368,12 @@ export default function ChakraAdminPage() {
           </Badge>
         </Td>
         <Td>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="neutral.600">
             {new Date(invite.createdAt).toLocaleDateString()}
           </Text>
         </Td>
         <Td>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="neutral.600">
             {invite.expiresAt 
               ? new Date(invite.expiresAt).toLocaleDateString()
               : 'Never'
@@ -424,7 +424,7 @@ export default function ChakraAdminPage() {
             ⚡ Admin Panel
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="gray.600">Loading admin panel...</Text>
+          <Text color="neutral.600">Loading admin panel...</Text>
         </VStack>
       </Container>
     )
@@ -437,12 +437,12 @@ export default function ChakraAdminPage() {
         <VStack spacing={4} textAlign="center">
           <Heading 
             size="2xl"
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
           >
             ⚡ Admin Panel
           </Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="neutral.600">
             Manage invite codes, user access, and weekly controls
           </Text>
         </VStack>
@@ -466,7 +466,7 @@ export default function ChakraAdminPage() {
         )}
 
         {/* Tabs */}
-        <Tabs variant="enclosed" colorScheme="football">
+        <Tabs variant="enclosed" colorScheme="brand">
           <TabList>
             <Tab>📧 Invite Codes</Tab>
             <Tab>📅 Weekly Controls</Tab>
@@ -514,7 +514,7 @@ export default function ChakraAdminPage() {
                           onClick={createInvite}
                           isLoading={creating}
                           loadingText="Creating..."
-                          colorScheme="football"
+                          colorScheme="brand"
                           w="full"
                         >
                           Create Invite
@@ -578,7 +578,7 @@ export default function ChakraAdminPage() {
                       <Heading size="lg" color="football.700">
                         Weekly Activation Controls
                       </Heading>
-                      <Text fontSize="sm" color="gray.600">
+                      <Text fontSize="sm" color="neutral.600">
                         Control which weeks are active for picking. Weeks automatically progress 24+ hours after all games are completed.
                       </Text>
                     </VStack>
@@ -598,7 +598,7 @@ export default function ChakraAdminPage() {
                   {weeksLoading ? (
                     <VStack py={8}>
                       <Spinner size="lg" color="football.500" thickness="3px" />
-                      <Text color="gray.600">Loading weeks...</Text>
+                      <Text color="neutral.600">Loading weeks...</Text>
                     </VStack>
                   ) : weeks.length === 0 ? (
                     <Box py={8} textAlign="center" color="gray.500">
@@ -667,7 +667,7 @@ export default function ChakraAdminPage() {
                         <Heading size="lg" color="football.700">
                           College Football Data API Usage
                         </Heading>
-                        <Text fontSize="sm" color="gray.600">
+                        <Text fontSize="sm" color="neutral.600">
                           Monitor your API call usage and performance to track tier limits
                         </Text>
                       </VStack>
@@ -697,7 +697,7 @@ export default function ChakraAdminPage() {
                     {apiLoading ? (
                       <VStack py={8}>
                         <Spinner size="lg" color="football.500" thickness="3px" />
-                        <Text color="gray.600">Loading API statistics...</Text>
+                        <Text color="neutral.600">Loading API statistics...</Text>
                       </VStack>
                     ) : apiStats ? (
                       <VStack spacing={6} align="stretch">
@@ -810,7 +810,7 @@ export default function ChakraAdminPage() {
                       <Heading size="lg" color="football.700">
                         Season Archive Management
                       </Heading>
-                      <Text fontSize="sm" color="gray.600">
+                      <Text fontSize="sm" color="neutral.600">
                         Archive completed seasons to preserve historical leaderboard data permanently
                       </Text>
                     </VStack>
@@ -884,7 +884,7 @@ export default function ChakraAdminPage() {
                     ) : (
                       <VStack py={8}>
                         <Spinner size="lg" color="football.500" thickness="3px" />
-                        <Text color="gray.600">Loading season information...</Text>
+                        <Text color="neutral.600">Loading season information...</Text>
                       </VStack>
                     )}
                   </CardBody>
@@ -915,7 +915,7 @@ export default function ChakraAdminPage() {
                   <CardBody textAlign="center">
                     <VStack spacing={4}>
                       <Heading size="md" color="gray.900">View Historical Data</Heading>
-                      <Text fontSize="sm" color="gray.600">
+                      <Text fontSize="sm" color="neutral.600">
                         View archived season leaderboards and historical statistics
                       </Text>
                       <ChakraLink href="/history" isExternal>

@@ -93,12 +93,12 @@ export default function ChakraRegisterPage() {
         <VStack spacing={4} textAlign="center">
           <Heading 
             size="2xl"
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
           >
             🚀 Join the Game
           </Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="neutral.600">
             Create your account to start picking winners
           </Text>
         </VStack>
@@ -233,7 +233,7 @@ export default function ChakraRegisterPage() {
                     type="submit"
                     isLoading={loading}
                     loadingText="Creating account..."
-                    colorScheme="football"
+                    colorScheme="brand"
                     size="lg"
                     w="full"
                     leftIcon={<CheckIcon />}
@@ -256,7 +256,7 @@ export default function ChakraRegisterPage() {
                 <Divider />
               </Flex>
 
-              <Text color="gray.600" textAlign="center">
+              <Text color="neutral.600" textAlign="center">
                 Already have an account?{' '}
                 <ChakraLink 
                   as={Link} 

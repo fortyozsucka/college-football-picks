@@ -1,42 +1,43 @@
 import { extendTheme } from '@chakra-ui/react'
 
-// Football-themed color palette
+// Minimalist black/grey/white/green color palette
 const colors = {
+  brand: {
+    50: '#f8fdfb',   // Very light mint
+    100: '#e6faf2',  // Light mint tint
+    200: '#d4f5e6',  // Soft mint
+    300: '#93E9BE',  // Your custom mint green (medium)
+    400: '#7ee3b0',  // Vibrant mint
+    500: '#6ade9c',  // Primary mint accent
+    600: '#4fbb7a',  // Darker mint
+    700: '#3a9860',  // Deep mint
+    800: '#2f7a4e',  // Forest mint
+    900: '#1f5233',  // Very dark mint
+  },
+  neutral: {
+    50: '#ffffff',   // Pure white
+    100: '#fafafa',  // Off white
+    200: '#f5f5f5',  // Very light grey
+    300: '#e5e5e5',  // Light grey
+    400: '#a3a3a3',  // Medium grey
+    500: '#737373',  // Dark grey
+    600: '#525252',  // Darker grey
+    700: '#404040',  // Very dark grey
+    800: '#262626',  // Almost black
+    900: '#171717',  // Pure black
+  },
+  // Alias for backward compatibility
   football: {
-    50: '#f0fdf4',   // Light green (field)
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    300: '#86efac',
-    400: '#4ade80',
-    500: '#22c55e',  // Main green
-    600: '#16a34a',
-    700: '#15803d',  // Darker field green
-    800: '#166534',
-    900: '#14532d',
-  },
-  orange: {
-    50: '#fff7ed',
-    100: '#ffedd5',
-    200: '#fed7aa',
-    300: '#fdba74',
-    400: '#fb923c',
-    500: '#f97316',   // Game day orange
-    600: '#ea580c',
-    700: '#c2410c',
-    800: '#9a3412',
-    900: '#7c2d12',
-  },
-  navy: {
-    50: '#f8fafc',
-    100: '#f1f5f9',
-    200: '#e2e8f0',
-    300: '#cbd5e1',
-    400: '#94a3b8',
-    500: '#64748b',
-    600: '#475569',
-    700: '#334155',   // Team navy
-    800: '#1e293b',
-    900: '#0f172a',   // Deep navy
+    50: '#f8fdfb',
+    100: '#e6faf2',
+    200: '#d4f5e6',
+    300: '#93E9BE',
+    400: '#7ee3b0',
+    500: '#6ade9c',
+    600: '#4fbb7a',
+    700: '#3a9860',
+    800: '#2f7a4e',
+    900: '#1f5233',
   }
 }
 
@@ -45,29 +46,34 @@ const components = {
   Button: {
     variants: {
       solid: {
-        bg: 'football.600',
+        bg: 'neutral.900',
         color: 'white',
+        fontWeight: '500',
         _hover: {
-          bg: 'football.700',
+          bg: 'neutral.800',
           transform: 'translateY(-1px)',
-          boxShadow: 'lg',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
         },
         _active: {
-          bg: 'football.800',
+          bg: 'neutral.700',
           transform: 'translateY(0)',
         },
       },
       ghost: {
-        color: 'football.600',
+        color: 'neutral.700',
+        fontWeight: '500',
         _hover: {
-          bg: 'football.50',
+          bg: 'neutral.100',
+          color: 'neutral.900',
         },
       },
       outline: {
-        borderColor: 'football.600',
-        color: 'football.600',
+        borderColor: 'neutral.300',
+        color: 'neutral.700',
+        fontWeight: '500',
         _hover: {
-          bg: 'football.50',
+          bg: 'neutral.50',
+          borderColor: 'neutral.400',
         },
       },
     },
@@ -76,15 +82,16 @@ const components = {
     baseStyle: {
       container: {
         bg: 'white',
-        boxShadow: 'lg',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         border: '1px solid',
-        borderColor: 'gray.200',
-        borderRadius: 'xl',
+        borderColor: 'neutral.200',
+        borderRadius: 'lg',
         overflow: 'hidden',
-        transition: 'all 0.2s',
+        transition: 'all 0.2s ease',
         _hover: {
           transform: 'translateY(-2px)',
-          boxShadow: 'xl',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          borderColor: 'neutral.300',
         },
       },
     },
@@ -92,39 +99,48 @@ const components = {
   Badge: {
     variants: {
       win: {
-        bg: 'football.500',
+        bg: 'brand.500',
         color: 'white',
+        fontWeight: '600',
       },
       loss: {
-        bg: 'red.500',
+        bg: 'neutral.600',
         color: 'white',
+        fontWeight: '600',
       },
       tie: {
-        bg: 'orange.500',
+        bg: 'neutral.400',
         color: 'white',
+        fontWeight: '600',
       },
     },
   },
 }
 
-// Typography
+// Typography - Modern, clean fonts
 const fonts = {
   heading: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
   body: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
 }
 
-// Global styles
+// Global styles - Minimalist aesthetic
 const styles = {
   global: {
     body: {
-      bg: 'gray.50',
-      color: 'gray.900',
+      bg: 'neutral.50',
+      color: 'neutral.900',
+      fontSize: '16px',
+      lineHeight: '1.6',
     },
     '*::placeholder': {
-      color: 'gray.400',
+      color: 'neutral.400',
     },
     '*, *::before, &::after': {
-      borderColor: 'gray.200',
+      borderColor: 'neutral.200',
+    },
+    // Smooth scrolling
+    html: {
+      scrollBehavior: 'smooth',
     },
   },
 }
@@ -132,12 +148,16 @@ const styles = {
 // Semantic tokens for consistent theming
 const semanticTokens = {
   colors: {
-    primary: 'football.600',
-    secondary: 'orange.500',
-    accent: 'navy.700',
-    success: 'football.500',
-    warning: 'orange.400',
-    error: 'red.500',
+    primary: 'brand.500',
+    secondary: 'neutral.700',
+    accent: 'brand.600',
+    success: 'brand.500',
+    warning: 'neutral.500',
+    error: 'neutral.600',
+    muted: 'neutral.400',
+    background: 'neutral.50',
+    surface: 'white',
+    border: 'neutral.200',
   },
 }
 

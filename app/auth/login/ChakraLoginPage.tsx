@@ -64,12 +64,12 @@ export default function ChakraLoginPage() {
         <VStack spacing={4} textAlign="center">
           <Heading 
             size="2xl"
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
           >
             ✨ Welcome Back
           </Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="neutral.600">
             Sign in to make your college football picks
           </Text>
         </VStack>
@@ -140,7 +140,7 @@ export default function ChakraLoginPage() {
                     type="submit"
                     isLoading={loading}
                     loadingText="Signing in..."
-                    colorScheme="football"
+                    colorScheme="brand"
                     size="lg"
                     w="full"
                     leftIcon={<ViewIcon />}
@@ -163,7 +163,7 @@ export default function ChakraLoginPage() {
                 <Divider />
               </Flex>
 
-              <Text color="gray.600" textAlign="center">
+              <Text color="neutral.600" textAlign="center">
                 Don&apos;t have an account?{' '}
                 <ChakraLink 
                   as={Link} 

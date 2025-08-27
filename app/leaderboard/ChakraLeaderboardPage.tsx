@@ -126,7 +126,7 @@ export default function ChakraLeaderboardPage() {
             🔥 Leaderboard
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="gray.600">Loading leaderboard...</Text>
+          <Text color="neutral.600">Loading leaderboard...</Text>
         </VStack>
       </Container>
     )
@@ -153,13 +153,13 @@ export default function ChakraLeaderboardPage() {
         <Box textAlign="center">
           <Heading 
             size="2xl" 
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
             mb={4}
           >
             🔥 Leaderboard
           </Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="neutral.600">
             See how you stack up against the competition
           </Text>
         </Box>
@@ -312,7 +312,7 @@ export default function ChakraLeaderboardPage() {
                           -
                           <Text as="span" color="red.600" fontWeight="semibold">{entry.losses}</Text>
                           -
-                          <Text as="span" color="gray.600">{entry.pushes}</Text>
+                          <Text as="span" color="neutral.600">{entry.pushes}</Text>
                         </Text>
                       </Td>
                       <Td isNumeric>
@@ -413,7 +413,7 @@ export default function ChakraLeaderboardPage() {
                           {' - '}
                           <Text as="span" color="red.600" fontWeight="bold">{selectedUser.losses}</Text>
                           {' - '}
-                          <Text as="span" color="gray.600">{selectedUser.pushes}</Text>
+                          <Text as="span" color="neutral.600">{selectedUser.pushes}</Text>
                         </StatHelpText>
                       </Stat>
                     </SimpleGrid>
@@ -456,7 +456,7 @@ export default function ChakraLeaderboardPage() {
                               <Text fontWeight="semibold" fontSize="sm">
                                 Week {week.week}, {week.season}
                               </Text>
-                              <Text fontSize="xs" color="gray.600">
+                              <Text fontSize="xs" color="neutral.600">
                                 {week.picks} picks made
                               </Text>
                             </VStack>

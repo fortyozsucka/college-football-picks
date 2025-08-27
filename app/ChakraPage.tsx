@@ -80,7 +80,7 @@ const UpdateCard = ({ title, description }: { title: string, description: string
               {title}
             </Text>
           </HStack>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="neutral.600">
             {description}
           </Text>
         </VStack>
@@ -99,13 +99,13 @@ export default function ChakraPage() {
         <VStack spacing={6} textAlign="center" mb={8}>
           <Heading 
             size="2xl" 
-            bgGradient="linear(to-r, football.600, orange.500)"
+            bgGradient="linear(to-r, neutral.900, brand.600)"
             bgClip="text"
             fontWeight="extrabold"
           >
             🎯 Squad College Football Picks
           </Heading>
-          <Text fontSize="xl" color="gray.600" maxW="2xl">
+          <Text fontSize="xl" color="neutral.600" maxW="2xl">
             Your college football picks application - ready for the season!
           </Text>
         </VStack>
@@ -114,7 +114,7 @@ export default function ChakraPage() {
         <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6} mb={8}>
           <FeatureCard
             title="✅ Current Features"
-            colorScheme="football"
+            colorScheme="brand"
             icon={CheckCircleIcon}
             items={[
               { text: 'User authentication with invite-only registration' },
@@ -181,7 +181,7 @@ export default function ChakraPage() {
 
           <FeatureCard
             title="⚡ Quick Wins"
-            colorScheme="football"
+            colorScheme="brand"
             icon={TimeIcon}
             items={[
               { text: 'Keyboard Shortcuts - Power user shortcuts for picking' },
@@ -251,7 +251,7 @@ export default function ChakraPage() {
                     <Text fontWeight="semibold" color="red.800">
                       Automated Syncing
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="neutral.600">
                       Cron jobs for automatic game updates
                     </Text>
                   </VStack>
@@ -264,7 +264,7 @@ export default function ChakraPage() {
                     <Text fontWeight="semibold" color="red.800">
                       Production Security
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="neutral.600">
                       Rate limiting and input validation
                     </Text>
                   </VStack>
@@ -277,7 +277,7 @@ export default function ChakraPage() {
                     <Text fontWeight="semibold" color="red.800">
                       Performance Optimization
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="neutral.600">
                       Caching and database optimization
                     </Text>
                   </VStack>
@@ -290,7 +290,7 @@ export default function ChakraPage() {
                     <Text fontWeight="semibold" color="red.800">
                       User Experience Polish
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="neutral.600">
                       Loading states, error handling, confirmations
                     </Text>
                   </VStack>

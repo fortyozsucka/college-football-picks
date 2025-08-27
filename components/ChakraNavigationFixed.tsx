@@ -35,16 +35,18 @@ const NavLink = ({ children, href, isActive = false }: {
     as={Link}
     href={href}
     px={2}
-    py={1}
+    py={2}
     rounded={'md'}
-    color={isActive ? 'primary' : 'gray.600'}
-    fontWeight={isActive ? 'bold' : 'medium'}
+    color={isActive ? 'brand.500' : 'neutral.600'}
+    fontWeight={isActive ? '600' : '500'}
+    fontSize="sm"
+    whiteSpace="nowrap"
     _hover={{
       textDecoration: 'none',
-      bg: 'gray.100',
-      color: 'primary',
+      bg: 'neutral.100',
+      color: 'neutral.900',
     }}
-    transition="all 0.2s"
+    transition="all 0.2s ease"
   >
     {children}
   </ChakraLink>
@@ -74,7 +76,7 @@ export default function ChakraNavigationFixed() {
   // Use consistent content during SSR
   if (loading || !isClient) {
     return (
-      <Box bg="white" boxShadow="sm" borderBottom="1px" borderColor="gray.200" mb={8}>
+      <Box bg="white" boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor="neutral.200" mb={8}>
         <Container maxW="7xl">
           <Flex h={16} alignItems="center" justifyContent="space-between">
             <HStack spacing={8} alignItems="center">
@@ -92,29 +94,29 @@ export default function ChakraNavigationFixed() {
   }
 
   return (
-    <Box bg="white" boxShadow="sm" borderBottom="1px" borderColor="gray.200" mb={{ base: 4, sm: 8 }}>
+    <Box bg="white" boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor="neutral.200" mb={{ base: 4, sm: 8 }}>
       <Container maxW="7xl">
         <Flex h={16} alignItems="center" justifyContent="space-between">
           {/* Logo */}
           <HStack spacing={8} alignItems="center">
             <ChakraLink as={Link} href="/" _hover={{ textDecoration: 'none' }}>
-              <Text fontWeight="bold" fontSize={{ base: 'lg', sm: 'xl' }} color="gray.900">
+              <Text fontWeight="bold" fontSize={{ base: 'lg', sm: 'xl' }} color="neutral.900">
                 🎯 Squad College Football Picks
               </Text>
             </ChakraLink>
             
             {/* Desktop Navigation */}
-            <HStack as="nav" spacing={4} display={{ base: 'none', md: 'flex' }}>
+            <HStack as="nav" spacing={2} display={{ base: 'none', md: 'flex' }}>
               {user && (
                 <>
-                  <NavLink href="/picks">Pick Tracker</NavLink>
-                  <NavLink href="/games">Weekly Games</NavLink>
+                  <NavLink href="/picks">Picks</NavLink>
+                  <NavLink href="/games">Games</NavLink>
                   <NavLink href="/leaderboard">Leaderboard</NavLink>
-                  <NavLink href="/history">Historical Leaderboards</NavLink>
+                  <NavLink href="/history">History</NavLink>
                   {user.isAdmin && (
                     <NavLink href="/admin">
                       <HStack spacing={1}>
-                        <Text>Admin Panel</Text>
+                        <Text>Admin</Text>
                         <Badge colorScheme="red" size="sm">ADMIN</Badge>
                       </HStack>
                     </NavLink>
@@ -146,13 +148,13 @@ export default function ChakraNavigationFixed() {
                     </HStack>
                   </MenuButton>
                   <MenuList>
-                    <MenuItem as={Link} href="/picks">Pick Tracker</MenuItem>
-                    <MenuItem as={Link} href="/games">Weekly Games</MenuItem>
+                    <MenuItem as={Link} href="/picks">Picks</MenuItem>
+                    <MenuItem as={Link} href="/games">Games</MenuItem>
                     <MenuItem as={Link} href="/leaderboard">Leaderboard</MenuItem>
-                    <MenuItem as={Link} href="/history">Historical Leaderboards</MenuItem>
+                    <MenuItem as={Link} href="/history">History</MenuItem>
                     {user.isAdmin && (
                       <MenuItem as={Link} href="/admin" color="red.500">
-                        Admin Panel
+                        Admin
                       </MenuItem>
                     )}
                     <MenuItem onClick={handleLogout} color="red.500">
@@ -176,7 +178,7 @@ export default function ChakraNavigationFixed() {
                 <Button as={Link} href="/auth/login" variant="ghost" size="sm">
                   Login
                 </Button>
-                <Button as={Link} href="/auth/register" colorScheme="football" size="sm">
+                <Button as={Link} href="/auth/register" bg="neutral.900" color="white" _hover={{ bg: 'neutral.800' }} size="sm">
                   Sign Up
                 </Button>
               </HStack>
@@ -194,14 +196,14 @@ export default function ChakraNavigationFixed() {
                   {user.name || user.email}
                 </Text>
               </Flex>
-              <NavLink href="/picks">Pick Tracker</NavLink>
-              <NavLink href="/games">Weekly Games</NavLink>
+              <NavLink href="/picks">Picks</NavLink>
+              <NavLink href="/games">Games</NavLink>
               <NavLink href="/leaderboard">Leaderboard</NavLink>
-              <NavLink href="/history">Historical Leaderboards</NavLink>
+              <NavLink href="/history">History</NavLink>
               {user.isAdmin && (
                 <NavLink href="/admin">
                   <HStack spacing={2}>
-                    <Text>Admin Panel</Text>
+                    <Text>Admin</Text>
                     <Badge colorScheme="red" size="sm">ADMIN</Badge>
                   </HStack>
                 </NavLink>
