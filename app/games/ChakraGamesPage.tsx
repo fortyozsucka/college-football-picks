@@ -1,0 +1,826 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  SimpleGrid,
+  Card,
+  CardBody,
+  VStack,
+  HStack,
+  Button,
+  Input,
+  Select,
+  Badge,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Spinner,
+  useToast,
+  Flex,
+  Image,
+  Divider,
+  Stack,
+  useColorModeValue,
+  Icon,
+  InputGroup,
+  InputLeftElement,
+  Wrap,
+  WrapItem,
+  ButtonGroup,
+  Progress,
+  Checkbox,
+} from '@chakra-ui/react'
+import { SearchIcon, TimeIcon, SettingsIcon, CheckIcon, CloseIcon, StarIcon } from '@chakra-ui/icons'
+import Link from 'next/link'
+import { Game, Pick } from '@/lib/types'
+import { useAuth } from '@/lib/context/AuthContext'
+
+interface SyncStatus {
+  lastSync: string | null
+  lastSyncWeek: string | null
+  activeWeeks: Array<{
+    week: number
+    season: number
+    updatedAt: string
+  }>
+  syncStats: Array<{
+    season: number
+    week: number
+    gameCount: number
+    oldestSync: string
+    newestSync: string
+  }>
+}
+
+export default function ChakraGamesPage() {
+  const { user } = useAuth()
+  const toast = useToast()
+  const [games, setGames] = useState<Game[]>([])
+  const [filteredGames, setFilteredGames] = useState<Game[]>([])
+  const [picks, setPicks] = useState<Pick[]>([])
+  const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [makingPick, setMakingPick] = useState<string | null>(null)
+  const [celebratingPicks, setCelebratingPicks] = useState<Set<string>>(new Set())
+  const [justMadePick, setJustMadePick] = useState<string | null>(null)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
+  
+  // Filter states
+  const [teamSearch, setTeamSearch] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
+  const [spreadRange, setSpreadRange] = useState({ min: '', max: '' })
+  const [gameStatus, setGameStatus] = useState('all')
+
+  // Color mode values
+  const cardBg = useColorModeValue('white', 'gray.800')
+  const borderColor = useColorModeValue('gray.200', 'gray.600')
+
+  const getSpreadWinner = (game: Game): string | null => {
+    if (!game.completed || game.homeScore === null || game.awayScore === null) {
+      return null
+    }
+    
+    const scoreDiff = game.homeScore - game.awayScore
+    const adjustedHomeDiff = scoreDiff + game.spread
+    
+    if (adjustedHomeDiff > 0) {
+      return game.homeTeam
+    } else if (adjustedHomeDiff < 0) {
+      return game.awayTeam
+    } else {
+      return 'Push'
+    }
+  }
+
+  const getSpreadDisplay = (game: Game): string => {
+    if (game.spread > 0) {
+      return `${game.homeTeam} -${game.spread}`
+    } else if (game.spread < 0) {
+      return `${game.awayTeam} -${Math.abs(game.spread)}`
+    } else {
+      return 'Even'
+    }
+  }
+
+  const fetchGames = async () => {
+    try {
+      const response = await fetch('/api/games')
+      if (!response.ok) throw new Error('Failed to fetch games')
+      const data = await response.json()
+      setGames(data || [])
+    } catch (error) {
+      setError('Failed to load games')
+      console.error('Error fetching games:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchPicks = async () => {
+    try {
+      const response = await fetch('/api/picks')
+      if (!response.ok) throw new Error('Failed to fetch picks')
+      const data = await response.json()
+      setPicks(data || [])
+    } catch (error) {
+      console.error('Error fetching picks:', error)
+    }
+  }
+
+  const fetchSyncStatus = async () => {
+    try {
+      const response = await fetch('/api/games/sync-status')
+      if (!response.ok) throw new Error('Failed to fetch sync status')
+      const data = await response.json()
+      setSyncStatus(data)
+    } catch (error) {
+      console.error('Error fetching sync status:', error)
+    }
+  }
+
+  const handleMakePick = async (gameId: string, team: string, isDoubleDown: boolean = false) => {
+    if (!user) return
+    
+    const game = games.find(g => g.id === gameId)
+    if (!game) return
+    
+    setMakingPick(gameId)
+    try {
+      const response = await fetch('/api/picks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user.id, 
+          gameId, 
+          pickedTeam: team, 
+          isDoubleDown,
+          lockedSpread: game.spread 
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to make pick')
+      }
+
+      await fetchPicks()
+      setJustMadePick(gameId)
+      setCelebratingPicks(prev => new Set([...Array.from(prev), gameId]))
+      
+      toast({
+        title: 'Pick Made!',
+        description: `You picked ${team}${isDoubleDown ? ' (Double Down!)' : ''}`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+
+      setTimeout(() => {
+        setCelebratingPicks(prev => {
+          const newSet = new Set(Array.from(prev))
+          newSet.delete(gameId)
+          return newSet
+        })
+        setJustMadePick(null)
+      }, 2000)
+
+    } catch (error) {
+      toast({
+        title: 'Error Making Pick',
+        description: error instanceof Error ? error.message : 'Failed to make pick',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setMakingPick(null)
+    }
+  }
+
+  const handleRemovePick = async (gameId: string) => {
+    if (!user) return
+    
+    setMakingPick(gameId)
+    try {
+      const response = await fetch(`/api/picks?userId=${user.id}&gameId=${gameId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to remove pick')
+      }
+
+      await fetchPicks()
+      toast({
+        title: 'Pick Removed',
+        description: 'Your pick has been removed',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      })
+
+    } catch (error) {
+      toast({
+        title: 'Error Removing Pick',
+        description: error instanceof Error ? error.message : 'Failed to remove pick',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setMakingPick(null)
+    }
+  }
+
+  const handleSyncGames = async () => {
+    if (!user?.isAdmin) return
+    
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/games/sync', { method: 'POST' })
+      if (!response.ok) throw new Error('Failed to sync games')
+      
+      await fetchGames()
+      await fetchSyncStatus()
+      
+      toast({
+        title: 'Games Synced!',
+        description: 'Games have been synchronized with CFB API',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: 'Sync Error',
+        description: error instanceof Error ? error.message : 'Failed to sync games',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchGames()
+    fetchSyncStatus()
+    if (user) {
+      fetchPicks()
+    }
+  }, [user])
+
+  // Filter games whenever filters or games change
+  useEffect(() => {
+    let filtered = [...games]
+    
+    // Team search filter
+    if (teamSearch.trim()) {
+      const searchTerm = teamSearch.toLowerCase()
+      filtered = filtered.filter(game => 
+        game.homeTeam.toLowerCase().includes(searchTerm) ||
+        game.awayTeam.toLowerCase().includes(searchTerm)
+      )
+    }
+    
+    // Time filter
+    if (selectedTime) {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const nextWeek = new Date(today)
+      nextWeek.setDate(nextWeek.getDate() + 7)
+      
+      filtered = filtered.filter(game => {
+        const gameDate = new Date(game.startTime)
+        switch (selectedTime) {
+          case 'today':
+            return gameDate >= today && gameDate < tomorrow
+          case 'tomorrow':
+            const dayAfterTomorrow = new Date(tomorrow)
+            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1)
+            return gameDate >= tomorrow && gameDate < dayAfterTomorrow
+          case 'week':
+            return gameDate >= today && gameDate < nextWeek
+          default:
+            return true
+        }
+      })
+    }
+    
+    // Spread range filter
+    if (spreadRange.min || spreadRange.max) {
+      filtered = filtered.filter(game => {
+        const spread = Math.abs(game.spread)
+        const min = spreadRange.min ? parseFloat(spreadRange.min) : 0
+        const max = spreadRange.max ? parseFloat(spreadRange.max) : Infinity
+        return spread >= min && spread <= max
+      })
+    }
+    
+    // Game status filter
+    if (gameStatus !== 'all') {
+      filtered = filtered.filter(game => {
+        switch (gameStatus) {
+          case 'upcoming':
+            return !game.completed && new Date(game.startTime) > new Date()
+          case 'live':
+            return !game.completed && new Date(game.startTime) <= new Date()
+          case 'completed':
+            return game.completed
+          default:
+            return true
+        }
+      })
+    }
+    
+    setFilteredGames(filtered)
+  }, [games, teamSearch, selectedTime, spreadRange, gameStatus])
+
+  const clearFilters = () => {
+    setTeamSearch('')
+    setSelectedTime('')
+    setSpreadRange({ min: '', max: '' })
+    setGameStatus('all')
+  }
+
+  const hasFilters = teamSearch || selectedTime || spreadRange.min || spreadRange.max || gameStatus !== 'all'
+
+  if (loading) {
+    return (
+      <Container maxW="7xl" py={8}>
+        <VStack spacing={8}>
+          <Heading size="xl" textAlign="center">
+            ⚡ Weekly Games
+          </Heading>
+          <Spinner size="xl" color="football.500" thickness="4px" />
+          <Text color="gray.600">Loading games...</Text>
+        </VStack>
+      </Container>
+    )
+  }
+
+  if (error) {
+    return (
+      <Container maxW="7xl" py={8}>
+        <Alert status="error" borderRadius="lg">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>Error loading games!</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Box>
+        </Alert>
+      </Container>
+    )
+  }
+
+  return (
+    <Container maxW="7xl" py={8}>
+      <VStack spacing={8} align="stretch">
+        {/* Header */}
+        <Box textAlign="center">
+          <Heading 
+            size="2xl" 
+            bgGradient="linear(to-r, football.600, orange.500)"
+            bgClip="text"
+            mb={4}
+          >
+            ⚡ Weekly Games
+          </Heading>
+          <Text fontSize="lg" color="gray.600">
+            Make your weekly picks and track game results
+          </Text>
+        </Box>
+
+        {/* Admin Controls */}
+        {user?.isAdmin && (
+          <Card bg="orange.50" borderColor="orange.200" shadow="md">
+            <CardBody>
+              <HStack justify="space-between" wrap="wrap" spacing={4}>
+                <VStack align="start" spacing={1}>
+                  <Text fontWeight="semibold" color="orange.800">
+                    🛠️ Admin Controls
+                  </Text>
+                  <Text fontSize="sm" color="orange.600">
+                    Manage game synchronization and system controls
+                  </Text>
+                </VStack>
+                <ButtonGroup>
+                  <Button
+                    leftIcon={<Icon as={SettingsIcon} />}
+                    colorScheme="orange"
+                    variant="outline"
+                    size="sm"
+                    as={Link}
+                    href="/admin"
+                  >
+                    Admin Panel
+                  </Button>
+                  <Button
+                    colorScheme="football"
+                    size="sm"
+                    isLoading={syncing}
+                    loadingText="Syncing..."
+                    onClick={handleSyncGames}
+                  >
+                    Sync Games
+                  </Button>
+                </ButtonGroup>
+              </HStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Filters */}
+        <Card bg={cardBg} shadow="md">
+          <CardBody>
+            <Text fontWeight="semibold" mb={4} color="gray.700">
+              🔍 Filter Games
+            </Text>
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
+              <VStack align="start">
+                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                  Team Search
+                </Text>
+                <InputGroup>
+                  <InputLeftElement>
+                    <SearchIcon color="gray.400" />
+                  </InputLeftElement>
+                  <Input
+                    placeholder="Search teams..."
+                    value={teamSearch}
+                    onChange={(e) => setTeamSearch(e.target.value)}
+                  />
+                </InputGroup>
+              </VStack>
+
+              <VStack align="start">
+                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                  Game Time
+                </Text>
+                <Select
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                >
+                  <option value="">All Times</option>
+                  <option value="today">Today</option>
+                  <option value="tomorrow">Tomorrow</option>
+                  <option value="week">Next 7 Days</option>
+                </Select>
+              </VStack>
+
+              <VStack align="start">
+                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                  Point Spread
+                </Text>
+                <HStack>
+                  <Input
+                    placeholder="Min"
+                    type="number"
+                    value={spreadRange.min}
+                    onChange={(e) => setSpreadRange(prev => ({ ...prev, min: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Max"
+                    type="number"
+                    value={spreadRange.max}
+                    onChange={(e) => setSpreadRange(prev => ({ ...prev, max: e.target.value }))}
+                  />
+                </HStack>
+              </VStack>
+
+              <VStack align="start">
+                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                  Game Status
+                </Text>
+                <Select
+                  value={gameStatus}
+                  onChange={(e) => setGameStatus(e.target.value)}
+                >
+                  <option value="all">All Games</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="live">Live</option>
+                  <option value="completed">Completed</option>
+                </Select>
+              </VStack>
+            </SimpleGrid>
+
+            {/* Filter Summary */}
+            <HStack justify="space-between" mt={4} wrap="wrap">
+              <Text fontSize="sm" color="gray.600">
+                Showing {filteredGames.length} of {games.length} games
+                {hasFilters && (
+                  <Badge ml={2} colorScheme="blue" variant="subtle">
+                    filtered
+                  </Badge>
+                )}
+              </Text>
+              {hasFilters && (
+                <Button size="sm" variant="ghost" onClick={clearFilters}>
+                  Clear all filters
+                </Button>
+              )}
+            </HStack>
+          </CardBody>
+        </Card>
+
+        {/* Games List or Empty State */}
+        {games.length === 0 ? (
+          <Alert
+            status="warning"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            textAlign="center"
+            height="200px"
+            borderRadius="lg"
+          >
+            <AlertIcon boxSize="40px" mr={0} />
+            <AlertTitle mt={4} mb={1} fontSize="lg">
+              No games available for picking
+            </AlertTitle>
+            <AlertDescription maxWidth="sm" mb={4}>
+              No games are currently available. This could be because no weeks are activated 
+              by an admin or no games have been synced yet.
+            </AlertDescription>
+            {user?.isAdmin && (
+              <Button
+                as={Link}
+                href="/admin"
+                leftIcon={<SettingsIcon />}
+                colorScheme="orange"
+                size="sm"
+              >
+                Manage Weekly Controls
+              </Button>
+            )}
+          </Alert>
+        ) : filteredGames.length === 0 ? (
+          <Alert status="info" borderRadius="lg">
+            <AlertIcon />
+            <Box>
+              <AlertTitle>No games match your filters</AlertTitle>
+              <AlertDescription>
+                Try adjusting your search criteria or{' '}
+                <Button variant="link" size="sm" onClick={clearFilters}>
+                  clear all filters
+                </Button>
+              </AlertDescription>
+            </Box>
+          </Alert>
+        ) : (
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+            {filteredGames.map((game) => {
+              const userPick = picks.find(pick => pick.gameId === game.id)
+              const isPicking = makingPick === game.id
+              const isCelebrating = celebratingPicks.has(game.id)
+              const gameStarted = new Date(game.startTime) <= new Date()
+              const spreadWinner = getSpreadWinner(game)
+
+              return (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  userPick={userPick}
+                  isPicking={isPicking}
+                  isCelebrating={isCelebrating}
+                  gameStarted={gameStarted}
+                  spreadWinner={spreadWinner}
+                  onMakePick={handleMakePick}
+                  onRemovePick={handleRemovePick}
+                  getSpreadDisplay={getSpreadDisplay}
+                />
+              )
+            })}
+          </SimpleGrid>
+        )}
+      </VStack>
+    </Container>
+  )
+}
+
+// Game Card Component
+const GameCard = ({ 
+  game, 
+  userPick, 
+  isPicking, 
+  isCelebrating, 
+  gameStarted, 
+  spreadWinner,
+  onMakePick,
+  onRemovePick,
+  getSpreadDisplay
+}: {
+  game: Game
+  userPick?: Pick
+  isPicking: boolean
+  isCelebrating: boolean
+  gameStarted: boolean
+  spreadWinner: string | null
+  onMakePick: (gameId: string, team: string, isDoubleDown: boolean) => void
+  onRemovePick: (gameId: string) => void
+  getSpreadDisplay: (game: Game) => string
+}) => {
+  const cardBg = useColorModeValue('white', 'gray.800')
+  const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const [isDoubleDown, setIsDoubleDown] = useState(false)
+
+  return (
+    <Card 
+      bg={cardBg} 
+      borderColor={borderColor} 
+      shadow="md"
+      transform={isCelebrating ? 'scale(1.02)' : 'scale(1)'}
+      transition="all 0.3s"
+      _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
+    >
+      <CardBody>
+        <VStack spacing={4} align="stretch">
+          {/* Game Header */}
+          <HStack justify="space-between">
+            <Badge colorScheme={game.completed ? 'green' : gameStarted ? 'orange' : 'blue'}>
+              {game.completed ? 'Final' : gameStarted ? 'Live' : 'Upcoming'}
+            </Badge>
+            <Text fontSize="sm" color="gray.500">
+              {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+          </HStack>
+
+          {/* Teams */}
+          <VStack spacing={3}>
+            {/* Away Team */}
+            <HStack justify="space-between" w="full">
+              <HStack>
+                {game.awayTeamLogo && (
+                  <Image src={game.awayTeamLogo} alt={game.awayTeam} boxSize="32px" />
+                )}
+                <Text fontWeight="semibold">{game.awayTeam}</Text>
+              </HStack>
+              <Text fontWeight="bold" fontSize="lg">
+                {game.awayScore !== null ? game.awayScore : '-'}
+              </Text>
+            </HStack>
+
+            <Text color="gray.500" fontSize="sm">@</Text>
+
+            {/* Home Team */}
+            <HStack justify="space-between" w="full">
+              <HStack>
+                {game.homeTeamLogo && (
+                  <Image src={game.homeTeamLogo} alt={game.homeTeam} boxSize="32px" />
+                )}
+                <Text fontWeight="semibold">{game.homeTeam}</Text>
+              </HStack>
+              <Text fontWeight="bold" fontSize="lg">
+                {game.homeScore !== null ? game.homeScore : '-'}
+              </Text>
+            </HStack>
+          </VStack>
+
+          <Divider />
+
+          {/* Game Info */}
+          <HStack justify="space-between">
+            <VStack align="start" spacing={1}>
+              <Text fontSize="sm" color="gray.600">Spread</Text>
+              <Text fontWeight="semibold">{getSpreadDisplay(game)}</Text>
+            </VStack>
+            {game.overUnder && (
+              <VStack align="center" spacing={1}>
+                <Text fontSize="sm" color="gray.600">O/U</Text>
+                <Text fontWeight="semibold">{game.overUnder}</Text>
+              </VStack>
+            )}
+            {game.gameType !== 'REGULAR' && (
+              <Badge colorScheme="purple" variant="solid">
+                {game.gameType}
+              </Badge>
+            )}
+          </HStack>
+
+          {/* Pick Actions */}
+          {!game.completed && !gameStarted && (
+            <VStack spacing={3}>
+              {!userPick ? (
+                <>
+                  <VStack spacing={3} w="full">
+                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                      Make your pick:
+                    </Text>
+                    
+                    <Checkbox 
+                      isChecked={isDoubleDown} 
+                      onChange={(e) => setIsDoubleDown(e.target.checked)}
+                      colorScheme="orange"
+                      size="sm"
+                    >
+                      <HStack spacing={1}>
+                        <Text fontSize="sm">Double Down</Text>
+                        <Icon as={StarIcon} color="orange.500" boxSize={3} />
+                      </HStack>
+                    </Checkbox>
+                    
+                    <ButtonGroup size="sm" width="full" variant="outline">
+                      <Button
+                        flex={1}
+                        onClick={() => onMakePick(game.id, game.awayTeam, isDoubleDown)}
+                        isLoading={isPicking}
+                        colorScheme={isDoubleDown ? "orange" : "football"}
+                        variant={isDoubleDown ? "solid" : "outline"}
+                      >
+                        {game.awayTeam}
+                      </Button>
+                      <Button
+                        flex={1}
+                        onClick={() => onMakePick(game.id, game.homeTeam, isDoubleDown)}
+                        isLoading={isPicking}
+                        colorScheme={isDoubleDown ? "orange" : "football"}
+                        variant={isDoubleDown ? "solid" : "outline"}
+                      >
+                        {game.homeTeam}
+                      </Button>
+                    </ButtonGroup>
+                    
+                    {isDoubleDown && (
+                      <Text fontSize="xs" color="orange.600" textAlign="center" fontWeight="semibold">
+                        ⭐ Double Down: Worth 2x points!
+                      </Text>
+                    )}
+                  </VStack>
+                </>
+              ) : (
+                <VStack spacing={2}>
+                  <HStack>
+                    <CheckIcon color="green.500" />
+                    <Text fontWeight="semibold">
+                      You picked: {userPick.pickedTeam}
+                    </Text>
+                    {userPick.isDoubleDown && (
+                      <Badge colorScheme="orange" variant="solid">
+                        Double Down
+                      </Badge>
+                    )}
+                  </HStack>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="red"
+                    onClick={() => onRemovePick(game.id)}
+                    isLoading={isPicking}
+                  >
+                    Remove Pick
+                  </Button>
+                </VStack>
+              )}
+            </VStack>
+          )}
+
+          {/* Game Result */}
+          {game.completed && spreadWinner && (
+            <VStack spacing={2}>
+              <Text fontSize="sm" color="gray.600">Spread Winner:</Text>
+              <Badge 
+                colorScheme={spreadWinner === 'Push' ? 'gray' : 'green'} 
+                variant="solid"
+                fontSize="sm"
+                px={3}
+                py={1}
+              >
+                {spreadWinner}
+              </Badge>
+              {userPick && (
+                <Badge
+                  colorScheme={
+                    userPick.points === null 
+                      ? 'gray' 
+                      : userPick.points > 0 
+                        ? 'green' 
+                        : 'red'
+                  }
+                  variant="solid"
+                >
+                  {userPick.points === null 
+                    ? 'Not Scored' 
+                    : userPick.points > 0 
+                      ? `+${userPick.points} pts` 
+                      : `${userPick.points} pts`
+                  }
+                </Badge>
+              )}
+            </VStack>
+          )}
+        </VStack>
+      </CardBody>
+    </Card>
+  )
+}

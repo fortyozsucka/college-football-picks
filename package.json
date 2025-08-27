@@ -3,16 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-      "build": "prisma generate && next build",
-      "start": "npm run db:deploy && next start",
-      "db:deploy": "prisma migrate deploy",
-      "dev": "next dev",
-      "lint": "next lint"
+    "build": "prisma generate && next build",
+    "start": "npm run db:deploy && next start",
+    "db:deploy": "prisma migrate deploy",
+    "dev": "next dev",
+    "lint": "next lint"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.2.4",
+    "@chakra-ui/react": "^2.10.9",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@prisma/client": "^5.19.1",
     "@types/js-cookie": "^3.0.6",
     "bcryptjs": "^2.4.3",
+    "framer-motion": "^12.23.12",
     "jose": "^6.0.13",
     "js-cookie": "^3.0.5",
     "next": "14.2.15",

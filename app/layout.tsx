@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import Navigation from '@/components/Navigation'
+import ChakraNavigationFixed from '@/components/ChakraNavigationFixed'
 import { Providers } from './providers'
+import { ChakraUIProvider } from '@/components/providers/ChakraProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -15,13 +16,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50">
-        <Providers>
-          <Navigation />
-          <div className="container mx-auto px-4 py-8">
+      <body>
+        <ChakraUIProvider>
+          <Providers>
+            <ChakraNavigationFixed />
             {children}
-          </div>
-        </Providers>
+          </Providers>
+        </ChakraUIProvider>
       </body>
     </html>
   )
