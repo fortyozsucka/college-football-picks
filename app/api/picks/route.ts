@@ -2,9 +2,16 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { validateUserPicks, getWeekPickRules, GameType } from '@/lib/game-classification'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    
+    // If userId is provided, filter by that user, otherwise return all picks
+    const whereClause = userId ? { userId } : {}
+    
     const picks = await db.pick.findMany({
+      where: whereClause,
       include: {
         user: {
           select: {

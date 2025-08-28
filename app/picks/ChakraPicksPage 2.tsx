@@ -67,8 +67,8 @@ export default function ChakraPicksPage() {
       const gamesData = await gamesResponse.json()
       const picksData = await picksResponse.json()
 
-      setGames(gamesData.games || [])
-      setPicks(picksData.picks?.filter((pick: Pick) => pick.userId === user?.id) || [])
+      setGames(gamesData || [])
+      setPicks(picksData?.filter((pick: Pick) => pick.userId === user?.id) || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -81,12 +81,11 @@ export default function ChakraPicksPage() {
     
     setRemovingPick(pickId)
     try {
-      const response = await fetch('/api/picks', {
+      const response = await fetch(`/api/picks?userId=${user.id}&gameId=${gameId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pickId }),
       })
 
       if (!response.ok) {
@@ -154,7 +153,7 @@ export default function ChakraPicksPage() {
         <Container maxW="7xl" py={8}>
           <VStack spacing={8}>
             <Heading size="xl" textAlign="center">
-              🏈 My Picks
+              📈 Pick Tracker
             </Heading>
             <Spinner size="xl" color="football.500" thickness="4px" />
             <Text color="gray.600">Loading your picks...</Text>
@@ -188,13 +187,21 @@ export default function ChakraPicksPage() {
           <Box textAlign="center">
             <Heading 
               size="2xl" 
-              bgGradient="linear(to-r, football.600, orange.500)"
-              bgClip="text"
               mb={4}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={3}
             >
-              🏈 My Picks
+              <Text fontSize="2xl">📈</Text>
+              <Text 
+                bgGradient="linear(to-r, neutral.900, brand.600)"
+                bgClip="text"
+              >
+                Pick Tracker
+              </Text>
             </Heading>
-            <Text fontSize="lg" color="gray.600">
+            <Text fontSize="lg" color="neutral.600">
               Track your weekly picks and performance
             </Text>
           </Box>

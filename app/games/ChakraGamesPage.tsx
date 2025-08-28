@@ -100,9 +100,9 @@ export default function ChakraGamesPage() {
 
   const getSpreadDisplay = (game: Game): string => {
     if (game.spread > 0) {
-      return `${game.homeTeam} -${game.spread}`
+      return `${game.awayTeam} -${game.spread}`
     } else if (game.spread < 0) {
-      return `${game.awayTeam} -${Math.abs(game.spread)}`
+      return `${game.homeTeam} -${Math.abs(game.spread)}`
     } else {
       return 'Even'
     }
@@ -123,8 +123,10 @@ export default function ChakraGamesPage() {
   }
 
   const fetchPicks = async () => {
+    if (!user?.id) return
+    
     try {
-      const response = await fetch('/api/picks')
+      const response = await fetch(`/api/picks?userId=${user.id}`)
       if (!response.ok) throw new Error('Failed to fetch picks')
       const data = await response.json()
       setPicks(data || [])
