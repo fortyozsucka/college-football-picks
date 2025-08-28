@@ -54,10 +54,12 @@ export default function ChakraPicksPage() {
   }, [user])
 
   const fetchData = async () => {
+    if (!user?.id) return
+    
     try {
       const [gamesResponse, picksResponse] = await Promise.all([
         fetch('/api/games'),
-        fetch('/api/picks')
+        fetch(`/api/picks?userId=${user.id}`)
       ])
 
       if (!gamesResponse.ok || !picksResponse.ok) {
@@ -67,8 +69,8 @@ export default function ChakraPicksPage() {
       const gamesData = await gamesResponse.json()
       const picksData = await picksResponse.json()
 
-      setGames(gamesData.games || [])
-      setPicks(picksData.picks?.filter((pick: Pick) => pick.userId === user?.id) || [])
+      setGames(gamesData || [])
+      setPicks(picksData || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -81,12 +83,11 @@ export default function ChakraPicksPage() {
     
     setRemovingPick(pickId)
     try {
-      const response = await fetch('/api/picks', {
+      const response = await fetch(`/api/picks?userId=${user.id}&gameId=${gameId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pickId }),
       })
 
       if (!response.ok) {
@@ -121,9 +122,9 @@ export default function ChakraPicksPage() {
 
   const getSpreadDisplay = (game: Game): string => {
     if (game.spread > 0) {
-      return `${game.homeTeam} -${game.spread}`
+      return `${game.awayTeam} -${game.spread}`
     } else if (game.spread < 0) {
-      return `${game.awayTeam} -${Math.abs(game.spread)}`
+      return `${game.homeTeam} -${Math.abs(game.spread)}`
     } else {
       return 'Even'
     }
@@ -156,8 +157,8 @@ export default function ChakraPicksPage() {
             <Heading size="xl" textAlign="center">
               🏈 My Picks
             </Heading>
-            <Spinner size="xl" color="football.500" thickness="4px" />
-            <Text color="gray.600">Loading your picks...</Text>
+            <Spinner size="xl" color="brand.500" thickness="4px" />
+            <Text color="neutral.600">Loading your picks...</Text>
           </VStack>
         </Container>
       </ProtectedRoute>
@@ -188,31 +189,31 @@ export default function ChakraPicksPage() {
           <Box textAlign="center">
             <Heading 
               size="2xl" 
-              bgGradient="linear(to-r, football.600, orange.500)"
+              bgGradient="linear(to-r, neutral.900, brand.600)"
               bgClip="text"
               mb={4}
             >
               🏈 My Picks
             </Heading>
-            <Text fontSize="lg" color="gray.600">
+            <Text fontSize="lg" color="neutral.600">
               Track your weekly picks and performance
             </Text>
           </Box>
 
           {/* Stats Overview */}
-          <Card bg="linear-gradient(to-r, var(--chakra-colors-football-50), var(--chakra-colors-blue-50))" shadow="md">
+          <Card bg="linear-gradient(to-r, var(--chakra-colors-brand-50), var(--chakra-colors-accent-50))" shadow="md">
             <CardBody>
-              <Text fontWeight="semibold" mb={4} color="football.800">
+              <Text fontWeight="semibold" mb={4} color="brand.800">
                 📊 Your Performance
               </Text>
               <StatGroup>
                 <Stat>
                   <StatLabel>Total Picks</StatLabel>
-                  <StatNumber color="football.600">{stats.totalPicks}</StatNumber>
+                  <StatNumber color="brand.600">{stats.totalPicks}</StatNumber>
                 </Stat>
                 <Stat>
                   <StatLabel>Completed</StatLabel>
-                  <StatNumber color="blue.600">{stats.completedPicks}</StatNumber>
+                  <StatNumber color="accent.600">{stats.completedPicks}</StatNumber>
                 </Stat>
                 <Stat>
                   <StatLabel>Win Rate</StatLabel>
@@ -226,16 +227,16 @@ export default function ChakraPicksPage() {
                 </Stat>
                 <Stat>
                   <StatLabel>Double Downs</StatLabel>
-                  <StatNumber color="orange.600">{stats.doubleDownPicks}</StatNumber>
+                  <StatNumber color="accent.600">{stats.doubleDownPicks}</StatNumber>
                 </Stat>
               </StatGroup>
               
               {stats.completedPicks > 0 && (
                 <Box mt={4}>
-                  <Text fontSize="sm" mb={2} color="gray.600">Progress to Goal</Text>
+                  <Text fontSize="sm" mb={2} color="neutral.600">Progress to Goal</Text>
                   <Progress 
                     value={stats.winRate} 
-                    colorScheme="football" 
+                    colorScheme="brand" 
                     size="md" 
                     borderRadius="md"
                   />
@@ -266,7 +267,7 @@ export default function ChakraPicksPage() {
                 as="a"
                 href="/games"
                 mt={4}
-                colorScheme="football"
+                colorScheme="brand"
                 size="sm"
               >
                 View Games
@@ -367,7 +368,7 @@ const PickCard = ({
             </HStack>
             
             <Text fontSize="sm" color="gray.500">
-              {new Date(game.startTime).toLocaleDateString()}
+              {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </HStack>
 
@@ -405,29 +406,29 @@ const PickCard = ({
           {/* Pick Info */}
           <VStack spacing={3}>
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="gray.600">Your Pick:</Text>
+              <Text fontSize="sm" color="neutral.600">Your Pick:</Text>
               <HStack>
-                <Text fontWeight="bold" color="football.600">
+                <Text fontWeight="bold" color="brand.600">
                   {pick.pickedTeam}
                 </Text>
                 {pick.pickedTeam === pick.pickedTeam && (
-                  <CheckIcon color="football.500" boxSize={3} />
+                  <CheckIcon color="brand.500" boxSize={3} />
                 )}
               </HStack>
             </HStack>
 
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="gray.600">Spread:</Text>
+              <Text fontSize="sm" color="neutral.600">Spread:</Text>
               <Text fontSize="sm" fontWeight="medium">
                 {getSpreadDisplay(game)}
               </Text>
             </HStack>
 
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="gray.600">Locked Spread:</Text>
+              <Text fontSize="sm" color="neutral.600">Locked Spread:</Text>
               <Text fontSize="sm" fontWeight="medium">
-                {pick.lockedSpread > 0 ? `${game.homeTeam} -${pick.lockedSpread}` :
-                 pick.lockedSpread < 0 ? `${game.awayTeam} -${Math.abs(pick.lockedSpread)}` :
+                {pick.lockedSpread > 0 ? `${game.awayTeam} -${pick.lockedSpread}` :
+                 pick.lockedSpread < 0 ? `${game.homeTeam} -${Math.abs(pick.lockedSpread)}` :
                  'Even'}
               </Text>
             </HStack>
@@ -438,7 +439,7 @@ const PickCard = ({
             <VStack spacing={2}>
               <Divider />
               <HStack justify="space-between" w="full">
-                <Text fontSize="sm" color="gray.600">Result:</Text>
+                <Text fontSize="sm" color="neutral.600">Result:</Text>
                 <Badge
                   colorScheme={
                     pick.points > 0 ? 'green' : 

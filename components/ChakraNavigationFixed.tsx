@@ -81,8 +81,13 @@ export default function ChakraNavigationFixed() {
           <Flex h={16} alignItems="center" justifyContent="space-between">
             <HStack spacing={8} alignItems="center">
               <ChakraLink as={Link} href="/" _hover={{ textDecoration: 'none' }}>
-                <Text fontWeight="bold" fontSize="xl" color="gray.900">
-                  🎯 Squad College Football Picks
+                <Text 
+                  fontWeight="bold" 
+                  fontSize="xl" 
+                  bgGradient="linear(to-r, neutral.900, brand.600)"
+                  bgClip="text"
+                >
+                  Squad College Football Picks
                 </Text>
               </ChakraLink>
             </HStack>
@@ -100,8 +105,13 @@ export default function ChakraNavigationFixed() {
           {/* Logo */}
           <HStack spacing={8} alignItems="center">
             <ChakraLink as={Link} href="/" _hover={{ textDecoration: 'none' }}>
-              <Text fontWeight="bold" fontSize={{ base: 'lg', sm: 'xl' }} color="neutral.900">
-                🎯 Squad College Football Picks
+              <Text 
+                fontWeight="bold" 
+                fontSize={{ base: 'lg', sm: 'xl' }} 
+                bgGradient="linear(to-r, neutral.900, brand.600)"
+                bgClip="text"
+              >
+                Squad College Football Picks
               </Text>
             </ChakraLink>
             
