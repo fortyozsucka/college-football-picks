@@ -43,7 +43,7 @@ export async function POST() {
 
     // Fetch live scores for all relevant weeks
     const liveScoresByGameId = new Map<string, any>()
-    for (const weekSeason of weekSeasonPairs) {
+    for (const weekSeason of Array.from(weekSeasonPairs)) {
       const [season, week] = weekSeason.split('-').map(Number)
       try {
         const scoreboardData = await cfbApi.getScoreboard(season, week)
