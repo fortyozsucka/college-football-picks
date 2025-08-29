@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { emailService, GameResult } from '@/lib/email'
+import { cfbApi } from '@/lib/cfb-api'
 
 function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string {
   // Spread is stored from home team's perspective
@@ -20,15 +21,10 @@ function getSpreadWinner(homeScore: number, awayScore: number, spread: number, h
 
 export async function POST() {
   try {
-    // Get all completed games with picks that haven't been scored yet
+    // Get all picks that haven't been scored yet
     const picks = await db.pick.findMany({
       where: {
         points: null, // Only unscored picks
-        game: {
-          completed: true,
-          homeScore: { not: null },
-          awayScore: { not: null }
-        }
       },
       include: {
         game: true,
@@ -36,7 +32,37 @@ export async function POST() {
       }
     })
 
-    console.log(`Processing ${picks.length} picks for point calculation`)
+    console.log(`Found ${picks.length} unscored picks, checking scores via CFB API`)
+
+    // Get unique weeks/seasons from the picks
+    const weekSeasonPairs = new Set<string>()
+    picks.forEach(pick => {
+      const key = `${pick.game.season}-${pick.game.week}`
+      weekSeasonPairs.add(key)
+    })
+
+    // Fetch live scores for all relevant weeks
+    const liveScoresByGameId = new Map<string, any>()
+    for (const weekSeason of weekSeasonPairs) {
+      const [season, week] = weekSeason.split('-').map(Number)
+      try {
+        const scoreboardData = await cfbApi.getScoreboard(season, week)
+        for (const game of scoreboardData) {
+          if (game.status === 'completed' && game.homeTeam?.points !== null && game.awayTeam?.points !== null) {
+            liveScoresByGameId.set(game.id.toString(), {
+              homeScore: game.homeTeam.points,
+              awayScore: game.awayTeam.points,
+              homeTeam: game.homeTeam.name,
+              awayTeam: game.awayTeam.name
+            })
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to fetch scores for ${season} week ${week}:`, error)
+      }
+    }
+
+    console.log(`Fetched live scores for ${liveScoresByGameId.size} completed games`)
 
     let updatedPicks = 0
     let totalPointsAwarded = 0
@@ -48,14 +74,20 @@ export async function POST() {
     for (const pick of picks) {
       const { game } = pick
       
-      if (game.homeScore === null || game.awayScore === null) {
+      // Check if we have live scores for this game
+      const liveScore = liveScoresByGameId.get(game.cfbId)
+      if (!liveScore) {
+        console.log(`No live scores available for game ${game.homeTeam} vs ${game.awayTeam}`)
         continue
       }
 
-      // Determine who won against the spread
+      const homeScore = liveScore.homeScore
+      const awayScore = liveScore.awayScore
+
+      // Determine who won against the spread using live scores
       const spreadWinner = getSpreadWinner(
-        game.homeScore, 
-        game.awayScore, 
+        homeScore, 
+        awayScore, 
         game.spread, 
         game.homeTeam, 
         game.awayTeam
@@ -111,8 +143,8 @@ export async function POST() {
         completedGames.push({
           homeTeam: game.homeTeam,
           awayTeam: game.awayTeam,
-          homeScore: game.homeScore,
-          awayScore: game.awayScore,
+          homeScore: homeScore,
+          awayScore: awayScore,
           spread: game.spread,
           winner: spreadWinner === 'Push' ? 'Push' : spreadWinner,
           startTime: game.startTime
