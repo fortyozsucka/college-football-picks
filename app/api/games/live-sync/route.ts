@@ -110,9 +110,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  const currentSeason = getCurrentSeason()
   return NextResponse.json({
     message: 'Live sync endpoint - focuses only on updating scores for games in progress',
     usage: 'POST to this endpoint to sync live scores only (faster than full sync)',
-    parameters: '?week=1&season=2024'
+    parameters: `?week=1&season=${currentSeason}`,
+    currentSeason,
+    detectedSeason: currentSeason
   })
 }
