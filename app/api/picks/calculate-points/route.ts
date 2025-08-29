@@ -94,22 +94,26 @@ export async function POST() {
       )
 
       let points = 0
+      let result = ""
 
       if (spreadWinner === 'Push') {
         // Push (tie against spread) = treated as a loss
         points = pick.isDoubleDown ? -1 : 0
+        result = "push"
       } else if (spreadWinner === pick.pickedTeam) {
         // User picked correctly
         points = pick.isDoubleDown ? 2 : 1
+        result = "win"
       } else {
         // User picked incorrectly
         points = pick.isDoubleDown ? -1 : 0
+        result = "loss"
       }
 
-      // Update the pick with calculated points
+      // Update the pick with calculated points and result
       await db.pick.update({
         where: { id: pick.id },
-        data: { points }
+        data: { points, result }
       })
 
       // Update user's total score

@@ -13,6 +13,7 @@ export async function GET() {
         picks: {
           select: {
             points: true,
+            result: true,
             isDoubleDown: true,
             game: {
               select: {
@@ -37,9 +38,11 @@ export async function GET() {
     // Calculate additional stats for each user
     const leaderboardWithStats = leaderboard.map(user => {
       const completedPicks = user.picks.filter(pick => pick.points !== null)
-      const wins = completedPicks.filter(pick => pick.points && pick.points > 0).length
-      const losses = completedPicks.filter(pick => pick.points && pick.points < 0).length
-      const pushes = completedPicks.filter(pick => pick.points === 0).length
+      
+      // Use the new result field for accurate win/loss/push tracking
+      const wins = completedPicks.filter(pick => pick.result === 'win').length
+      const losses = completedPicks.filter(pick => pick.result === 'loss').length
+      const pushes = completedPicks.filter(pick => pick.result === 'push').length
       const doubleDowns = completedPicks.filter(pick => pick.isDoubleDown).length
       const doubleDownWins = completedPicks.filter(pick => pick.isDoubleDown && pick.points && pick.points > 0).length
 
