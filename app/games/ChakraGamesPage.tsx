@@ -63,6 +63,7 @@ export default function ChakraGamesPage() {
   const [games, setGames] = useState<Game[]>([])
   const [filteredGames, setFilteredGames] = useState<Game[]>([])
   const [picks, setPicks] = useState<Pick[]>([])
+  const [allPicks, setAllPicks] = useState<Pick[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -135,6 +136,17 @@ export default function ChakraGamesPage() {
     }
   }
 
+  const fetchAllPicks = async () => {
+    try {
+      const response = await fetch('/api/picks')
+      if (!response.ok) throw new Error('Failed to fetch all picks')
+      const data = await response.json()
+      setAllPicks(data || [])
+    } catch (error) {
+      console.error('Error fetching all picks:', error)
+    }
+  }
+
   const fetchSyncStatus = async () => {
     try {
       const response = await fetch('/api/games/sync-status')
@@ -172,6 +184,7 @@ export default function ChakraGamesPage() {
       }
 
       await fetchPicks()
+      await fetchAllPicks()
       setJustMadePick(gameId)
       setCelebratingPicks(prev => new Set([...Array.from(prev), gameId]))
       
@@ -221,6 +234,7 @@ export default function ChakraGamesPage() {
       }
 
       await fetchPicks()
+      await fetchAllPicks()
       toast({
         title: 'Pick Removed',
         description: 'Your pick has been removed',
@@ -276,6 +290,7 @@ export default function ChakraGamesPage() {
   useEffect(() => {
     fetchGames()
     fetchSyncStatus()
+    fetchAllPicks()
     if (user) {
       fetchPicks()
     }
@@ -588,12 +603,14 @@ export default function ChakraGamesPage() {
               const isCelebrating = celebratingPicks.has(game.id)
               const gameStarted = new Date(game.startTime) <= new Date()
               const spreadWinner = getSpreadWinner(game)
+              const gamePicks = allPicks.filter(pick => pick.gameId === game.id)
 
               return (
                 <GameCard
                   key={game.id}
                   game={game}
                   userPick={userPick}
+                  gamePicks={gamePicks}
                   isPicking={isPicking}
                   isCelebrating={isCelebrating}
                   gameStarted={gameStarted}
@@ -615,6 +632,7 @@ export default function ChakraGamesPage() {
 const GameCard = ({ 
   game, 
   userPick, 
+  gamePicks,
   isPicking, 
   isCelebrating, 
   gameStarted, 
@@ -625,6 +643,7 @@ const GameCard = ({
 }: {
   game: Game
   userPick?: Pick
+  gamePicks: Pick[]
   isPicking: boolean
   isCelebrating: boolean
   gameStarted: boolean
@@ -784,6 +803,40 @@ const GameCard = ({
                   </Button>
                 </VStack>
               )}
+            </VStack>
+          )}
+
+          {/* Picks Display (when game has started) */}
+          {gameStarted && gamePicks.length > 0 && (
+            <VStack spacing={3}>
+              <Divider />
+              <Text fontSize="sm" color="neutral.600" fontWeight="semibold">Who Picked What:</Text>
+              <VStack spacing={2} w="full">
+                {[game.homeTeam, game.awayTeam].map((team) => {
+                  const teamPicks = gamePicks.filter(pick => pick.pickedTeam === team)
+                  if (teamPicks.length === 0) return null
+                  
+                  return (
+                    <HStack key={team} justify="space-between" w="full" p={2} bg="gray.50" borderRadius="md">
+                      <Text fontWeight="semibold" fontSize="sm">{team}:</Text>
+                      <Wrap spacing={1}>
+                        {teamPicks.map((pick) => (
+                          <WrapItem key={pick.id}>
+                            <Badge 
+                              colorScheme={pick.isDoubleDown ? 'orange' : 'blue'}
+                              variant={pick.isDoubleDown ? 'solid' : 'outline'}
+                              fontSize="xs"
+                            >
+                              {pick.user.name || pick.user.email}
+                              {pick.isDoubleDown && ' ⭐'}
+                            </Badge>
+                          </WrapItem>
+                        ))}
+                      </Wrap>
+                    </HStack>
+                  )
+                })}
+              </VStack>
             </VStack>
           )}
 
