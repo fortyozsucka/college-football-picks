@@ -39,10 +39,37 @@ export async function GET() {
     const leaderboardWithStats = leaderboard.map(user => {
       const completedPicks = user.picks.filter(pick => pick.points !== null)
       
-      // Use the new result field for accurate win/loss/push tracking
-      const wins = completedPicks.filter(pick => pick.result === 'win').length
-      const losses = completedPicks.filter(pick => pick.result === 'loss').length
-      const pushes = completedPicks.filter(pick => pick.result === 'push').length
+      // Use the new result field for accurate win/loss/push tracking, with fallback to points
+      const wins = completedPicks.filter(pick => {
+        if (pick.result) {
+          return pick.result === 'win'
+        }
+        // Fallback: wins are positive points
+        return pick.points && pick.points > 0
+      }).length
+      
+      const losses = completedPicks.filter(pick => {
+        if (pick.result) {
+          return pick.result === 'loss'
+        }
+        // Fallback: losses are negative points OR 0 points for non-double-down picks
+        if (pick.points === -1) return true
+        if (pick.points === 0 && !pick.isDoubleDown) {
+          // For legacy data, we can't distinguish between loss and push for 0-point normal picks
+          // We'll count them as losses for now
+          return true
+        }
+        return false
+      }).length
+      
+      const pushes = completedPicks.filter(pick => {
+        if (pick.result) {
+          return pick.result === 'push'
+        }
+        // Fallback: for legacy data, we can't reliably identify pushes
+        // We'll show 0 pushes for old data
+        return false
+      }).length
       const doubleDowns = completedPicks.filter(pick => pick.isDoubleDown).length
       const doubleDownWins = completedPicks.filter(pick => pick.isDoubleDown && pick.points && pick.points > 0).length
 
