@@ -3,12 +3,15 @@ import { db } from '@/lib/db'
 import { emailService, GameResult } from '@/lib/email'
 
 function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string {
-  const scoreDiff = homeScore - awayScore
-  const adjustedHomeDiff = scoreDiff + spread
+  // Spread is stored from home team's perspective
+  // Positive spread means away team is favored by that amount
+  // Negative spread means home team is favored by that amount
   
-  if (adjustedHomeDiff > 0) {
+  const homeScoreWithSpread = homeScore + spread
+  
+  if (homeScoreWithSpread > awayScore) {
     return homeTeam
-  } else if (adjustedHomeDiff < 0) {
+  } else if (homeScoreWithSpread < awayScore) {
     return awayTeam
   } else {
     return 'Push' // Exact tie against the spread
