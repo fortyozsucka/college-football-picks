@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`Testing live scores for Week ${week}, Season ${season}`)
 
-    // Fetch games from CFB API
-    const cfbGames = await cfbApi.getGames(season, week)
-    console.log(`Fetched ${cfbGames.length} games from CFB API`)
+    // Use scoreboard API for better live score data
+    const cfbGames = await cfbApi.getScoreboard(season, week)
+    console.log(`Fetched ${cfbGames.length} games from CFB Scoreboard API`)
 
     const liveGames = []
     const completedGames = []
@@ -28,22 +28,22 @@ export async function POST(request: NextRequest) {
 
     // Process each game to categorize and update scores
     for (const cfbGame of cfbGames) {
-      // Skip non-FBS games
-      if (cfbGame.homeClassification !== 'fbs' || cfbGame.awayClassification !== 'fbs') {
+      // Skip non-FBS games (scoreboard API uses team classifications)
+      if (cfbGame.homeTeam?.classification !== 'fbs' || cfbGame.awayTeam?.classification !== 'fbs') {
         continue
       }
 
       const gameId = cfbGame.id.toString()
-      const homeTeam = cfbGame.homeTeam || cfbGame.home_team || cfbGame.home || 'Unknown Home Team'
-      const awayTeam = cfbGame.awayTeam || cfbGame.away_team || cfbGame.away || 'Unknown Away Team'
-      const homeScore = cfbGame.home_points || cfbGame.homePoints || null
-      const awayScore = cfbGame.away_points || cfbGame.awayPoints || null
-      const isCompleted = cfbGame.completed || false
+      const homeTeam = cfbGame.homeTeam?.name || 'Unknown Home Team'
+      const awayTeam = cfbGame.awayTeam?.name || 'Unknown Away Team'
+      const homeScore = cfbGame.homeTeam?.points || null
+      const awayScore = cfbGame.awayTeam?.points || null
+      const isCompleted = cfbGame.status === 'completed'
       const startTime = new Date(cfbGame.startDate || new Date())
       const now = new Date()
 
-      // Categorize games
-      if (isCompleted) {
+      // Categorize games by actual game status
+      if (cfbGame.status === 'completed') {
         completedGames.push({
           id: gameId,
           homeTeam,
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           awayScore,
           status: 'Completed'
         })
-      } else if (startTime <= now) {
+      } else if (cfbGame.status === 'in_progress') {
         liveGames.push({
           id: gameId,
           homeTeam,
@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
           homeScore,
           awayScore,
           startTime: startTime.toISOString(),
-          status: homeScore !== null || awayScore !== null ? 'Live' : 'Started (no score yet)'
+          status: 'Live',
+          period: cfbGame.period,
+          clock: cfbGame.clock
         })
       } else {
         upcomingGames.push({
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
           homeTeam,
           awayTeam,
           startTime: startTime.toISOString(),
-          status: 'Upcoming'
+          status: cfbGame.status || 'Scheduled'
         })
       }
 

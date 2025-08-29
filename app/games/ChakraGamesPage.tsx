@@ -71,6 +71,7 @@ export default function ChakraGamesPage() {
   const [celebratingPicks, setCelebratingPicks] = useState<Set<string>>(new Set())
   const [justMadePick, setJustMadePick] = useState<string | null>(null)
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   
   // Filter states
   const [teamSearch, setTeamSearch] = useState('')
@@ -115,6 +116,7 @@ export default function ChakraGamesPage() {
       if (!response.ok) throw new Error('Failed to fetch games')
       const data = await response.json()
       setGames(data || [])
+      setLastUpdated(new Date())
     } catch (error) {
       setError('Failed to load games')
       console.error('Error fetching games:', error)
@@ -417,6 +419,12 @@ export default function ChakraGamesPage() {
           <Text fontSize="lg" color="neutral.600">
             Make your weekly picks and track game results
           </Text>
+          {lastUpdated && (
+            <Text fontSize="sm" color="neutral.500" mt={2}>
+              <Icon as={TimeIcon} mr={1} />
+              Last updated: {lastUpdated.toLocaleString()}
+            </Text>
+          )}
         </Box>
 
         {/* Admin Controls */}
@@ -542,11 +550,23 @@ export default function ChakraGamesPage() {
                   </Badge>
                 )}
               </Text>
-              {hasFilters && (
-                <Button size="sm" variant="ghost" onClick={clearFilters}>
-                  Clear all filters
+              <HStack spacing={2}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  leftIcon={<TimeIcon />}
+                  onClick={fetchGames}
+                  isLoading={loading}
+                  loadingText="Refreshing..."
+                >
+                  Refresh
                 </Button>
-              )}
+                {hasFilters && (
+                  <Button size="sm" variant="ghost" onClick={clearFilters}>
+                    Clear all filters
+                  </Button>
+                )}
+              </HStack>
             </HStack>
           </CardBody>
         </Card>
@@ -688,7 +708,7 @@ const GameCard = ({
                 <Text fontWeight="semibold">{game.awayTeam}</Text>
               </HStack>
               <Text fontWeight="bold" fontSize="lg">
-                {game.awayScore !== null ? game.awayScore : '-'}
+                {game.awayScore !== null ? game.awayScore : (gameStarted ? '0' : '-')}
               </Text>
             </HStack>
 
@@ -703,7 +723,7 @@ const GameCard = ({
                 <Text fontWeight="semibold">{game.homeTeam}</Text>
               </HStack>
               <Text fontWeight="bold" fontSize="lg">
-                {game.homeScore !== null ? game.homeScore : '-'}
+                {game.homeScore !== null ? game.homeScore : (gameStarted ? '0' : '-')}
               </Text>
             </HStack>
           </VStack>

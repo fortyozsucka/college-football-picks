@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔴 LIVE sync for Week ${week}, Season ${season}`)
 
-    // Only fetch games (skip lines and teams for speed)
-    const cfbGames = await cfbApi.getGames(season, week)
-    console.log(`Fetched ${cfbGames.length} games from CFB API`)
+    // Use scoreboard API for better live score data
+    const cfbGames = await cfbApi.getScoreboard(season, week)
+    console.log(`Fetched ${cfbGames.length} games from CFB Scoreboard API`)
 
     let gamesUpdated = 0
     let liveGamesFound = 0
@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
 
     // Only process games that have started or completed
     for (const cfbGame of cfbGames) {
-      // Skip games where either team is not FBS
-      if (cfbGame.homeClassification !== 'fbs' || cfbGame.awayClassification !== 'fbs') {
+      // Skip games where either team is not FBS (scoreboard API uses team classifications)
+      if (cfbGame.homeTeam?.classification !== 'fbs' || cfbGame.awayTeam?.classification !== 'fbs') {
         continue
       }
 
@@ -36,16 +36,17 @@ export async function POST(request: NextRequest) {
       const startTime = cfbGame.startDate ? new Date(cfbGame.startDate) : new Date()
       const now = new Date()
       
-      // Only sync games that have started
-      if (startTime > now && !cfbGame.completed) {
+      // Only sync games that have started or are in progress
+      const gameStatus = cfbGame.status
+      if (gameStatus !== 'in_progress' && gameStatus !== 'completed') {
         continue
       }
 
       liveGamesFound++
 
-      const homeScore = cfbGame.home_points || cfbGame.homePoints || null
-      const awayScore = cfbGame.away_points || cfbGame.awayPoints || null
-      const isCompleted = cfbGame.completed || false
+      const homeScore = cfbGame.homeTeam?.points || null
+      const awayScore = cfbGame.awayTeam?.points || null
+      const isCompleted = gameStatus === 'completed'
 
       // Check if game exists in database
       const existingGame = await db.game.findFirst({

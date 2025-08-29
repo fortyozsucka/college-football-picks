@@ -50,6 +50,10 @@ export class CFBAPIClient {
     return this.fetchFromAPI(`/games?year=${year}&week=${week}&seasonType=regular&classification=fbs`)
   }
 
+  async getScoreboard(year: number, week: number): Promise<any[]> {
+    return this.fetchFromAPI(`/scoreboard?year=${year}&week=${week}&classification=fbs`)
+  }
+
   async getLines(year: number, week: number): Promise<CFBLine[]> {
     return this.fetchFromAPI(`/lines?year=${year}&week=${week}&seasonType=regular&classification=fbs`)
   }
