@@ -222,7 +222,8 @@ export async function POST(request: Request) {
           game: {
             select: {
               week: true,
-              season: true
+              season: true,
+              gameType: true
             }
           }
         }
@@ -286,7 +287,8 @@ export async function POST(request: Request) {
             game: {
               select: {
                 week: true,
-                season: true
+                season: true,
+                gameType: true
               }
             }
           }
