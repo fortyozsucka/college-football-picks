@@ -211,7 +211,7 @@ export default function ChakraLeaderboardPage() {
                           <Stat size="sm">
                             <StatLabel fontSize="xs">Win %</StatLabel>
                             <StatNumber fontSize="md" color="green.600">
-                              {entry.winPercentage}%
+                              {entry.winPercentage.toFixed(2)}%
                             </StatNumber>
                           </Stat>
                           <Stat size="sm">
@@ -295,7 +295,7 @@ export default function ChakraLeaderboardPage() {
                       <Td isNumeric>
                         <VStack spacing={1} align="end">
                           <Text fontWeight="semibold" color="green.600">
-                            {entry.winPercentage}%
+                            {entry.winPercentage.toFixed(2)}%
                           </Text>
                           <Progress 
                             value={entry.winPercentage} 
@@ -397,7 +397,7 @@ export default function ChakraLeaderboardPage() {
                       </Stat>
                       <Stat>
                         <StatLabel>Win Percentage</StatLabel>
-                        <StatNumber color="green.600">{selectedUser.winPercentage}%</StatNumber>
+                        <StatNumber color="green.600">{selectedUser.winPercentage.toFixed(2)}%</StatNumber>
                         <Progress 
                           value={selectedUser.winPercentage} 
                           colorScheme="green" 
