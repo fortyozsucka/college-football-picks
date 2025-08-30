@@ -70,7 +70,62 @@ export async function DELETE(request: Request) {
       )
     }
 
-    // Find and delete the pick
+    // Find the pick to be deleted
+    const pickToDelete = await db.pick.findUnique({
+      where: {
+        userId_gameId: {
+          userId: userId,
+          gameId: gameId
+        }
+      }
+    })
+
+    if (!pickToDelete) {
+      return NextResponse.json(
+        { error: 'Pick not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check double down requirement before deletion
+    if (pickToDelete.isDoubleDown && (game.gameType === 'REGULAR' || !game.gameType)) {
+      // Get all user picks for the same week
+      const allWeekPicks = await db.pick.findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          game: {
+            select: {
+              week: true,
+              season: true,
+              gameType: true
+            }
+          }
+        }
+      })
+
+      const sameWeekPicks = allWeekPicks.filter(pick => 
+        pick.game.week === game.week && pick.game.season === game.season
+      )
+
+      const regularSeasonPicks = sameWeekPicks.filter(pick => 
+        pick.game && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
+      )
+
+      // If user has 5 regular season picks and this is their only double down, prevent deletion
+      if (regularSeasonPicks.length === 5) {
+        const doubleDownCount = regularSeasonPicks.filter(pick => pick.isDoubleDown).length
+        if (doubleDownCount === 1) {
+          return NextResponse.json(
+            { error: 'Cannot remove your double down pick when you have 5 regular season picks. You must have exactly 1 double down.' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // Delete the pick
     const deletedPick = await db.pick.delete({
       where: {
         userId_gameId: {
@@ -194,6 +249,29 @@ export async function POST(request: Request) {
             { error: 'You can only have one double down pick per week' },
             { status: 400 }
           )
+        }
+      }
+
+      // Check double down requirement for regular season games
+      // If user will have 5 picks after this one, they must have exactly 1 double down
+      const regularSeasonPicks = sameWeekPicks.filter(pick => 
+        pick.game && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
+      )
+      
+      if (game.gameType === 'REGULAR' || !game.gameType) {
+        const futureRegularPicksCount = regularSeasonPicks.length + 1
+        
+        if (futureRegularPicksCount === 5) {
+          // User will have 5 regular season picks - check double down requirement
+          const currentDoubleDowns = regularSeasonPicks.filter(pick => pick.isDoubleDown).length
+          const futureDoubleDowns = currentDoubleDowns + (pickData.isDoubleDown ? 1 : 0)
+          
+          if (futureDoubleDowns === 0) {
+            return NextResponse.json(
+              { error: 'You must select exactly 1 double down game out of your 5 regular season picks' },
+              { status: 400 }
+            )
+          }
         }
       }
     } else {

@@ -137,13 +137,23 @@ export default function ChakraPicksPage() {
     const doubleDownPicks = picks.filter(pick => pick.isDoubleDown)
     const totalPoints = picks.reduce((sum, pick) => sum + (pick.points || 0), 0)
 
+    // Calculate regular season picks and double down requirement
+    const regularSeasonPicks = picks.filter(pick => 
+      pick.game && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
+    )
+    const regularDoubleDowns = regularSeasonPicks.filter(pick => pick.isDoubleDown).length
+    const needsDoubleDown = regularSeasonPicks.length >= 5 && regularDoubleDowns === 0
+
     return {
       totalPicks,
       completedPicks: completedPicks.length,
       winningPicks: winningPicks.length,
       doubleDownPicks: doubleDownPicks.length,
       totalPoints,
-      winRate: completedPicks.length > 0 ? Math.round((winningPicks.length / completedPicks.length) * 100) : 0
+      winRate: completedPicks.length > 0 ? Math.round((winningPicks.length / completedPicks.length) * 100) : 0,
+      regularSeasonPicks: regularSeasonPicks.length,
+      regularDoubleDowns,
+      needsDoubleDown
     }
   }
 
@@ -230,6 +240,34 @@ export default function ChakraPicksPage() {
                   <StatNumber color="accent.600">{stats.doubleDownPicks}</StatNumber>
                 </Stat>
               </StatGroup>
+
+              {/* Double Down Requirement Warning */}
+              {stats.needsDoubleDown && (
+                <Alert status="warning" mt={4} borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Double Down Required!</AlertTitle>
+                    <AlertDescription>
+                      You must select exactly 1 double down game out of your 5 regular season picks. 
+                      You currently have {stats.regularSeasonPicks} regular picks with {stats.regularDoubleDowns} double down.
+                    </AlertDescription>
+                  </Box>
+                </Alert>
+              )}
+
+              {/* Double Down Status Info */}
+              {stats.regularSeasonPicks > 0 && !stats.needsDoubleDown && (
+                <Alert status="info" mt={4} borderRadius="md">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Double Down Status</AlertTitle>
+                    <AlertDescription>
+                      Regular season picks: {stats.regularSeasonPicks}/5 | Double downs: {stats.regularDoubleDowns}/1
+                      {stats.regularSeasonPicks === 5 && stats.regularDoubleDowns === 1 && " ✓ Requirements met!"}
+                    </AlertDescription>
+                  </Box>
+                </Alert>
+              )}
               
               {stats.completedPicks > 0 && (
                 <Box mt={4}>
