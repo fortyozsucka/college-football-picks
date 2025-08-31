@@ -19,6 +19,14 @@ function getSpreadWinner(homeScore: number, awayScore: number, spread: number, h
   }
 }
 
+export async function GET() {
+  return NextResponse.json({
+    message: 'Points calculation endpoint',
+    usage: 'POST to this endpoint to calculate points for unscored picks',
+    description: 'Fetches live scores from CFB API and calculates points for all unscored picks based on spread results'
+  })
+}
+
 export async function POST() {
   try {
     // Get all picks that haven't been scored yet

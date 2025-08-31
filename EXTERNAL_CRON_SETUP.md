@@ -35,12 +35,12 @@ This guide shows how to set up reliable external cron services for automated gam
 - **Method**: POST
 - **Purpose**: Sets up new week's games and spreads
 
-### 📊 **Leaderboard Refresh** (Optional)
+### 🏆 **Point Calculation** (During Active Games)
 - **Frequency**: Every 30 minutes during games
 - **Cron**: `*/30 * * * *`  
-- **URL**: `https://squadtriangle.com/api/leaderboard`
-- **Method**: GET
-- **Purpose**: Keeps leaderboard data fresh (cached)
+- **URL**: `https://squadtriangle.com/api/picks/calculate-points`
+- **Method**: POST
+- **Purpose**: Calculates points for completed games, updates leaderboard
 
 ## Setup Instructions for cron-job.org
 
