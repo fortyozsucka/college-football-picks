@@ -361,6 +361,8 @@ const PickCard = ({
 
   const getPickResult = () => {
     if (pick.points === null) return null
+    if (pick.result) return pick.result  // Use the actual result field
+    // Fallback to points-based logic for older picks without result field
     if (pick.points > 0) return 'win'
     if (pick.points === 0) return 'push'
     return 'loss'
