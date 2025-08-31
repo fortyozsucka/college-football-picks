@@ -362,18 +362,6 @@ const PickCard = ({
   const getPickResult = () => {
     if (pick.points === null) return null
     
-    // Debug log for Georgia vs Marshall game
-    if (game.homeTeam === 'Georgia' && game.awayTeam === 'Marshall') {
-      const willUseResult = pick.result && pick.result !== null && pick.result !== undefined
-      console.log('Georgia vs Marshall pick debug:', {
-        pickId: pick.id,
-        pickResult: pick.result,
-        pickPoints: pick.points,
-        pickResultType: typeof pick.result,
-        willUseResult,
-        finalResult: willUseResult ? pick.result : (pick.points > 0 ? 'win' : pick.points === 0 ? 'push' : 'loss')
-      })
-    }
     
     // Always use the result field if it exists and is not null/undefined
     if (pick.result && pick.result !== null && pick.result !== undefined) {
@@ -509,7 +497,7 @@ const PickCard = ({
                   py={1}
                 >
                   {pick.points > 0 ? `+${pick.points} pts` : 
-                   pick.points === 0 ? 'Push' : `${pick.points} pts`}
+                   pickResult === 'push' ? 'Push' : `${pick.points} pts`}
                 </Badge>
               </HStack>
             </VStack>
