@@ -230,7 +230,7 @@ export default function ChakraPage() {
                         <Text fontSize="md" fontWeight="semibold" color="gray.800">🏈 Bowl Rules:</Text>
                         <Text fontSize="sm" color="orange.600" fontWeight="bold">• Must pick ALL bowl games</Text>
                         <Text fontSize="sm" color="orange.600" fontWeight="bold">• ALL picks are mandatory double-downs</Text>
-                        <Text fontSize="sm">• Don't count toward 5-game weekly limit</Text>
+                        <Text fontSize="sm">• Don&apos;t count toward 5-game weekly limit</Text>
                         <Text fontSize="sm">• Postseason elimination games</Text>
                       </VStack>
 
@@ -305,7 +305,7 @@ export default function ChakraPage() {
                   <Card bg="blue.50" border="1px" borderColor="blue.200">
                     <CardBody py={3}>
                       <Text fontSize="sm" fontWeight="bold" color="blue.800">Regular Season</Text>
-                      <Text fontSize="xs" color="blue.600">Choose your double-down wisely - it's high risk, high reward</Text>
+                      <Text fontSize="xs" color="blue.600">Choose your double-down wisely - it&apos;s high risk, high reward</Text>
                     </CardBody>
                   </Card>
                   <Card bg="purple.50" border="1px" borderColor="purple.200">
