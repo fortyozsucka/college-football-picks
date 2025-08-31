@@ -681,6 +681,17 @@ export default function ChakraAdminPage() {
                     >
                       Calculate Points
                     </Button>
+
+                    <Button
+                      leftIcon={<TimeIcon />}
+                      onClick={syncLiveScores}
+                      isLoading={syncingLive}
+                      loadingText="Syncing..."
+                      colorScheme="blue"
+                      size="md"
+                    >
+                      Sync Live Scores
+                    </Button>
                   </Flex>
 
                   {/* Manual Sync Controls */}
