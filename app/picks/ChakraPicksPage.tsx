@@ -364,10 +364,14 @@ const PickCard = ({
     
     // Debug log for Georgia vs Marshall game
     if (game.homeTeam === 'Georgia' && game.awayTeam === 'Marshall') {
+      const willUseResult = pick.result && pick.result !== null && pick.result !== undefined
       console.log('Georgia vs Marshall pick debug:', {
+        pickId: pick.id,
         pickResult: pick.result,
         pickPoints: pick.points,
-        pickResultType: typeof pick.result
+        pickResultType: typeof pick.result,
+        willUseResult,
+        finalResult: willUseResult ? pick.result : (pick.points > 0 ? 'win' : pick.points === 0 ? 'push' : 'loss')
       })
     }
     
