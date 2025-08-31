@@ -37,6 +37,7 @@ export interface Pick {
   lockedSpread: number
   isDoubleDown: boolean
   points: number | null
+  result: string | null
   createdAt: Date
   updatedAt: Date
   user: User
