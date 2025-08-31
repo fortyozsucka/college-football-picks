@@ -6,10 +6,10 @@ name = "web"
 source = "."
 
 [[services]]
-name = "game-sync"
+name = "live-score-sync"
 source = "."
-cron = "*/15 * * * *"  # Every 15 minutes
-startCommand = "curl -X POST https://squadtriangle.com/api/games/sync"
+cron = "*/15 * * * *"  # Every 15 minutes - live score updates
+startCommand = "curl -X POST https://squadtriangle.com/api/games/live-sync"
 
 [[services]]
 name = "weekly-sync"  
