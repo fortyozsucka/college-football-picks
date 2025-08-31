@@ -61,7 +61,9 @@ import {
   SettingsIcon,
   ViewIcon,
   RepeatIcon,
-  ExternalLinkIcon
+  ExternalLinkIcon,
+  DownloadIcon,
+  TimeIcon
 } from '@chakra-ui/icons'
 
 interface Invite {
@@ -95,6 +97,8 @@ export default function ChakraAdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoProgressing, setAutoProgressing] = useState(false)
   const [calculatingPoints, setCalculatingPoints] = useState(false)
+  const [syncingLive, setSyncingLive] = useState(false)
+  const [syncingGames, setSyncingGames] = useState(false)
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [apiLoading, setApiLoading] = useState(false)
   const [seasonInfo, setSeasonInfo] = useState<{availableSeasons: number[], archivedSeasons: number[]} | null>(null)
@@ -281,6 +285,54 @@ export default function ChakraAdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to calculate points')
     } finally {
       setCalculatingPoints(false)
+    }
+  }
+
+  const syncLiveScores = async () => {
+    setSyncingLive(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/games/live-sync', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to sync live scores')
+      }
+
+      const result = await response.json()
+      
+      alert(`Live score sync completed!\n\nGames updated: ${result.gamesUpdated}\nLive games: ${result.liveGamesFound}\nScore updates: ${result.scoreUpdates}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync live scores')
+    } finally {
+      setSyncingLive(false)
+    }
+  }
+
+  const syncGames = async () => {
+    setSyncingGames(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/games/sync', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to sync games')
+      }
+
+      const result = await response.json()
+      
+      alert(`Game sync completed!\n\nGames created: ${result.gamesCreated}\nGames updated: ${result.gamesUpdated}\nTotal games: ${result.totalGames}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync games')
+    } finally {
+      setSyncingGames(false)
     }
   }
 
@@ -630,6 +682,42 @@ export default function ChakraAdminPage() {
                       Calculate Points
                     </Button>
                   </Flex>
+
+                  {/* Manual Sync Controls */}
+                  <VStack spacing={4} align="stretch">
+                    <Text fontWeight="semibold" color="neutral.700">
+                      📡 Manual Sync Controls
+                    </Text>
+                    <Text fontSize="sm" color="neutral.600">
+                      Manual backup controls for syncing. External cron service handles automation.
+                    </Text>
+                    
+                    <SimpleGrid columns={2} spacing={4}>
+                      <Button
+                        leftIcon={<TimeIcon />}
+                        onClick={syncLiveScores}
+                        isLoading={syncingLive}
+                        loadingText="Syncing..."
+                        colorScheme="blue"
+                        variant="outline"
+                        size="sm"
+                      >
+                        Sync Live Scores
+                      </Button>
+
+                      <Button
+                        leftIcon={<DownloadIcon />}
+                        onClick={syncGames}
+                        isLoading={syncingGames}
+                        loadingText="Syncing..."
+                        colorScheme="teal"
+                        variant="outline"
+                        size="sm"
+                      >
+                        Sync Games
+                      </Button>
+                    </SimpleGrid>
+                  </VStack>
                   
                   {weeksLoading ? (
                     <VStack py={8}>

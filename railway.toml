@@ -4,15 +4,3 @@ builder = "nixpacks"
 [[services]]
 name = "web"
 source = "."
-
-[[services]]
-name = "live-score-sync"
-source = "."
-cron = "*/15 * * * *"  # Every 15 minutes - live score updates
-startCommand = "curl -X POST https://squadtriangle.com/api/games/live-sync"
-
-[[services]]
-name = "weekly-sync"  
-source = "."
-cron = "0 2 * * 1"  # Every Monday at 2 AM (new week setup)
-startCommand = "curl -X POST https://squadtriangle.com/api/games/sync?week=auto"
