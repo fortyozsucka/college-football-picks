@@ -113,9 +113,6 @@ export default function ChakraPage() {
           >
             🎯 Squad College Football Picks
           </Heading>
-          <Text fontSize="xl" color="neutral.600" maxW="2xl">
-            Your college football picks application - ready for the season!
-          </Text>
         </VStack>
 
         {/* Scoring Rules Section */}
