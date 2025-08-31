@@ -361,7 +361,21 @@ const PickCard = ({
 
   const getPickResult = () => {
     if (pick.points === null) return null
-    if (pick.result) return pick.result  // Use the actual result field
+    
+    // Debug log for Georgia vs Marshall game
+    if (game.homeTeam === 'Georgia' && game.awayTeam === 'Marshall') {
+      console.log('Georgia vs Marshall pick debug:', {
+        pickResult: pick.result,
+        pickPoints: pick.points,
+        pickResultType: typeof pick.result
+      })
+    }
+    
+    // Always use the result field if it exists and is not null/undefined
+    if (pick.result && pick.result !== null && pick.result !== undefined) {
+      return pick.result
+    }
+    
     // Fallback to points-based logic for older picks without result field
     if (pick.points > 0) return 'win'
     if (pick.points === 0) return 'push'
