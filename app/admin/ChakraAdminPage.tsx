@@ -94,6 +94,7 @@ export default function ChakraAdminPage() {
   const [newInviteExpiry, setNewInviteExpiry] = useState(7)
   const [error, setError] = useState<string | null>(null)
   const [autoProgressing, setAutoProgressing] = useState(false)
+  const [calculatingPoints, setCalculatingPoints] = useState(false)
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [apiLoading, setApiLoading] = useState(false)
   const [seasonInfo, setSeasonInfo] = useState<{availableSeasons: number[], archivedSeasons: number[]} | null>(null)
@@ -256,6 +257,30 @@ export default function ChakraAdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to check week progression')
     } finally {
       setAutoProgressing(false)
+    }
+  }
+
+  const calculatePoints = async () => {
+    setCalculatingPoints(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/picks/calculate-points', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to calculate points')
+      }
+
+      const result = await response.json()
+      
+      alert(`Points calculation completed!\n\nUpdated picks: ${result.updatedPicks}\nTotal points awarded: ${result.totalPointsAwarded}\nEmails sent: ${result.emailsSent}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to calculate points')
+    } finally {
+      setCalculatingPoints(false)
     }
   }
 
@@ -592,6 +617,17 @@ export default function ChakraAdminPage() {
                       size="md"
                     >
                       Check Auto-Progress
+                    </Button>
+
+                    <Button
+                      leftIcon={<CheckIcon />}
+                      onClick={calculatePoints}
+                      isLoading={calculatingPoints}
+                      loadingText="Calculating..."
+                      colorScheme="green"
+                      size="md"
+                    >
+                      Calculate Points
                     </Button>
                   </Flex>
                   
