@@ -6,9 +6,22 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const week = searchParams.get('week')
+    const season = searchParams.get('season')
     
-    // If userId is provided, filter by that user, otherwise return all picks
-    const whereClause = userId ? { userId } : {}
+    // Build where clause based on parameters
+    const whereClause: any = {}
+    
+    if (userId) {
+      whereClause.userId = userId
+    }
+    
+    // If week or season are specified, filter by game properties
+    if (week || season) {
+      whereClause.game = {}
+      if (week) whereClause.game.week = parseInt(week)
+      if (season) whereClause.game.season = parseInt(season)
+    }
     
     const picks = await db.pick.findMany({
       where: whereClause,
@@ -22,9 +35,11 @@ export async function GET(request: Request) {
         },
         game: true
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: [
+        { game: { season: 'desc' } },
+        { game: { week: 'desc' } },
+        { createdAt: 'desc' }
+      ]
     })
 
     return NextResponse.json(picks)

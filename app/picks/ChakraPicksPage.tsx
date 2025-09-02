@@ -28,6 +28,8 @@ import {
   StatGroup,
   Progress,
   Icon,
+  Select,
+  Flex,
 } from '@chakra-ui/react'
 import { CheckIcon, CloseIcon, StarIcon, TimeIcon } from '@chakra-ui/icons'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -42,6 +44,8 @@ export default function ChakraPicksPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [removingPick, setRemovingPick] = useState<string | null>(null)
+  const [availableWeeks, setAvailableWeeks] = useState<{week: number, season: number, gameCount: number}[]>([])
+  const [selectedWeek, setSelectedWeek] = useState<string>('current') // 'current' or 'week-season' format
 
   // Color mode values
   const cardBg = useColorModeValue('white', 'gray.800')
@@ -49,17 +53,53 @@ export default function ChakraPicksPage() {
 
   useEffect(() => {
     if (user) {
+      fetchAvailableWeeks()
       fetchData()
     }
   }, [user])
+
+  useEffect(() => {
+    if (user && availableWeeks.length > 0) {
+      fetchData()
+    }
+  }, [user, selectedWeek, availableWeeks])
+
+  const fetchAvailableWeeks = async () => {
+    try {
+      // Fetch all weeks that have games or picks
+      const response = await fetch('/api/weeks/available')
+      if (response.ok) {
+        const weeks = await response.json()
+        setAvailableWeeks(weeks || [])
+      }
+    } catch (err) {
+      console.warn('Could not fetch available weeks:', err)
+      // Don't set error state, just continue with current games
+    }
+  }
 
   const fetchData = async () => {
     if (!user?.id) return
     
     try {
+      setLoading(true)
+      
+      // Determine what to fetch based on selected week
+      let gamesUrl = '/api/games'
+      let picksUrl = `/api/picks?userId=${user.id}`
+      
+      if (selectedWeek !== 'current') {
+        // Parse week-season format like "2-2024"
+        const [week, season] = selectedWeek.split('-').map(Number)
+        if (week && season) {
+          gamesUrl = `/api/games` // Current games API only shows active weeks, so we'll need to get all games with picks
+          picksUrl = `/api/picks?userId=${user.id}&week=${week}&season=${season}`
+        }
+      }
+
       const [gamesResponse, picksResponse] = await Promise.all([
-        fetch('/api/games'),
-        fetch(`/api/picks?userId=${user.id}`)
+        fetch(gamesUrl),
+        fetch(picksUrl)
       ])
 
       if (!gamesResponse.ok || !picksResponse.ok) {
@@ -69,7 +109,15 @@ export default function ChakraPicksPage() {
       const gamesData = await gamesResponse.json()
       const picksData = await picksResponse.json()
 
-      setGames(gamesData || [])
+      // If viewing historical week, only show games that have picks
+      if (selectedWeek !== 'current' && picksData.length > 0) {
+        const pickedGameIds = picksData.map((pick: Pick) => pick.gameId)
+        const relevantGames = picksData.map((pick: Pick) => pick.game).filter(Boolean)
+        setGames(relevantGames || [])
+      } else {
+        setGames(gamesData || [])
+      }
+      
       setPicks(picksData || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -205,9 +253,40 @@ export default function ChakraPicksPage() {
             >
               🏈 My Picks
             </Heading>
-            <Text fontSize="lg" color="neutral.600">
+            <Text fontSize="lg" color="neutral.600" mb={4}>
               Track your weekly picks and performance
             </Text>
+            
+            {/* Week Selection */}
+            <Flex justify="center" align="center" gap={4} mb={selectedWeek !== 'current' ? 4 : 0}>
+              <Text fontSize="md" fontWeight="semibold" color="neutral.700">
+                View Picks For:
+              </Text>
+              <Select 
+                value={selectedWeek} 
+                onChange={(e) => setSelectedWeek(e.target.value)}
+                maxW="200px"
+                bg={cardBg}
+                borderColor={borderColor}
+              >
+                <option value="current">Current Week</option>
+                {availableWeeks
+                  .filter(week => week.gameCount > 0)
+                  .map(week => (
+                    <option key={`${week.week}-${week.season}`} value={`${week.week}-${week.season}`}>
+                      Week {week.week} {week.season} ({week.gameCount} games)
+                    </option>
+                  ))
+                }
+              </Select>
+            </Flex>
+            
+            {/* Historical View Badge */}
+            {selectedWeek !== 'current' && (
+              <Badge colorScheme="purple" fontSize="sm" p={2} borderRadius="md">
+                📅 Viewing Historical Picks - {selectedWeek.replace('-', ' Season ')}
+              </Badge>
+            )}
           </Box>
 
           {/* Stats Overview */}
@@ -318,7 +397,7 @@ export default function ChakraPicksPage() {
                 if (!game) return null
 
                 const gameStarted = new Date(game.startTime) <= new Date()
-                const canRemove = !gameStarted && !game.completed
+                const canRemove = !gameStarted && !game.completed && selectedWeek === 'current'
 
                 return (
                   <PickCard
