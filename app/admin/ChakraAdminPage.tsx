@@ -99,6 +99,7 @@ export default function ChakraAdminPage() {
   const [calculatingPoints, setCalculatingPoints] = useState(false)
   const [syncingLive, setSyncingLive] = useState(false)
   const [syncingGames, setSyncingGames] = useState(false)
+  const [syncingNewWeeks, setSyncingNewWeeks] = useState(false)
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [apiLoading, setApiLoading] = useState(false)
   const [seasonInfo, setSeasonInfo] = useState<{availableSeasons: number[], archivedSeasons: number[]} | null>(null)
@@ -333,6 +334,54 @@ export default function ChakraAdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to sync games')
     } finally {
       setSyncingGames(false)
+    }
+  }
+
+  const syncNewWeeks = async () => {
+    setSyncingNewWeeks(true)
+    setError(null)
+    
+    try {
+      // Sync multiple weeks to find new data
+      const currentYear = new Date().getFullYear()
+      const seasons = [currentYear, currentYear - 1] // Current and previous year
+      const weeksToSync = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] // All possible weeks
+      
+      let totalCreated = 0
+      let totalUpdated = 0
+      let weeksFound = 0
+      
+      for (const season of seasons) {
+        for (const week of weeksToSync) {
+          try {
+            const response = await fetch(`/api/games/sync?week=${week}&season=${season}`, {
+              method: 'POST'
+            })
+            
+            if (response.ok) {
+              const result = await response.json()
+              if (result.gamesCreated > 0 || result.gamesUpdated > 0) {
+                totalCreated += result.gamesCreated
+                totalUpdated += result.gamesUpdated
+                weeksFound++
+                console.log(`Found data for Week ${week} ${season}: ${result.gamesCreated} new games`)
+              }
+            }
+          } catch (err) {
+            // Ignore individual week failures, continue with next week
+            console.warn(`Failed to sync Week ${week} ${season}:`, err)
+          }
+        }
+      }
+      
+      // Refresh weeks data to show new options
+      await fetchWeeks()
+      
+      alert(`Week sync completed!\n\nWeeks with new data found: ${weeksFound}\nGames created: ${totalCreated}\nGames updated: ${totalUpdated}\n\nNew weeks should now appear in your admin controls.`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync new weeks')
+    } finally {
+      setSyncingNewWeeks(false)
     }
   }
 
@@ -703,7 +752,7 @@ export default function ChakraAdminPage() {
                       Manual backup controls for syncing. External cron service handles automation.
                     </Text>
                     
-                    <SimpleGrid columns={2} spacing={4}>
+                    <SimpleGrid columns={3} spacing={4}>
                       <Button
                         leftIcon={<TimeIcon />}
                         onClick={syncLiveScores}
@@ -726,6 +775,18 @@ export default function ChakraAdminPage() {
                         size="sm"
                       >
                         Sync Games
+                      </Button>
+
+                      <Button
+                        leftIcon={<CalendarIcon />}
+                        onClick={syncNewWeeks}
+                        isLoading={syncingNewWeeks}
+                        loadingText="Finding weeks..."
+                        colorScheme="purple"
+                        variant="outline"
+                        size="sm"
+                      >
+                        Sync New Weeks
                       </Button>
                     </SimpleGrid>
                   </VStack>
