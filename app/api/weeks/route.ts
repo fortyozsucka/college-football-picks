@@ -25,31 +25,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Get all weeks and their game counts
-    const weeks = await db.week.findMany({
+    // Get all unique week/season combinations that have games
+    const gamesWithWeeks = await db.game.groupBy({
+      by: ['week', 'season'],
+      _count: {
+        id: true
+      },
       orderBy: [
         { season: 'desc' },
         { week: 'desc' }
       ]
     })
 
-    // Get game counts for each week
-    const weeksWithGameCounts = await Promise.all(
-      weeks.map(async (week) => {
-        const gameCount = await db.game.count({
-          where: {
-            season: week.season,
-            week: week.week
-          }
-        })
-        return {
-          ...week,
-          gameCount
-        }
-      })
-    )
+    // Get existing week records
+    const existingWeeks = await db.week.findMany({
+      orderBy: [
+        { season: 'desc' },
+        { week: 'desc' }
+      ]
+    })
 
-    return NextResponse.json(weeksWithGameCounts)
+    // Create a map for quick lookup of existing week records
+    const weekMap = new Map()
+    existingWeeks.forEach(week => {
+      weekMap.set(`${week.week}-${week.season}`, week)
+    })
+
+    // Combine games data with existing week records
+    const allWeeks = gamesWithWeeks.map(gameWeek => {
+      const key = `${gameWeek.week}-${gameWeek.season}`
+      const existingWeek = weekMap.get(key)
+      
+      return {
+        id: existingWeek?.id || null,
+        week: gameWeek.week,
+        season: gameWeek.season,
+        isActive: existingWeek?.isActive || false,
+        gameCount: gameWeek._count.id,
+        createdAt: existingWeek?.createdAt || null,
+        updatedAt: existingWeek?.updatedAt || null
+      }
+    })
+
+    return NextResponse.json(allWeeks)
   } catch (error) {
     console.error('Error fetching weeks:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
