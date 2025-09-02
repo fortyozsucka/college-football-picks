@@ -12,8 +12,24 @@ export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const currentSeason = getCurrentSeason()
-    const week = parseInt(searchParams.get('week') || '1')
+    
+    // If no week specified, get the currently active week from database
+    let week = searchParams.get('week') ? parseInt(searchParams.get('week')!) : null
     const season = parseInt(searchParams.get('season') || currentSeason.toString())
+    
+    if (!week) {
+      // Find the currently active week
+      const activeWeek = await db.week.findFirst({
+        where: { 
+          isActive: true,
+          season: season
+        },
+        orderBy: { week: 'desc' }
+      })
+      
+      week = activeWeek?.week || 1
+      console.log(`🎯 No week specified, using active week: ${week}`)
+    }
 
     console.log(`🔴 LIVE sync for Week ${week}, Season ${season}`)
 
