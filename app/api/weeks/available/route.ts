@@ -25,13 +25,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Get unique week/season combinations from games
-    const availableWeeks = await db.game.findMany({
-      select: {
-        week: true,
-        season: true,
-      },
-      distinct: ['week', 'season'],
+    // Get unique week/season combinations from games using groupBy for reliable results
+    const availableWeeks = await db.game.groupBy({
+      by: ['week', 'season'],
       orderBy: [
         { season: 'desc' },
         { week: 'desc' }
