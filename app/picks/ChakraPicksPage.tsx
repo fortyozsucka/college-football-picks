@@ -179,18 +179,35 @@ export default function ChakraPicksPage() {
   }
 
   const getPickStats = () => {
-    const totalPicks = picks.length
-    const completedPicks = picks.filter(pick => pick.points !== null)
-    const winningPicks = picks.filter(pick => pick.points && pick.points > 0)
-    const doubleDownPicks = picks.filter(pick => pick.isDoubleDown)
-    const totalPoints = picks.reduce((sum, pick) => sum + (pick.points || 0), 0)
+    // Filter picks for the selected week if viewing historical data
+    let weekPicks = picks
+    
+    if (selectedWeek !== 'current') {
+      const [week, season] = selectedWeek.split('-').map(Number)
+      weekPicks = picks.filter(pick => 
+        pick.game && pick.game.week === week && pick.game.season === season
+      )
+    }
+
+    const totalPicks = weekPicks.length
+    const completedPicks = weekPicks.filter(pick => pick.points !== null)
+    const winningPicks = weekPicks.filter(pick => pick.points && pick.points > 0)
+    const doubleDownPicks = weekPicks.filter(pick => pick.isDoubleDown)
+    const totalPoints = weekPicks.reduce((sum, pick) => sum + (pick.points || 0), 0)
 
     // Calculate regular season picks and double down requirement
-    const regularSeasonPicks = picks.filter(pick => 
+    const regularSeasonPicks = weekPicks.filter(pick => 
       pick.game && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
     )
     const regularDoubleDowns = regularSeasonPicks.filter(pick => pick.isDoubleDown).length
     const needsDoubleDown = regularSeasonPicks.length >= 5 && regularDoubleDowns === 0
+
+    // Get current week info for display
+    let weekInfo = 'Current Week'
+    if (selectedWeek !== 'current') {
+      const [week, season] = selectedWeek.split('-')
+      weekInfo = `Week ${week} ${season}`
+    }
 
     return {
       totalPicks,
@@ -201,7 +218,8 @@ export default function ChakraPicksPage() {
       winRate: completedPicks.length > 0 ? Math.round((winningPicks.length / completedPicks.length) * 100) : 0,
       regularSeasonPicks: regularSeasonPicks.length,
       regularDoubleDowns,
-      needsDoubleDown
+      needsDoubleDown,
+      weekInfo
     }
   }
 
@@ -293,7 +311,7 @@ export default function ChakraPicksPage() {
           <Card bg="linear-gradient(to-r, var(--chakra-colors-brand-50), var(--chakra-colors-accent-50))" shadow="md">
             <CardBody>
               <Text fontWeight="semibold" mb={4} color="brand.800">
-                📊 Your Performance
+                📊 Your Performance - {stats.weekInfo}
               </Text>
               <StatGroup>
                 <Stat>
@@ -325,7 +343,7 @@ export default function ChakraPicksPage() {
                 <Alert status="warning" mt={4} borderRadius="md">
                   <AlertIcon />
                   <Box>
-                    <AlertTitle>Double Down Required!</AlertTitle>
+                    <AlertTitle>Double Down Required! - {stats.weekInfo}</AlertTitle>
                     <AlertDescription>
                       You must select exactly 1 double down game out of your 5 regular season picks. 
                       You currently have {stats.regularSeasonPicks} regular picks with {stats.regularDoubleDowns} double down.
@@ -339,7 +357,7 @@ export default function ChakraPicksPage() {
                 <Alert status="info" mt={4} borderRadius="md">
                   <AlertIcon />
                   <Box>
-                    <AlertTitle>Double Down Status</AlertTitle>
+                    <AlertTitle>Double Down Status - {stats.weekInfo}</AlertTitle>
                     <AlertDescription>
                       Regular season picks: {stats.regularSeasonPicks}/5 | Double downs: {stats.regularDoubleDowns}/1
                       {stats.regularSeasonPicks === 5 && stats.regularDoubleDowns === 1 && " ✓ Requirements met!"}
