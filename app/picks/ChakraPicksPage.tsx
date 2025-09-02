@@ -84,38 +84,63 @@ export default function ChakraPicksPage() {
     try {
       setLoading(true)
       
-      // Determine what to fetch based on selected week
-      let gamesUrl = '/api/games'
+      // Always fetch games first to determine current active week
+      const gamesResponse = await fetch('/api/games')
+      if (!gamesResponse.ok) {
+        throw new Error('Failed to fetch games')
+      }
+      const gamesData = await gamesResponse.json()
+      
+      // Determine the current active week from the games
+      let activeWeek = null
+      let activeSeason = null
+      if (gamesData && gamesData.length > 0) {
+        // Get the most common week/season from active games (games API only returns active weeks)
+        const weekCounts = gamesData.reduce((acc: any, game: any) => {
+          const key = `${game.week}-${game.season}`
+          acc[key] = (acc[key] || 0) + 1
+          return acc
+        }, {})
+        const mostCommonWeek = Object.keys(weekCounts).reduce((a, b) => weekCounts[a] > weekCounts[b] ? a : b)
+        const [week, season] = mostCommonWeek.split('-').map(Number)
+        activeWeek = week
+        activeSeason = season
+      }
+      
+      // Determine picks URL based on selected week
       let picksUrl = `/api/picks?userId=${user.id}`
       
-      if (selectedWeek !== 'current') {
-        // Parse week-season format like "2-2024"
+      if (selectedWeek === 'current') {
+        // For current week, filter to active week if we found one
+        if (activeWeek && activeSeason) {
+          picksUrl = `/api/picks?userId=${user.id}&week=${activeWeek}&season=${activeSeason}`
+        }
+      } else {
+        // Parse week-season format like "2-2024" for historical weeks
         const [week, season] = selectedWeek.split('-').map(Number)
         if (week && season) {
-          gamesUrl = `/api/games` // Current games API only shows active weeks, so we'll need to get all games with picks
           picksUrl = `/api/picks?userId=${user.id}&week=${week}&season=${season}`
         }
       }
 
-      const [gamesResponse, picksResponse] = await Promise.all([
-        fetch(gamesUrl),
-        fetch(picksUrl)
-      ])
-
-      if (!gamesResponse.ok || !picksResponse.ok) {
-        throw new Error('Failed to fetch data')
+      const picksResponse = await fetch(picksUrl)
+      if (!picksResponse.ok) {
+        throw new Error('Failed to fetch picks')
       }
-
-      const gamesData = await gamesResponse.json()
       const picksData = await picksResponse.json()
 
-      // If viewing historical week, only show games that have picks
-      if (selectedWeek !== 'current' && picksData.length > 0) {
-        const pickedGameIds = picksData.map((pick: Pick) => pick.gameId)
-        const relevantGames = picksData.map((pick: Pick) => pick.game).filter(Boolean)
-        setGames(relevantGames || [])
-      } else {
+      // Set games and picks based on what we're viewing
+      if (selectedWeek === 'current') {
+        // Current week: show active games
         setGames(gamesData || [])
+      } else {
+        // Historical week: only show games that have picks
+        if (picksData.length > 0) {
+          const relevantGames = picksData.map((pick: Pick) => pick.game).filter(Boolean)
+          setGames(relevantGames || [])
+        } else {
+          setGames([])
+        }
       }
       
       setPicks(picksData || [])
@@ -179,24 +204,15 @@ export default function ChakraPicksPage() {
   }
 
   const getPickStats = () => {
-    // Filter picks for the selected week if viewing historical data
-    let weekPicks = picks
-    
-    if (selectedWeek !== 'current') {
-      const [week, season] = selectedWeek.split('-').map(Number)
-      weekPicks = picks.filter(pick => 
-        pick.game && pick.game.week === week && pick.game.season === season
-      )
-    }
-
-    const totalPicks = weekPicks.length
-    const completedPicks = weekPicks.filter(pick => pick.points !== null)
-    const winningPicks = weekPicks.filter(pick => pick.points && pick.points > 0)
-    const doubleDownPicks = weekPicks.filter(pick => pick.isDoubleDown)
-    const totalPoints = weekPicks.reduce((sum, pick) => sum + (pick.points || 0), 0)
+    // Picks are already filtered by week from fetchData, so use them directly
+    const totalPicks = picks.length
+    const completedPicks = picks.filter(pick => pick.points !== null)
+    const winningPicks = picks.filter(pick => pick.points && pick.points > 0)
+    const doubleDownPicks = picks.filter(pick => pick.isDoubleDown)
+    const totalPoints = picks.reduce((sum, pick) => sum + (pick.points || 0), 0)
 
     // Calculate regular season picks and double down requirement
-    const regularSeasonPicks = weekPicks.filter(pick => 
+    const regularSeasonPicks = picks.filter(pick => 
       pick.game && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
     )
     const regularDoubleDowns = regularSeasonPicks.filter(pick => pick.isDoubleDown).length
