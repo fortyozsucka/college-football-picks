@@ -35,6 +35,9 @@ import { CheckIcon, CloseIcon, StarIcon, TimeIcon } from '@chakra-ui/icons'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/lib/context/AuthContext'
 import { Game, Pick } from '@/lib/types'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function ChakraPicksPage() {
   const { user } = useAuth()
@@ -42,10 +45,24 @@ export default function ChakraPicksPage() {
   const [games, setGames] = useState<Game[]>([])
   const [picks, setPicks] = useState<Pick[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Color mode values
+  const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
   const [error, setError] = useState<string | null>(null)
   const [removingPick, setRemovingPick] = useState<string | null>(null)
   const [availableWeeks, setAvailableWeeks] = useState<{week: number, season: number, gameCount: number}[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>('current') // 'current' or 'week-season' format
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  })
 
   // Color mode values
   const cardBg = useColorModeValue('white', 'gray.800')
@@ -193,6 +210,15 @@ export default function ChakraPicksPage() {
     }
   }
 
+  const confirmRemovePick = (gameId: string, pickId: string, teamName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Remove Pick',
+      message: `Are you sure you want to remove your pick for ${teamName}? You can change your pick until the game starts.`,
+      onConfirm: () => removePick(gameId, pickId)
+    })
+  }
+
   const getSpreadDisplay = (game: Game): string => {
     if (game.spread > 0) {
       return `${game.awayTeam} -${game.spread}`
@@ -245,13 +271,10 @@ export default function ChakraPicksPage() {
     return (
       <ProtectedRoute>
         <Container maxW="7xl" py={8}>
-          <VStack spacing={8}>
-            <Heading size="xl" textAlign="center">
-              🏈 My Picks
-            </Heading>
-            <Spinner size="xl" color="brand.500" thickness="4px" />
-            <Text color="neutral.600">Loading your picks...</Text>
-          </VStack>
+          <LoadingSpinner 
+            size="xl" 
+            text="Loading your picks..." 
+          />
         </Container>
       </ProtectedRoute>
     )
@@ -261,13 +284,11 @@ export default function ChakraPicksPage() {
     return (
       <ProtectedRoute>
         <Container maxW="7xl" py={8}>
-          <Alert status="error" borderRadius="lg">
-            <AlertIcon />
-            <Box>
-              <AlertTitle>Error loading picks!</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Box>
-          </Alert>
+          <ErrorAlert 
+            error={error}
+            title="Error loading picks!"
+            onClose={() => setError(null)}
+          />
         </Container>
       </ProtectedRoute>
     )
@@ -281,13 +302,13 @@ export default function ChakraPicksPage() {
           <Box textAlign="center">
             <Heading 
               size="2xl" 
-              bgGradient="linear(to-r, neutral.900, brand.600)"
+              bgGradient={titleGradient}
               bgClip="text"
               mb={4}
             >
               🏈 My Picks
             </Heading>
-            <Text fontSize="lg" color="neutral.600" mb={4}>
+            <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")} mb={4}>
               Track your weekly picks and performance
             </Text>
             
@@ -384,7 +405,7 @@ export default function ChakraPicksPage() {
               
               {stats.completedPicks > 0 && (
                 <Box mt={4}>
-                  <Text fontSize="sm" mb={2} color="neutral.600">Progress to Goal</Text>
+                  <Text fontSize="sm" mb={2} color={useColorModeValue("neutral.600", "neutral.300")}>Progress to Goal</Text>
                   <Progress 
                     value={stats.winRate} 
                     colorScheme="brand" 
@@ -440,7 +461,7 @@ export default function ChakraPicksPage() {
                     game={game}
                     canRemove={canRemove}
                     isRemoving={removingPick === pick.id}
-                    onRemove={() => removePick(game.id, pick.id)}
+                    onRemove={() => confirmRemovePick(game.id, pick.id, pick.pickedTeam)}
                     getSpreadDisplay={getSpreadDisplay}
                   />
                 )
@@ -448,6 +469,18 @@ export default function ChakraPicksPage() {
             </SimpleGrid>
           )}
         </VStack>
+        
+        {/* Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+          onConfirm={confirmDialog.onConfirm}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmText="Remove Pick"
+          cancelText="Cancel"
+          colorScheme="red"
+        />
       </Container>
     </ProtectedRoute>
   )
@@ -565,7 +598,7 @@ const PickCard = ({
           {/* Pick Info */}
           <VStack spacing={3}>
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="neutral.600">Your Pick:</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Your Pick:</Text>
               <HStack>
                 <Text fontWeight="bold" color="brand.600">
                   {pick.pickedTeam}
@@ -577,14 +610,14 @@ const PickCard = ({
             </HStack>
 
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="neutral.600">Spread:</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Spread:</Text>
               <Text fontSize="sm" fontWeight="medium">
                 {getSpreadDisplay(game)}
               </Text>
             </HStack>
 
             <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color="neutral.600">Locked Spread:</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Locked Spread:</Text>
               <Text fontSize="sm" fontWeight="medium">
                 {pick.lockedSpread > 0 ? `${game.awayTeam} -${pick.lockedSpread}` :
                  pick.lockedSpread < 0 ? `${game.homeTeam} -${Math.abs(pick.lockedSpread)}` :
@@ -598,7 +631,7 @@ const PickCard = ({
             <VStack spacing={2}>
               <Divider />
               <HStack justify="space-between" w="full">
-                <Text fontSize="sm" color="neutral.600">Result:</Text>
+                <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Result:</Text>
                 <Badge
                   colorScheme={
                     pick.points > 0 ? 'green' : 

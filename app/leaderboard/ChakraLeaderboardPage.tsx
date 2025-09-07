@@ -77,6 +77,7 @@ export default function ChakraLeaderboardPage() {
   // Color mode values
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
   const oddRowBg = useColorModeValue('gray.50', 'gray.700')
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export default function ChakraLeaderboardPage() {
             🔥 Leaderboard
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="neutral.600">Loading leaderboard...</Text>
+          <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading leaderboard...</Text>
         </VStack>
       </Container>
     )
@@ -153,13 +154,13 @@ export default function ChakraLeaderboardPage() {
         <Box textAlign="center">
           <Heading 
             size="2xl" 
-            bgGradient="linear(to-r, neutral.900, brand.600)"
+            bgGradient={titleGradient}
             bgClip="text"
             mb={4}
           >
             🔥 Leaderboard
           </Heading>
-          <Text fontSize="lg" color="neutral.600">
+          <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
             See how you stack up against the competition
           </Text>
         </Box>
@@ -312,7 +313,7 @@ export default function ChakraLeaderboardPage() {
                           -
                           <Text as="span" color="red.600" fontWeight="semibold">{entry.losses}</Text>
                           -
-                          <Text as="span" color="neutral.600">{entry.pushes}</Text>
+                          <Text as="span" color={useColorModeValue("neutral.600", "neutral.300")}>{entry.pushes}</Text>
                         </Text>
                       </Td>
                       <Td isNumeric>
@@ -413,7 +414,7 @@ export default function ChakraLeaderboardPage() {
                           {' - '}
                           <Text as="span" color="red.600" fontWeight="bold">{selectedUser.losses}</Text>
                           {' - '}
-                          <Text as="span" color="neutral.600">{selectedUser.pushes}</Text>
+                          <Text as="span" color={useColorModeValue("neutral.600", "neutral.300")}>{selectedUser.pushes}</Text>
                         </StatHelpText>
                       </Stat>
                     </SimpleGrid>
@@ -456,7 +457,7 @@ export default function ChakraLeaderboardPage() {
                               <Text fontWeight="semibold" fontSize="sm">
                                 Week {week.week}, {week.season}
                               </Text>
-                              <Text fontSize="xs" color="neutral.600">
+                              <Text fontSize="xs" color={useColorModeValue("neutral.600", "neutral.300")}>
                                 {week.picks} picks made
                               </Text>
                             </VStack>

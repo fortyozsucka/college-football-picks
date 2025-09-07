@@ -73,6 +73,9 @@ export default function ChakraGamesPage() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   
+  // Color mode values
+  const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
+  
   // Filter states
   const [teamSearch, setTeamSearch] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -107,6 +110,58 @@ export default function ChakraGamesPage() {
       return `${game.homeTeam} -${Math.abs(game.spread)}`
     } else {
       return 'Even'
+    }
+  }
+
+  const getGameStatusDisplay = (game: Game): { display: string; color: string; isLive: boolean } => {
+    const gameStarted = new Date() >= new Date(game.startTime)
+    
+    // If game hasn't started yet
+    if (!gameStarted) {
+      return {
+        display: new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        color: 'gray.500',
+        isLive: false
+      }
+    }
+
+    // If game is completed
+    if (game.completed) {
+      return {
+        display: 'Final',
+        color: 'green.600',
+        isLive: false
+      }
+    }
+
+    // If game is in progress
+    if (game.status === 'in_progress' && game.period && game.clock) {
+      const getQuarterName = (period: number) => {
+        if (period <= 4) return `Q${period}`
+        return period === 5 ? 'OT' : `${period - 4}OT`
+      }
+      
+      return {
+        display: `${getQuarterName(game.period)} ${game.clock}`,
+        color: 'red.500',
+        isLive: true
+      }
+    }
+
+    // If game has started but no live data available
+    if (gameStarted) {
+      return {
+        display: 'In Progress',
+        color: 'orange.500',
+        isLive: true
+      }
+    }
+
+    // Default fallback
+    return {
+      display: new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      color: 'gray.500',
+      isLive: false
     }
   }
 
@@ -383,7 +438,7 @@ export default function ChakraGamesPage() {
             ⚡ Weekly Games
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="neutral.600">Loading games...</Text>
+          <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading games...</Text>
         </VStack>
       </Container>
     )
@@ -410,13 +465,13 @@ export default function ChakraGamesPage() {
         <Box textAlign="center">
           <Heading 
             size="2xl" 
-            bgGradient="linear(to-r, neutral.900, brand.600)"
+            bgGradient={titleGradient}
             bgClip="text"
             mb={4}
           >
             ⚡ Weekly Games
           </Heading>
-          <Text fontSize="lg" color="neutral.600">
+          <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
             Make your weekly picks and track game results
           </Text>
           {lastUpdated && (
@@ -474,7 +529,7 @@ export default function ChakraGamesPage() {
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
+                <Text fontSize="sm" fontWeight="medium" color={useColorModeValue("neutral.600", "neutral.300")}>
                   Team Search
                 </Text>
                 <InputGroup>
@@ -490,7 +545,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
+                <Text fontSize="sm" fontWeight="medium" color={useColorModeValue("neutral.600", "neutral.300")}>
                   Game Time
                 </Text>
                 <Select
@@ -505,7 +560,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
+                <Text fontSize="sm" fontWeight="medium" color={useColorModeValue("neutral.600", "neutral.300")}>
                   Point Spread
                 </Text>
                 <HStack>
@@ -525,7 +580,7 @@ export default function ChakraGamesPage() {
               </VStack>
 
               <VStack align="start">
-                <Text fontSize="sm" fontWeight="medium" color="neutral.600">
+                <Text fontSize="sm" fontWeight="medium" color={useColorModeValue("neutral.600", "neutral.300")}>
                   Game Status
                 </Text>
                 <Select
@@ -542,7 +597,7 @@ export default function ChakraGamesPage() {
 
             {/* Filter Summary */}
             <HStack justify="space-between" mt={4} wrap="wrap">
-              <Text fontSize="sm" color="neutral.600">
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                 Showing {filteredGames.length} of {games.length} games
                 {hasFilters && (
                   <Badge ml={2} colorScheme="blue" variant="subtle">
@@ -638,6 +693,7 @@ export default function ChakraGamesPage() {
                   onMakePick={handleMakePick}
                   onRemovePick={handleRemovePick}
                   getSpreadDisplay={getSpreadDisplay}
+                  getGameStatusDisplay={getGameStatusDisplay}
                 />
               )
             })}
@@ -659,7 +715,8 @@ const GameCard = ({
   spreadWinner,
   onMakePick,
   onRemovePick,
-  getSpreadDisplay
+  getSpreadDisplay,
+  getGameStatusDisplay
 }: {
   game: Game
   userPick?: Pick
@@ -671,6 +728,7 @@ const GameCard = ({
   onMakePick: (gameId: string, team: string, isDoubleDown: boolean) => void
   onRemovePick: (gameId: string) => void
   getSpreadDisplay: (game: Game) => string
+  getGameStatusDisplay: (game: Game) => { display: string; color: string; isLive: boolean }
 }) => {
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -690,7 +748,16 @@ const GameCard = ({
           {/* Game Header */}
           <HStack justify="space-between">
             <Badge colorScheme={game.completed ? 'green' : gameStarted ? 'orange' : 'blue'}>
-              {game.completed ? 'Final' : gameStarted ? 'Live' : 'Upcoming'}
+              {(() => {
+                if (game.completed) return 'Final'
+                if (!gameStarted) return 'Upcoming'
+                
+                const status = getGameStatusDisplay(game)
+                if (status.isLive) {
+                  return `Live - ${status.display}`
+                }
+                return 'Live'
+              })()}
             </Badge>
             <Text fontSize="sm" color="gray.500">
               {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -728,17 +795,18 @@ const GameCard = ({
             </HStack>
           </VStack>
 
+
           <Divider />
 
           {/* Game Info */}
           <HStack justify="space-between">
             <VStack align="start" spacing={1}>
-              <Text fontSize="sm" color="neutral.600">Spread</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Spread</Text>
               <Text fontWeight="semibold">{getSpreadDisplay(game)}</Text>
             </VStack>
             {game.overUnder && (
               <VStack align="center" spacing={1}>
-                <Text fontSize="sm" color="neutral.600">O/U</Text>
+                <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>O/U</Text>
                 <Text fontWeight="semibold">{game.overUnder}</Text>
               </VStack>
             )}
@@ -755,7 +823,7 @@ const GameCard = ({
               {!userPick ? (
                 <>
                   <VStack spacing={3} w="full">
-                    <Text fontSize="sm" color="neutral.600" textAlign="center">
+                    <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")} textAlign="center">
                       Make your pick:
                     </Text>
                     
@@ -830,7 +898,7 @@ const GameCard = ({
           {gameStarted && gamePicks.length > 0 && (
             <VStack spacing={3}>
               <Divider />
-              <Text fontSize="sm" color="neutral.600" fontWeight="semibold">Who Picked What:</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")} fontWeight="semibold">Who Picked What:</Text>
               <VStack spacing={2} w="full">
                 {[game.homeTeam, game.awayTeam].map((team) => {
                   const teamPicks = gamePicks.filter(pick => pick.pickedTeam === team)
@@ -863,7 +931,7 @@ const GameCard = ({
           {/* Game Result */}
           {game.completed && spreadWinner && (
             <VStack spacing={2}>
-              <Text fontSize="sm" color="neutral.600">Spread Winner:</Text>
+              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Spread Winner:</Text>
               <Badge 
                 colorScheme={spreadWinner === 'Push' ? 'gray' : 'green'} 
                 variant="solid"

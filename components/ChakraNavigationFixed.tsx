@@ -25,38 +25,52 @@ import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons'
 import Link from 'next/link'
 import { useAuth } from '@/lib/context/AuthContext'
 import { useState, useEffect } from 'react'
+import { DarkModeToggle } from './DarkModeToggle'
 
 const NavLink = ({ children, href, isActive = false }: { 
   children: React.ReactNode, 
   href: string, 
   isActive?: boolean 
-}) => (
-  <ChakraLink
-    as={Link}
-    href={href}
-    px={2}
-    py={2}
-    rounded={'md'}
-    color={isActive ? 'brand.500' : 'neutral.600'}
-    fontWeight={isActive ? '600' : '500'}
-    fontSize="sm"
-    whiteSpace="nowrap"
-    _hover={{
-      textDecoration: 'none',
-      bg: 'neutral.100',
-      color: 'neutral.900',
-    }}
-    transition="all 0.2s ease"
-  >
-    {children}
-  </ChakraLink>
-)
+}) => {
+  const linkColor = useColorModeValue(
+    isActive ? 'brand.500' : 'neutral.600',
+    isActive ? 'brand.400' : 'neutral.300'
+  )
+  const hoverBg = useColorModeValue('neutral.100', 'neutral.700')
+  const hoverColor = useColorModeValue('neutral.900', 'white')
+
+  return (
+    <ChakraLink
+      as={Link}
+      href={href}
+      px={2}
+      py={2}
+      rounded={'md'}
+      color={linkColor}
+      fontWeight={isActive ? '600' : '500'}
+      fontSize="sm"
+      whiteSpace="nowrap"
+      _hover={{
+        textDecoration: 'none',
+        bg: hoverBg,
+        color: hoverColor,
+      }}
+      transition="all 0.2s ease"
+    >
+      {children}
+    </ChakraLink>
+  )
+}
 
 export default function ChakraNavigationFixed() {
   const { user, logout, loading } = useAuth()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  
+  const navBg = useColorModeValue('white', 'neutral.800')
+  const navBorder = useColorModeValue('neutral.200', 'neutral.700')
+  const logoGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
 
   // Fix hydration by ensuring client-side rendering
   useEffect(() => {
@@ -76,7 +90,7 @@ export default function ChakraNavigationFixed() {
   // Use consistent content during SSR
   if (loading || !isClient) {
     return (
-      <Box bg="white" boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor="neutral.200" mb={8}>
+      <Box bg={navBg} boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor={navBorder} mb={8}>
         <Container maxW="7xl">
           <Flex h={16} alignItems="center" justifyContent="space-between">
             <HStack spacing={8} alignItems="center">
@@ -84,7 +98,7 @@ export default function ChakraNavigationFixed() {
                 <Text 
                   fontWeight="bold" 
                   fontSize="xl" 
-                  bgGradient="linear(to-r, neutral.900, brand.600)"
+                  bgGradient={logoGradient}
                   bgClip="text"
                 >
                   Squad College Football Picks
@@ -99,7 +113,7 @@ export default function ChakraNavigationFixed() {
   }
 
   return (
-    <Box bg="white" boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor="neutral.200" mb={{ base: 4, sm: 8 }}>
+    <Box bg={navBg} boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor={navBorder} mb={{ base: 4, sm: 8 }}>
       <Container maxW="7xl">
         <Flex h={16} alignItems="center" justifyContent="space-between">
           {/* Logo */}
@@ -108,7 +122,7 @@ export default function ChakraNavigationFixed() {
               <Text 
                 fontWeight="bold" 
                 fontSize={{ base: 'lg', sm: 'xl' }} 
-                bgGradient="linear(to-r, neutral.900, brand.600)"
+                bgGradient={logoGradient}
                 bgClip="text"
               >
                 Squad College Football Picks
@@ -121,8 +135,10 @@ export default function ChakraNavigationFixed() {
                 <>
                   <NavLink href="/picks">Picks</NavLink>
                   <NavLink href="/games">Games</NavLink>
+                  <NavLink href="/sidebets">💰 Side Bets</NavLink>
                   <NavLink href="/leaderboard">Leaderboard</NavLink>
                   <NavLink href="/history">History</NavLink>
+                  <NavLink href="/settings">Settings</NavLink>
                   {user.isAdmin && (
                     <NavLink href="/admin">
                       <HStack spacing={1}>
@@ -137,7 +153,8 @@ export default function ChakraNavigationFixed() {
           </HStack>
 
           {/* User Menu / Auth */}
-          <Flex alignItems="center">
+          <Flex alignItems="center" gap={2}>
+            <DarkModeToggle />
             {user ? (
               <>
                 {/* Desktop User Menu */}
@@ -162,6 +179,7 @@ export default function ChakraNavigationFixed() {
                     <MenuItem as={Link} href="/games">Games</MenuItem>
                     <MenuItem as={Link} href="/leaderboard">Leaderboard</MenuItem>
                     <MenuItem as={Link} href="/history">History</MenuItem>
+                    <MenuItem as={Link} href="/settings">Settings</MenuItem>
                     {user.isAdmin && (
                       <MenuItem as={Link} href="/admin" color="red.500">
                         Admin
@@ -208,8 +226,10 @@ export default function ChakraNavigationFixed() {
               </Flex>
               <NavLink href="/picks">Picks</NavLink>
               <NavLink href="/games">Games</NavLink>
+              <NavLink href="/sidebets">💰 Side Bets</NavLink>
               <NavLink href="/leaderboard">Leaderboard</NavLink>
               <NavLink href="/history">History</NavLink>
+              <NavLink href="/settings">Settings</NavLink>
               {user.isAdmin && (
                 <NavLink href="/admin">
                   <HStack spacing={2}>

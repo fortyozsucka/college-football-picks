@@ -74,6 +74,9 @@ export default function ChakraHistoryPage() {
   const [seasonDetail, setSeasonDetail] = useState<SeasonDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
+  
+  // Color mode values
+  const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
   const [error, setError] = useState<string | null>(null)
 
   // Color mode values
@@ -140,7 +143,7 @@ export default function ChakraHistoryPage() {
             <Text>Historical Leaderboards</Text>
           </Heading>
           <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="neutral.600">Loading historical data...</Text>
+          <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading historical data...</Text>
         </VStack>
       </Container>
     )
@@ -177,13 +180,13 @@ export default function ChakraHistoryPage() {
             >
               <Text fontSize="2xl">📊</Text>
               <Text 
-                bgGradient="linear(to-r, neutral.900, brand.600)"
+                bgGradient={titleGradient}
                 bgClip="text"
               >
                 Historical Leaderboards
               </Text>
             </Heading>
-            <Text fontSize="lg" color="neutral.600">
+            <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
               Season champions and final standings
             </Text>
           </VStack>
@@ -231,7 +234,7 @@ export default function ChakraHistoryPage() {
                     </Heading>
                     <HStack>
                       <Icon as={CalendarIcon} color="gray.500" />
-                      <Text color="neutral.600">
+                      <Text color={useColorModeValue("neutral.600", "neutral.300")}>
                         {seasonDetail.totalUsers} participants • Archived on{' '}
                         {new Date(seasonDetail.archivedAt).toLocaleDateString()}
                       </Text>
@@ -244,7 +247,7 @@ export default function ChakraHistoryPage() {
                     <CardBody textAlign="center" py={4}>
                       <VStack spacing={2}>
                         <Text fontSize="2xl">👑</Text>
-                        <Text fontSize="sm" color="neutral.600" fontWeight="semibold">
+                        <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")} fontWeight="semibold">
                           CHAMPION
                         </Text>
                         <Text fontSize="lg" fontWeight="bold" color="gray.900">
@@ -264,7 +267,7 @@ export default function ChakraHistoryPage() {
                 {detailLoading ? (
                   <VStack py={8}>
                     <Spinner size="lg" color="football.500" thickness="3px" />
-                    <Text color="neutral.600">Loading season details...</Text>
+                    <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading season details...</Text>
                   </VStack>
                 ) : (
                   <TableContainer>

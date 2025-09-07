@@ -1,4 +1,4 @@
-import { extendTheme } from '@chakra-ui/react'
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react'
 
 // Minimalist black/grey/white/green color palette
 const colors = {
@@ -79,22 +79,26 @@ const components = {
     },
   },
   Card: {
-    baseStyle: {
+    baseStyle: (props: any) => ({
       container: {
-        bg: 'white',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        bg: props.colorMode === 'dark' ? 'neutral.800' : 'white',
+        boxShadow: props.colorMode === 'dark' 
+          ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
+          : '0 1px 3px rgba(0, 0, 0, 0.1)',
         border: '1px solid',
-        borderColor: 'neutral.200',
+        borderColor: props.colorMode === 'dark' ? 'neutral.700' : 'neutral.200',
         borderRadius: 'lg',
         overflow: 'hidden',
         transition: 'all 0.2s ease',
         _hover: {
           transform: 'translateY(-2px)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-          borderColor: 'neutral.300',
+          boxShadow: props.colorMode === 'dark'
+            ? '0 4px 12px rgba(0, 0, 0, 0.4)'
+            : '0 4px 12px rgba(0, 0, 0, 0.15)',
+          borderColor: props.colorMode === 'dark' ? 'neutral.600' : 'neutral.300',
         },
       },
-    },
+    }),
   },
   Badge: {
     variants: {
@@ -123,47 +127,68 @@ const fonts = {
   body: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
 }
 
-// Global styles - Minimalist aesthetic
+// Global styles - Minimalist aesthetic with dark mode support
 const styles = {
-  global: {
+  global: (props: any) => ({
     body: {
-      bg: 'neutral.50',
-      color: 'neutral.900',
+      bg: props.colorMode === 'dark' ? 'neutral.900' : 'neutral.50',
+      color: props.colorMode === 'dark' ? 'neutral.50' : 'neutral.900',
       fontSize: '16px',
       lineHeight: '1.6',
     },
     '*::placeholder': {
-      color: 'neutral.400',
+      color: props.colorMode === 'dark' ? 'neutral.500' : 'neutral.400',
     },
     '*, *::before, &::after': {
-      borderColor: 'neutral.200',
+      borderColor: props.colorMode === 'dark' ? 'neutral.700' : 'neutral.200',
     },
     // Smooth scrolling
     html: {
       scrollBehavior: 'smooth',
     },
-  },
+  }),
 }
 
-// Semantic tokens for consistent theming
+// Semantic tokens for consistent theming with dark mode support
 const semanticTokens = {
   colors: {
     primary: 'brand.500',
-    secondary: 'neutral.700',
+    secondary: {
+      default: 'neutral.700',
+      _dark: 'neutral.300',
+    },
     accent: 'brand.600',
     success: 'brand.500',
-    warning: 'neutral.500',
-    error: 'neutral.600',
-    muted: 'neutral.400',
-    background: 'neutral.50',
-    surface: 'white',
-    border: 'neutral.200',
+    warning: {
+      default: 'neutral.500',
+      _dark: 'neutral.400',
+    },
+    error: {
+      default: 'neutral.600',
+      _dark: 'neutral.400',
+    },
+    muted: {
+      default: 'neutral.400',
+      _dark: 'neutral.500',
+    },
+    background: {
+      default: 'neutral.50',
+      _dark: 'neutral.900',
+    },
+    surface: {
+      default: 'white',
+      _dark: 'neutral.800',
+    },
+    border: {
+      default: 'neutral.200',
+      _dark: 'neutral.700',
+    },
   },
 }
 
-const config = {
+const config: ThemeConfig = {
   initialColorMode: 'light',
-  useSystemColorMode: false,
+  useSystemColorMode: true,
 }
 
 export const theme = extendTheme({

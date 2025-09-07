@@ -8,51 +8,50 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String?
-  password      String
-  totalScore    Int      @default(0)
-  isAdmin       Boolean  @default(false)
-  inviteCode    String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  picks Pick[]
-}
-
-enum GameType {
-  REGULAR
-  CHAMPIONSHIP
-  BOWL
-  PLAYOFF
-  ARMY_NAVY
+  id                      String                   @id @default(cuid())
+  email                   String                   @unique
+  name                    String?
+  password                String
+  totalScore              Int                      @default(0)
+  isAdmin                 Boolean                  @default(false)
+  inviteCode              String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  venmoHandle             String?
+  notificationPreferences NotificationPreferences?
+  picks                   Pick[]
+  pushSubscriptions       PushSubscription[]
+  proposedSideBets        SideBet[]                @relation("ProposedBets")
+  acceptedSideBets        SideBetAcceptance[]
 }
 
 model Game {
-  id        String   @id @default(cuid())
-  cfbId     String   @unique
-  week      Int
-  season    Int
-  homeTeam  String
-  awayTeam  String
-  homeTeamId String?
-  awayTeamId String?
+  id           String    @id @default(cuid())
+  cfbId        String    @unique
+  week         Int
+  season       Int
+  homeTeam     String
+  awayTeam     String
+  homeTeamId   String?
+  awayTeamId   String?
   homeTeamLogo String?
   awayTeamLogo String?
-  homeScore Int?
-  awayScore Int?
-  spread    Float    @default(0)
-  overUnder Float?
-  startTime DateTime
-  completed Boolean  @default(false)
-  winner    String?
-  gameType  GameType @default(REGULAR)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  
-  picks Pick[]
-  
+  homeScore    Int?
+  awayScore    Int?
+  spread       Float     @default(0)
+  overUnder    Float?
+  startTime    DateTime
+  completed    Boolean   @default(false)
+  winner       String?
+  gameType     GameType  @default(REGULAR)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  period       Int?
+  clock        String?
+  status       String?
+  picks        Pick[]
+  sideBets     SideBet[]
+
   @@index([season, week])
   @@index([cfbId])
   @@index([gameType])
@@ -66,13 +65,12 @@ model Pick {
   lockedSpread Float
   isDoubleDown Boolean  @default(false)
   points       Int?
-  result       String?  // "win", "loss", or "push"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  
+  result       String?
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, gameId])
   @@index([userId])
 }
@@ -84,40 +82,131 @@ model Week {
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([week, season])
 }
 
 model Invite {
-  id        String   @id @default(cuid())
-  code      String   @unique
+  id        String    @id @default(cuid())
+  code      String    @unique
   email     String?
   usedBy    String?
-  isUsed    Boolean  @default(false)
+  isUsed    Boolean   @default(false)
   createdBy String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   expiresAt DateTime?
-  
+
   @@index([code])
 }
 
 model HistoricalStats {
-  id                String   @id @default(cuid())
-  season            Int
-  userId            String
-  userName          String
-  userEmail         String
-  finalScore        Int
-  totalPicks        Int
-  correctPicks      Int
-  winPercentage     Float
-  doubleDowns       Int
+  id                 String   @id @default(cuid())
+  season             Int
+  userId             String
+  userName           String
+  userEmail          String
+  finalScore         Int
+  totalPicks         Int
+  correctPicks       Int
+  winPercentage      Float
+  doubleDowns        Int
   correctDoubleDowns Int
-  rank              Int
-  totalUsers        Int
-  archivedAt        DateTime @default(now())
-  
+  rank               Int
+  totalUsers         Int
+  archivedAt         DateTime @default(now())
+
+  @@unique([season, userId])
   @@index([season])
   @@index([season, rank])
-  @@unique([season, userId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+}
+
+model NotificationPreferences {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  gameStartReminders Boolean  @default(true)
+  gameResults        Boolean  @default(true)
+  leaderboardUpdates Boolean  @default(true)
+  weeklyRecaps       Boolean  @default(true)
+  friendActivity     Boolean  @default(true)
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SideBet {
+  id            String              @id @default(cuid())
+  gameId        String
+  proposerId    String
+  betType       SideBetType
+  betSide       String
+  customLine    Float?
+  amount        Float
+  note          String?
+  allowMultiple Boolean             @default(false)
+  maxAcceptors  Int?
+  status        SideBetStatus       @default(OPEN)
+  winningSide   String?
+  isResolved    Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  game          Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  proposer      User                @relation("ProposedBets", fields: [proposerId], references: [id], onDelete: Cascade)
+  acceptances   SideBetAcceptance[]
+
+  @@index([gameId])
+  @@index([proposerId])
+  @@index([status])
+}
+
+model SideBetAcceptance {
+  id         String   @id @default(cuid())
+  sideBetId  String
+  acceptorId String
+  isWinner   Boolean?
+  isPaid     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  acceptor   User     @relation(fields: [acceptorId], references: [id], onDelete: Cascade)
+  sideBet    SideBet  @relation(fields: [sideBetId], references: [id], onDelete: Cascade)
+
+  @@unique([sideBetId, acceptorId])
+  @@index([sideBetId])
+  @@index([acceptorId])
+}
+
+enum GameType {
+  REGULAR
+  CHAMPIONSHIP
+  BOWL
+  PLAYOFF
+  ARMY_NAVY
+}
+
+enum SideBetType {
+  SPREAD
+  OVER_UNDER
+}
+
+enum SideBetStatus {
+  OPEN
+  ACCEPTED
+  COMPLETED
+  CANCELLED
 }

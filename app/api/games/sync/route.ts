@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cfbApi } from '@/lib/cfb-api'
 import { classifyGame } from '@/lib/game-classification'
+import { PushNotificationService, NotificationTemplates } from '@/lib/push-notifications'
+import { SideBetService } from '@/lib/sidebets'
 
 function getCurrentSeason(): number {
   const now = new Date()
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest) {
 
     let gamesCreated = 0
     let gamesUpdated = 0
+    let newlyCompletedGames: string[] = []
 
     // Process each game
     for (const cfbGame of cfbGames) {
@@ -125,6 +128,9 @@ export async function POST(request: NextRequest) {
         homeScore: cfbGame.home_points || cfbGame.homePoints || null,
         awayScore: cfbGame.away_points || cfbGame.awayPoints || null,
         completed: cfbGame.completed || false,
+        period: cfbGame.period || null,
+        clock: cfbGame.clock || null,
+        status: cfbGame.status || null,
         winner: cfbGame.completed ? 
           ((cfbGame.home_points || cfbGame.homePoints || 0) > (cfbGame.away_points || cfbGame.awayPoints || 0) ? homeTeam : awayTeam) : null,
         gameType: gameClassification.gameType
@@ -138,12 +144,20 @@ export async function POST(request: NextRequest) {
       })
 
       if (existingGame) {
+        // Check if game was just completed (wasn't completed before, but is now)
+        const wasJustCompleted = !existingGame.completed && gameData.completed
+        
         // Update existing game
         await db.game.update({
           where: { id: existingGame.id },
           data: gameData
         })
         gamesUpdated++
+        
+        // Track newly completed games for notifications
+        if (wasJustCompleted) {
+          newlyCompletedGames.push(existingGame.id)
+        }
       } else {
         // Create new game
         await db.game.create({
@@ -153,6 +167,69 @@ export async function POST(request: NextRequest) {
           }
         })
         gamesCreated++
+      }
+    }
+
+    // Send notifications for newly completed games
+    let notificationsSent = 0
+    if (newlyCompletedGames.length > 0) {
+      console.log(`📱 Sending notifications for ${newlyCompletedGames.length} newly completed games`)
+      
+      try {
+        // Get picks for newly completed games
+        const picksForCompletedGames = await db.pick.findMany({
+          where: {
+            gameId: { in: newlyCompletedGames }
+          },
+          include: {
+            user: {
+              include: {
+                notificationPreferences: true
+              }
+            },
+            game: true
+          }
+        })
+
+        // Group picks by user
+        const picksByUser = new Map<string, typeof picksForCompletedGames>()
+        picksForCompletedGames.forEach(pick => {
+          if (!picksByUser.has(pick.userId)) {
+            picksByUser.set(pick.userId, [])
+          }
+          picksByUser.get(pick.userId)!.push(pick)
+        })
+
+        // Send notifications to each user
+        for (const [userId, userPicks] of Array.from(picksByUser.entries())) {
+          const user = userPicks[0].user
+          
+          // Check if user wants game result notifications
+          if (!user.notificationPreferences?.gameResults || !user.notificationPreferences?.pushNotifications) {
+            continue
+          }
+
+          // Send a notification for each completed game the user picked
+          for (const pick of userPicks) {
+            try {
+              const won = (pick.points || 0) > 0
+              const notification = NotificationTemplates.gameResult(
+                pick.pickedTeam,
+                won,
+                pick.points || 0
+              )
+              
+              await PushNotificationService.sendToUser(userId, notification)
+              notificationsSent++
+            } catch (error) {
+              console.error(`Error sending game result notification to user ${userId}:`, error)
+            }
+          }
+        }
+        
+        console.log(`✅ Sent ${notificationsSent} game result notifications`)
+      } catch (error) {
+        console.error('Error sending game completion notifications:', error)
       }
     }
 
@@ -169,6 +246,36 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Error calculating points:', error)
       // Don't fail the sync if points calculation fails
+    }
+
+    // Cancel expired side bets first
+    let sideBetsCancelled = 0
+    try {
+      console.log(`🚫 Checking for expired side bets...`)
+      const cancelResult = await SideBetService.cancelExpiredSideBets()
+      sideBetsCancelled = cancelResult.cancelled
+      console.log(`✅ Cancelled ${sideBetsCancelled} expired side bets`)
+    } catch (error) {
+      console.error('Error cancelling expired side bets:', error)
+      // Don't fail the sync if side bet cancellation fails
+    }
+
+    // Resolve side bets for newly completed games
+    let sideBetsResolved = 0
+    if (newlyCompletedGames.length > 0) {
+      console.log(`🎰 Resolving side bets for ${newlyCompletedGames.length} newly completed games`)
+      
+      try {
+        for (const gameId of newlyCompletedGames) {
+          const result = await SideBetService.resolveGameSideBets(gameId)
+          sideBetsResolved += result.resolved
+        }
+        
+        console.log(`✅ Resolved ${sideBetsResolved} side bets`)
+      } catch (error) {
+        console.error('Error resolving side bets:', error)
+        // Don't fail the sync if side bet resolution fails
+      }
     }
 
     // Check for automatic week progression after sync
@@ -194,7 +301,11 @@ export async function POST(request: NextRequest) {
       gamesCreated,
       gamesUpdated,
       totalGames: cfbGames.length,
+      newlyCompletedGames: newlyCompletedGames.length,
+      notificationsSent,
       pointsCalculated: pointsResult?.updatedPicks || 0,
+      sideBetsCancelled,
+      sideBetsResolved,
       weekProgression: progressionResult || { progressed: false }
     })
 

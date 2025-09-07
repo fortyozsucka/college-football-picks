@@ -65,6 +65,9 @@ import {
   DownloadIcon,
   TimeIcon
 } from '@chakra-ui/icons'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
 
 interface Invite {
   id: string
@@ -90,6 +93,20 @@ export default function ChakraAdminPage() {
   const [invites, setInvites] = useState<Invite[]>([])
   const [weeks, setWeeks] = useState<Week[]>([])
   const [loading, setLoading] = useState(true)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  })
+  
+  // Color mode values
+  const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
   const [weeksLoading, setWeeksLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [newInviteEmail, setNewInviteEmail] = useState('')
@@ -203,6 +220,24 @@ export default function ChakraAdminPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete invite')
     }
+  }
+
+  const confirmDelete = (inviteId: string, inviteCode: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Invite Code',
+      message: `Are you sure you want to delete the invite code "${inviteCode}"? This action cannot be undone.`,
+      onConfirm: () => deleteInvite(inviteId)
+    })
+  }
+
+  const confirmArchiveSeason = (season: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: `Archive Season ${season}`,
+      message: `Are you sure you want to archive season ${season}? This will preserve the final leaderboard permanently and cannot be undone.`,
+      onConfirm: () => archiveSeason(season)
+    })
   }
 
   const toggleWeekActivation = async (week: number, season: number, isActive: boolean) => {
@@ -494,12 +529,12 @@ export default function ChakraAdminPage() {
           </Badge>
         </Td>
         <Td>
-          <Text fontSize="sm" color="neutral.600">
+          <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
             {new Date(invite.createdAt).toLocaleDateString()}
           </Text>
         </Td>
         <Td>
-          <Text fontSize="sm" color="neutral.600">
+          <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
             {invite.expiresAt 
               ? new Date(invite.expiresAt).toLocaleDateString()
               : 'Never'
@@ -514,11 +549,7 @@ export default function ChakraAdminPage() {
               size="sm"
               colorScheme="red"
               variant="ghost"
-              onClick={() => {
-                if (confirm('Are you sure you want to delete this invite?')) {
-                  deleteInvite(invite.id)
-                }
-              }}
+              onClick={() => confirmDelete(invite.id, invite.code)}
             />
           )}
         </Td>
@@ -545,13 +576,10 @@ export default function ChakraAdminPage() {
   if (loading) {
     return (
       <Container maxW="7xl" py={8}>
-        <VStack spacing={8}>
-          <Heading size="xl" textAlign="center">
-            ⚡ Admin Panel
-          </Heading>
-          <Spinner size="xl" color="football.500" thickness="4px" />
-          <Text color="neutral.600">Loading admin panel...</Text>
-        </VStack>
+        <LoadingSpinner 
+          size="xl" 
+          text="Loading admin panel..." 
+        />
       </Container>
     )
   }
@@ -563,32 +591,22 @@ export default function ChakraAdminPage() {
         <VStack spacing={4} textAlign="center">
           <Heading 
             size="2xl"
-            bgGradient="linear(to-r, neutral.900, brand.600)"
+            bgGradient={titleGradient}
             bgClip="text"
           >
             ⚡ Admin Panel
           </Heading>
-          <Text fontSize="lg" color="neutral.600">
+          <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
             Manage invite codes, user access, and weekly controls
           </Text>
         </VStack>
 
         {/* Error Alert */}
         {error && (
-          <Alert status="error" borderRadius="lg">
-            <AlertIcon />
-            <Box flex="1">
-              <AlertTitle>Error!</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Box>
-            <IconButton
-              aria-label="Dismiss error"
-              icon={<CloseIcon />}
-              size="sm"
-              variant="ghost"
-              onClick={() => setError(null)}
-            />
-          </Alert>
+          <ErrorAlert 
+            error={error} 
+            onClose={() => setError(null)} 
+          />
         )}
 
         {/* Tabs */}
@@ -704,7 +722,7 @@ export default function ChakraAdminPage() {
                       <Heading size="lg" color="football.700">
                         Weekly Activation Controls
                       </Heading>
-                      <Text fontSize="sm" color="neutral.600">
+                      <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                         Control which weeks are active for picking. Weeks automatically progress 24+ hours after all games are completed.
                       </Text>
                     </VStack>
@@ -748,7 +766,7 @@ export default function ChakraAdminPage() {
                     <Text fontWeight="semibold" color="neutral.700">
                       📡 Manual Sync Controls
                     </Text>
-                    <Text fontSize="sm" color="neutral.600">
+                    <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                       Manual backup controls for syncing. External cron service handles automation.
                     </Text>
                     
@@ -792,10 +810,7 @@ export default function ChakraAdminPage() {
                   </VStack>
                   
                   {weeksLoading ? (
-                    <VStack py={8}>
-                      <Spinner size="lg" color="football.500" thickness="3px" />
-                      <Text color="neutral.600">Loading weeks...</Text>
-                    </VStack>
+                    <LoadingSpinner text="Loading weeks..." />
                   ) : weeks.length === 0 ? (
                     <Box py={8} textAlign="center" color="gray.500">
                       No games found. Sync some games first to manage weekly activation.
@@ -863,7 +878,7 @@ export default function ChakraAdminPage() {
                         <Heading size="lg" color="football.700">
                           College Football Data API Usage
                         </Heading>
-                        <Text fontSize="sm" color="neutral.600">
+                        <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                           Monitor your API call usage and performance to track tier limits
                         </Text>
                       </VStack>
@@ -891,10 +906,7 @@ export default function ChakraAdminPage() {
                     </Flex>
                     
                     {apiLoading ? (
-                      <VStack py={8}>
-                        <Spinner size="lg" color="football.500" thickness="3px" />
-                        <Text color="neutral.600">Loading API statistics...</Text>
-                      </VStack>
+                      <LoadingSpinner text="Loading API statistics..." />
                     ) : apiStats ? (
                       <VStack spacing={6} align="stretch">
                         {/* Stats Cards */}
@@ -1006,7 +1018,7 @@ export default function ChakraAdminPage() {
                       <Heading size="lg" color="football.700">
                         Season Archive Management
                       </Heading>
-                      <Text fontSize="sm" color="neutral.600">
+                      <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                         Archive completed seasons to preserve historical leaderboard data permanently
                       </Text>
                     </VStack>
@@ -1026,11 +1038,7 @@ export default function ChakraAdminPage() {
                                         Season {season}
                                       </Text>
                                       <Button
-                                        onClick={() => {
-                                          if (confirm(`Are you sure you want to archive season ${season}? This will preserve the final leaderboard permanently and cannot be undone.`)) {
-                                            archiveSeason(season)
-                                          }
-                                        }}
+                                        onClick={() => confirmArchiveSeason(season)}
                                         isLoading={archiving}
                                         loadingText="Archiving..."
                                         colorScheme="blue"
@@ -1078,10 +1086,7 @@ export default function ChakraAdminPage() {
                         )}
                       </VStack>
                     ) : (
-                      <VStack py={8}>
-                        <Spinner size="lg" color="football.500" thickness="3px" />
-                        <Text color="neutral.600">Loading season information...</Text>
-                      </VStack>
+                      <LoadingSpinner text="Loading season information..." />
                     )}
                   </CardBody>
                 </Card>
@@ -1111,7 +1116,7 @@ export default function ChakraAdminPage() {
                   <CardBody textAlign="center">
                     <VStack spacing={4}>
                       <Heading size="md" color="gray.900">View Historical Data</Heading>
-                      <Text fontSize="sm" color="neutral.600">
+                      <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                         View archived season leaderboards and historical statistics
                       </Text>
                       <ChakraLink href="/history" isExternal>
@@ -1127,6 +1132,18 @@ export default function ChakraAdminPage() {
           </TabPanels>
         </Tabs>
       </VStack>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText="Confirm"
+        cancelText="Cancel"
+        colorScheme="red"
+      />
     </Container>
   )
 }

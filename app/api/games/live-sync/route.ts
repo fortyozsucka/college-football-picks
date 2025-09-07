@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
       const homeScore = cfbGame.homeTeam?.points || null
       const awayScore = cfbGame.awayTeam?.points || null
       const isCompleted = gameStatus === 'completed'
+      const period = cfbGame.period || null
+      const clock = cfbGame.clock || null
 
       // Check if game exists in database
       const existingGame = await db.game.findFirst({
@@ -81,6 +83,9 @@ export async function POST(request: NextRequest) {
               homeScore,
               awayScore,
               completed: isCompleted,
+              period,
+              clock,
+              status: gameStatus,
               winner: isCompleted && homeScore !== null && awayScore !== null
                 ? (homeScore > awayScore 
                     ? existingGame.homeTeam 
