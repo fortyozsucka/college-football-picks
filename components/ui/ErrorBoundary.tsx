@@ -87,6 +87,8 @@ function ErrorFallback({
   onRetry: () => void
   showError?: boolean
 }) {
+  const errorBg = useColorModeValue('gray.50', 'gray.800')
+  
   return (
     <Container maxW="2xl" py={12}>
       <VStack spacing={6} align="stretch">
@@ -106,7 +108,7 @@ function ErrorFallback({
             Oops! Something went wrong
           </AlertTitle>
           <AlertDescription maxWidth="sm" fontSize="lg">
-            We're sorry, but something unexpected happened. Please try refreshing the page.
+            We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
           </AlertDescription>
         </Alert>
 
@@ -131,7 +133,7 @@ function ErrorFallback({
 
         {(showError || process.env.NODE_ENV === 'development') && error && (
           <Box
-            bg={useColorModeValue('gray.50', 'gray.800')}
+            bg={errorBg}
             p={4}
             borderRadius="md"
             borderLeft="4px"

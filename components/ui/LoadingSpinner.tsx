@@ -21,14 +21,17 @@ export function LoadingSpinner({
   fullPage = false,
   color 
 }: LoadingSpinnerProps) {
-  const spinnerColor = color || useColorModeValue('brand.500', 'brand.400')
+  const spinnerColor = useColorModeValue('brand.500', 'brand.400')
   const textColor = useColorModeValue('neutral.600', 'neutral.300')
+  const bgColor = useColorModeValue('white', 'gray.900')
+  
+  const finalSpinnerColor = color || spinnerColor
   
   const content = (
     <VStack spacing={4}>
       <Spinner 
         size={size} 
-        color={spinnerColor} 
+        color={finalSpinnerColor} 
         thickness="4px"
         speed="0.8s"
       />
@@ -51,7 +54,7 @@ export function LoadingSpinner({
         display="flex"
         alignItems="center"
         justifyContent="center"
-        bg={useColorModeValue('white', 'gray.900')}
+        bg={bgColor}
         zIndex={9999}
       >
         {content}
@@ -73,10 +76,12 @@ export function LoadingSpinner({
 }
 
 export function InlineLoader({ size = 'sm', color }: { size?: 'xs' | 'sm' | 'md', color?: string }) {
+  const defaultColor = useColorModeValue('brand.500', 'brand.400')
+  
   return (
     <Spinner 
       size={size} 
-      color={color || useColorModeValue('brand.500', 'brand.400')} 
+      color={color || defaultColor} 
       thickness="3px"
       speed="0.8s"
     />

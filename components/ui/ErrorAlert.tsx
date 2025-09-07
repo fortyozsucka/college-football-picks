@@ -23,10 +23,11 @@ export function ErrorAlert({
   title = 'Error',
   variant = 'left-accent'
 }: ErrorAlertProps) {
+  const borderColor = useColorModeValue('red.500', 'red.300')
+
   if (!error) return null
 
   const errorMessage = typeof error === 'string' ? error : error.message
-  const borderColor = useColorModeValue('red.500', 'red.300')
 
   return (
     <Alert 

@@ -67,6 +67,9 @@ export interface CFBGame {
   awayPoints?: number
   homeClassification?: string
   awayClassification?: string
+  period?: number
+  clock?: string
+  status?: string
 }
 
 export interface CFBLine {
