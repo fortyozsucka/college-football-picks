@@ -18,15 +18,7 @@ import { useState } from 'react'
 import { useSideBets } from '@/lib/hooks/useSideBets'
 import { SelectField, NumberField, TextareaField, SwitchField } from '@/components/ui/FormField'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
-
-interface Game {
-  id: string
-  homeTeam: string
-  awayTeam: string
-  spread: number
-  overUnder: number | null
-  startTime: string
-}
+import { Game } from '@/lib/types'
 
 interface CreateSideBetModalProps {
   isOpen: boolean
@@ -101,7 +93,7 @@ export default function CreateSideBetModal({
     onClose()
   }
 
-  const gameStarted = new Date() >= new Date(game.startTime)
+  const gameStarted = new Date() >= game.startTime
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">

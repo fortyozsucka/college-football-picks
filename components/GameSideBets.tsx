@@ -25,28 +25,22 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import { useSideBets, SideBet } from '@/lib/hooks/useSideBets'
 import { useAuth } from '@/lib/context/AuthContext'
-
-interface Game {
-  id: string
-  homeTeam: string
-  awayTeam: string
-  spread: number
-  overUnder: number | null
-  startTime: string
-  completed: boolean
-  homeScore: number | null
-  awayScore: number | null
-}
+import { Game } from '@/lib/types'
+import CreateSideBetModal from './CreateSideBetModal'
 
 interface GameSideBetsProps {
   game: Game
-  onCreateBet: () => void
   onBetAction?: () => void // Callback for when side bets are accepted/cancelled
 }
 
-export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSideBetsProps) {
+export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
   const { user } = useAuth()
   const { isOpen, onToggle } = useDisclosure()
+  const { 
+    isOpen: isCreateModalOpen, 
+    onOpen: onCreateModalOpen, 
+    onClose: onCreateModalClose 
+  } = useDisclosure()
   const [sideBets, setSideBets] = useState<SideBet[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [confirmBet, setConfirmBet] = useState<string | null>(null)
@@ -181,7 +175,13 @@ export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSid
     return `https://venmo.com/${venmoHandle}?txn=pay&amount=${amount}&note=${encodedNote}`
   }
 
-  const gameStarted = new Date() >= new Date(game.startTime)
+  // Game should be considered started if any of these conditions are true:
+  // 1. Start time has passed
+  // 2. Game is completed 
+  // 3. Game status indicates it's in progress
+  const gameStarted = new Date() >= game.startTime || 
+                      game.completed || 
+                      (game.status === 'in_progress')
   const openBets = sideBets.filter(bet => bet.status === 'OPEN').length
   const userBets = sideBets.filter(bet => 
     bet.proposerId === user?.id || 
@@ -225,7 +225,7 @@ export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSid
         <VStack spacing={3} mt={3} align="stretch">
           {/* Create Bet Button */}
           {!gameStarted && (
-            <Button size="sm" onClick={onCreateBet} colorScheme="blue">
+            <Button size="sm" onClick={onCreateModalOpen} colorScheme="blue">
               Create Side Bet
             </Button>
           )}
@@ -260,7 +260,7 @@ export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSid
                         </Text>
                         {!gameStarted && (
                           <Text fontSize="xs" color="orange.600">
-                            ⏰ Closes at {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            ⏰ Closes at {game.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                         )}
                         {bet.note && (
@@ -433,6 +433,17 @@ export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSid
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      {/* Create Side Bet Modal */}
+      <CreateSideBetModal
+        isOpen={isCreateModalOpen}
+        onClose={onCreateModalClose}
+        game={game}
+        onSuccess={() => {
+          loadSideBets() // Refresh the list
+          onBetAction?.() // Notify parent to refresh summary
+        }}
+      />
     </Box>
   )
 }

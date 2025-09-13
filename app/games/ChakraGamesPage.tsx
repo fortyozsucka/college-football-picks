@@ -39,6 +39,7 @@ import { SearchIcon, TimeIcon, SettingsIcon, CheckIcon, CloseIcon, StarIcon } fr
 import Link from 'next/link'
 import { Game, Pick } from '@/lib/types'
 import { useAuth } from '@/lib/context/AuthContext'
+import GameSideBets from '@/components/GameSideBets'
 
 interface SyncStatus {
   lastSync: string | null
@@ -962,6 +963,9 @@ const GameCard = ({
               )}
             </VStack>
           )}
+
+          {/* Side Bets */}
+          <GameSideBets game={game} />
         </VStack>
       </CardBody>
     </Card>
