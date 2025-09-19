@@ -68,8 +68,7 @@ export async function GET(request: NextRequest) {
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': 'Cron-Betting-Lines-Sync'
-          },
-          timeout: 30000 // 30 second timeout
+          }
         })
 
         if (!syncResponse.ok) {
