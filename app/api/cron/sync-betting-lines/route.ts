@@ -53,20 +53,23 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${activeWeeks.length} active weeks to sync:`, activeWeeks)
 
     // Sync betting lines for each active week
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://squadtriangle.com'
     const syncResults = []
 
     for (const weekData of activeWeeks) {
       try {
         console.log(`🎯 Syncing betting lines for Week ${weekData.week}, Season ${weekData.season}`)
-        
+
         const syncUrl = `${baseUrl}/api/games/sync?week=${weekData.week}&season=${weekData.season}`
+        console.log(`📡 Calling internal sync URL: ${syncUrl}`)
+
         const syncResponse = await fetch(syncUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': 'Cron-Betting-Lines-Sync'
-          }
+          },
+          timeout: 30000 // 30 second timeout
         })
 
         if (!syncResponse.ok) {
@@ -87,12 +90,16 @@ export async function GET(request: NextRequest) {
         await new Promise(resolve => setTimeout(resolve, 2000))
 
       } catch (error) {
-        console.error(`❌ Failed to sync Week ${weekData.week}, Season ${weekData.season}:`, error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error(`❌ Failed to sync Week ${weekData.week}, Season ${weekData.season}:`, {
+          error: errorMessage,
+          stack: error instanceof Error ? error.stack : undefined
+        })
         syncResults.push({
           week: weekData.week,
           season: weekData.season,
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: errorMessage
         })
       }
     }
