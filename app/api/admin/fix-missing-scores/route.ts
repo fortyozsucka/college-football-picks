@@ -96,12 +96,14 @@ export async function POST() {
         // Create map of CFB game ID to scores
         const scoresMap = new Map()
         scoreboardData.forEach((cfbGame: any) => {
-          if (cfbGame.status === 'completed' &&
-              cfbGame.homeTeam?.points !== null &&
-              cfbGame.awayTeam?.points !== null) {
+          if (cfbGame.status === 'completed') {
+            // Treat null scores as 0 for completed games
+            const homeScore = cfbGame.homeTeam?.points ?? 0
+            const awayScore = cfbGame.awayTeam?.points ?? 0
+
             scoresMap.set(cfbGame.id.toString(), {
-              homeScore: cfbGame.homeTeam.points,
-              awayScore: cfbGame.awayTeam.points
+              homeScore,
+              awayScore
             })
           }
         })

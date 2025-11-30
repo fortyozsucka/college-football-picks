@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Box,
   Container,
@@ -67,6 +68,7 @@ interface LeaderboardEntry {
 }
 
 export default function ChakraLeaderboardPage() {
+  const router = useRouter()
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -79,6 +81,9 @@ export default function ChakraLeaderboardPage() {
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
   const oddRowBg = useColorModeValue('gray.50', 'gray.700')
+  const weeklyItemBg = useColorModeValue('gray.50', 'gray.700')
+  const weeklyItemHoverBg = useColorModeValue('gray.100', 'gray.600')
+  const mutedTextColor = useColorModeValue('neutral.600', 'neutral.300')
 
   useEffect(() => {
     fetchLeaderboard()
@@ -313,7 +318,7 @@ export default function ChakraLeaderboardPage() {
                           -
                           <Text as="span" color="red.600" fontWeight="semibold">{entry.losses}</Text>
                           -
-                          <Text as="span" color={useColorModeValue("neutral.600", "neutral.300")}>{entry.pushes}</Text>
+                          <Text as="span" color={mutedTextColor}>{entry.pushes}</Text>
                         </Text>
                       </Td>
                       <Td isNumeric>
@@ -414,7 +419,7 @@ export default function ChakraLeaderboardPage() {
                           {' - '}
                           <Text as="span" color="red.600" fontWeight="bold">{selectedUser.losses}</Text>
                           {' - '}
-                          <Text as="span" color={useColorModeValue("neutral.600", "neutral.300")}>{selectedUser.pushes}</Text>
+                          <Text as="span" color={mutedTextColor}>{selectedUser.pushes}</Text>
                         </StatHelpText>
                       </Stat>
                     </SimpleGrid>
@@ -452,13 +457,29 @@ export default function ChakraLeaderboardPage() {
                         {selectedUser.weeklyStats
                           .sort((a, b) => b.season - a.season || b.week - a.week)
                           .map((week, index) => (
-                          <Flex key={index} justify="space-between" align="center" p={3} bg="gray.50" borderRadius="md">
+                          <Flex
+                            key={index}
+                            justify="space-between"
+                            align="center"
+                            p={3}
+                            bg={weeklyItemBg}
+                            borderRadius="md"
+                            cursor="pointer"
+                            onClick={() => {
+                              router.push(`/weekly-picks/${selectedUser.id}/${week.season}/${week.week}`)
+                            }}
+                            _hover={{
+                              bg: weeklyItemHoverBg,
+                              transform: 'translateX(4px)'
+                            }}
+                            transition="all 0.2s"
+                          >
                             <VStack align="start" spacing={0}>
                               <Text fontWeight="semibold" fontSize="sm">
                                 Week {week.week}, {week.season}
                               </Text>
-                              <Text fontSize="xs" color={useColorModeValue("neutral.600", "neutral.300")}>
-                                {week.picks} picks made
+                              <Text fontSize="xs" color={mutedTextColor}>
+                                {week.picks} picks made • Click to view details
                               </Text>
                             </VStack>
                             <Badge
