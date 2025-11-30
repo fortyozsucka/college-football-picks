@@ -18,29 +18,34 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
-  Link,
-  useColorModeValue
+  Link
 } from '@chakra-ui/react'
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import { useSideBets, SideBet } from '@/lib/hooks/useSideBets'
 import { useAuth } from '@/lib/context/AuthContext'
-import { Game } from '@/lib/types'
-import CreateSideBetModal from './CreateSideBetModal'
+
+interface Game {
+  id: string
+  homeTeam: string
+  awayTeam: string
+  spread: number
+  overUnder: number | null
+  startTime: string
+  completed: boolean
+  homeScore: number | null
+  awayScore: number | null
+}
 
 interface GameSideBetsProps {
   game: Game
+  onCreateBet: () => void
   onBetAction?: () => void // Callback for when side bets are accepted/cancelled
 }
 
-export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
+export default function GameSideBets({ game, onCreateBet, onBetAction }: GameSideBetsProps) {
   const { user } = useAuth()
   const { isOpen, onToggle } = useDisclosure()
-  const { 
-    isOpen: isCreateModalOpen, 
-    onOpen: onCreateModalOpen, 
-    onClose: onCreateModalClose 
-  } = useDisclosure()
   const [sideBets, setSideBets] = useState<SideBet[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [confirmBet, setConfirmBet] = useState<string | null>(null)
@@ -51,8 +56,7 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
     cancelSideBet, 
     withdrawAcceptance,
     markAsPaid,
-    formatBetDescription,
-    formatFullBetDescription, 
+    formatBetDescription, 
     canAcceptBet 
   } = useSideBets()
   
@@ -176,13 +180,7 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
     return `https://venmo.com/${venmoHandle}?txn=pay&amount=${amount}&note=${encodedNote}`
   }
 
-  // Game should be considered started if any of these conditions are true:
-  // 1. Start time has passed
-  // 2. Game is completed 
-  // 3. Game status indicates it's in progress
-  const gameStarted = new Date() >= game.startTime || 
-                      game.completed || 
-                      (game.status === 'in_progress')
+  const gameStarted = new Date() >= new Date(game.startTime)
   const openBets = sideBets.filter(bet => bet.status === 'OPEN').length
   const userBets = sideBets.filter(bet => 
     bet.proposerId === user?.id || 
@@ -226,7 +224,7 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
         <VStack spacing={3} mt={3} align="stretch">
           {/* Create Bet Button */}
           {!gameStarted && (
-            <Button size="sm" onClick={onCreateModalOpen} colorScheme="blue">
+            <Button size="sm" onClick={onCreateBet} colorScheme="blue">
               Create Side Bet
             </Button>
           )}
@@ -256,23 +254,12 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
                             {bet.status}
                           </Badge>
                         </HStack>
-                        <VStack spacing={1} align="start">
-                          <HStack>
-                            <Text fontSize="sm" fontWeight="semibold" color="blue.600">
-                              {bet.proposer.name}: {formatBetDescription(bet)}
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">•</Text>
-                            <Text fontSize="sm" fontWeight="bold" color="green.600">
-                              ${bet.amount}
-                            </Text>
-                          </HStack>
-                          <Text fontSize="xs" color={useColorModeValue("gray.500", "gray.400")}>
-                            💡 You would get: {formatFullBetDescription(bet).acceptor}
-                          </Text>
-                        </VStack>
+                        <Text fontSize="sm" color="gray.600">
+                          {formatBetDescription(bet)} • ${bet.amount}
+                        </Text>
                         {!gameStarted && (
                           <Text fontSize="xs" color="orange.600">
-                            ⏰ Closes at {game.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            ⏰ Closes at {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
                         )}
                         {bet.note && (
@@ -418,28 +405,13 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
                 return bet ? (
                   <>
                     Are you sure you want to accept this ${bet.amount} bet?
-                    <Box mt={3} p={3} bg={useColorModeValue("gray.50", "gray.700")} borderRadius="md">
-                      <VStack spacing={2} align="start">
-                        <HStack justify="space-between" w="full">
-                          <Text fontSize="sm" color={useColorModeValue("gray.600", "gray.300")}>
-                            {bet.proposer.name || 'Anonymous'} gets:
-                          </Text>
-                          <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                            {formatBetDescription(bet)}
-                          </Text>
-                        </HStack>
-                        <HStack justify="space-between" w="full">
-                          <Text fontSize="sm" color={useColorModeValue("gray.600", "gray.300")}>
-                            You get:
-                          </Text>
-                          <Text fontSize="sm" fontWeight="bold" color="green.600">
-                            {formatFullBetDescription(bet).acceptor}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color={useColorModeValue("gray.500", "gray.400")} textAlign="center" w="full" mt={2}>
-                          Both sides risk ${bet.amount}
-                        </Text>
-                      </VStack>
+                    <Box mt={2} p={2} bg="gray.50" borderRadius="md">
+                      <Text fontSize="sm" fontWeight="semibold">
+                        {bet.proposer.name}: {formatBetDescription(bet)}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        You&apos;ll be taking the opposite side for ${bet.amount}
+                      </Text>
                     </Box>
                   </>
                 ) : null
@@ -460,17 +432,6 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-
-      {/* Create Side Bet Modal */}
-      <CreateSideBetModal
-        isOpen={isCreateModalOpen}
-        onClose={onCreateModalClose}
-        game={game}
-        onSuccess={() => {
-          loadSideBets() // Refresh the list
-          onBetAction?.() // Notify parent to refresh summary
-        }}
-      />
     </Box>
   )
 }

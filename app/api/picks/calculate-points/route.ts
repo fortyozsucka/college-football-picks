@@ -92,12 +92,12 @@ export async function POST() {
       const homeScore = liveScore.homeScore
       const awayScore = liveScore.awayScore
 
-      // Determine who won against the spread using live scores
+      // Determine who won against the spread using live scores and LOCKED spread
       const spreadWinner = getSpreadWinner(
-        homeScore, 
-        awayScore, 
-        game.spread, 
-        game.homeTeam, 
+        homeScore,
+        awayScore,
+        pick.lockedSpread, // Use the locked spread from when pick was made
+        game.homeTeam,
         game.awayTeam
       )
 
@@ -157,13 +157,13 @@ export async function POST() {
           awayTeam: game.awayTeam,
           homeScore: homeScore,
           awayScore: awayScore,
-          spread: game.spread,
+          spread: pick.lockedSpread,
           winner: spreadWinner === 'Push' ? 'Push' : spreadWinner,
           startTime: game.startTime
         })
       }
 
-      console.log(`Pick ${pick.id}: ${pick.user.name} picked ${pick.pickedTeam} (${pick.isDoubleDown ? 'DOUBLE DOWN' : 'NORMAL'}) - Spread winner: ${spreadWinner} - Points: ${points}`)
+      console.log(`Pick ${pick.id}: ${pick.user.name} picked ${pick.pickedTeam} (${pick.isDoubleDown ? 'DOUBLE DOWN' : 'NORMAL'}) - Locked spread: ${pick.lockedSpread} - Spread winner: ${spreadWinner} - Points: ${points}`)
     }
 
     // Send email notifications to users about their results

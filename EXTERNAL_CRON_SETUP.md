@@ -21,6 +21,14 @@ This guide shows how to set up reliable external cron services for automated gam
 
 ## Required Cron Jobs
 
+### 🎲 **Betting Lines Sync** (Essential - New!)
+- **Frequency**: Twice daily (6 AM & 6 PM)
+- **Cron**: `0 6,18 * * *`
+- **URL**: `https://squadtriangle.com/api/cron/sync-betting-lines`
+- **Method**: POST
+- **Headers**: `Authorization: Bearer YOUR_CRON_SECRET`
+- **Purpose**: **SOLVES "EVEN ODDS" ISSUE** - Keeps all active weeks' betting lines current
+
 ### 🔴 **Live Score Updates** (During Game Season)
 - **Frequency**: Every 15 minutes
 - **Cron**: `*/15 * * * *`
@@ -49,7 +57,18 @@ This guide shows how to set up reliable external cron services for automated gam
 2. Sign up for free account
 3. Verify email address
 
-### Step 2: Add Live Score Sync Job
+### Step 2: Add Betting Lines Sync Job (PRIORITY #1)
+1. Click **"Create cronjob"**
+2. **Title**: `Betting Lines Sync - Fix Even Odds`
+3. **Address**: `https://squadtriangle.com/api/cron/sync-betting-lines`
+4. **Execution**: `0 6,18 * * *` (Twice daily: 6 AM & 6 PM)
+5. **Request method**: POST
+6. **Custom headers**: Add `Authorization: Bearer YOUR_CRON_SECRET`
+7. **Save settings**: ON
+8. **Enable notifications**: ON (get alerts if it fails)
+9. Click **"Create"**
+
+### Step 3: Add Live Score Sync Job
 1. Click **"Create cronjob"**
 2. **Title**: `College Football Live Scores`
 3. **Address**: `https://squadtriangle.com/api/games/live-sync`

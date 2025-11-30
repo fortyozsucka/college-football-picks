@@ -282,6 +282,34 @@ export function useSideBets() {
     }
   }, [])
 
+  // Helper function to format what the acceptor would be betting on (opposite side)
+  const formatAcceptorSide = useCallback((sideBet: SideBet) => {
+    const { betType, betSide, customLine, game } = sideBet
+    
+    if (betType === 'SPREAD') {
+      const line = customLine !== null ? customLine : game.spread
+      // Opposite team and opposite line
+      const team = betSide === 'HOME' ? game.awayTeam : game.homeTeam
+      const oppositeLine = -line
+      const formattedLine = oppositeLine > 0 ? `+${oppositeLine}` : oppositeLine.toString()
+      return `${team} ${formattedLine}`
+    } else {
+      const line = customLine !== null ? customLine : game.overUnder
+      const oppositeSide = betSide === 'OVER' ? 'UNDER' : 'OVER'
+      return `${oppositeSide} ${line}`
+    }
+  }, [])
+
+  // Helper function to format full bet display showing both sides
+  const formatFullBetDescription = useCallback((sideBet: SideBet) => {
+    const proposerSide = formatBetDescription(sideBet)
+    const acceptorSide = formatAcceptorSide(sideBet)
+    return {
+      proposer: proposerSide,
+      acceptor: acceptorSide
+    }
+  }, [formatBetDescription, formatAcceptorSide])
+
   // Helper function to determine if user can accept a bet
   const canAcceptBet = useCallback((sideBet: SideBet) => {
     if (!user) return false
@@ -312,6 +340,8 @@ export function useSideBets() {
     markAsPaid,
     fetchUserStats,
     formatBetDescription,
+    formatAcceptorSide,
+    formatFullBetDescription,
     canAcceptBet
   }
 }
