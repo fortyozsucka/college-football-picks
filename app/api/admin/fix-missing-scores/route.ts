@@ -86,7 +86,7 @@ export async function POST() {
     let skippedGames = 0
 
     // Fetch scores from CFB API for each week/season
-    for (const [weekSeason, games] of weekSeasonMap.entries()) {
+    for (const [weekSeason, games] of Array.from(weekSeasonMap.entries())) {
       const [season, week] = weekSeason.split('-').map(Number)
 
       try {
