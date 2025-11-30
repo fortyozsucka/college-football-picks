@@ -91,28 +91,32 @@ export async function POST() {
 
       try {
         console.log(`📡 Fetching scores for ${season} week ${week}...`)
-        const scoreboardData = await cfbApi.getScoreboard(season, week)
+
+        // Try using the games endpoint instead of scoreboard for more complete data
+        const gamesData = await cfbApi.getGames(season, week)
+
+        console.log(`   Found ${gamesData.length} games from API`)
+        console.log(`   Looking for ${games.length} games in our DB`)
 
         // Create map of CFB game ID to scores
         const scoresMap = new Map()
-        scoreboardData.forEach((cfbGame: any) => {
-          if (cfbGame.status === 'completed') {
-            // Treat null scores as 0 for completed games
-            const homeScore = cfbGame.homeTeam?.points ?? 0
-            const awayScore = cfbGame.awayTeam?.points ?? 0
+        gamesData.forEach((cfbGame: any) => {
+          // For completed games, treat null as 0
+          const homeScore = cfbGame.home_points ?? 0
+          const awayScore = cfbGame.away_points ?? 0
 
-            scoresMap.set(cfbGame.id.toString(), {
-              homeScore,
-              awayScore
-            })
-          }
+          scoresMap.set(cfbGame.id.toString(), {
+            homeScore,
+            awayScore,
+            completed: cfbGame.completed
+          })
         })
 
         // Update games with missing scores
         for (const game of games) {
           const cfbScores = scoresMap.get(game.cfbId)
 
-          if (cfbScores) {
+          if (cfbScores && cfbScores.completed) {
             await db.game.update({
               where: { id: game.id },
               data: {
@@ -123,9 +127,18 @@ export async function POST() {
 
             fixedGames++
             console.log(`✅ Fixed ${game.homeTeam} vs ${game.awayTeam}: ${cfbScores.homeScore}-${cfbScores.awayScore}`)
+          } else if (!cfbScores) {
+            skippedGames++
+            console.log(`⚠️ Game not found in API: ${game.homeTeam} vs ${game.awayTeam} (CFB ID: ${game.cfbId})`)
+
+            // Show a sample of what IDs we do have
+            if (skippedGames === 1) {
+              const sampleIds = Array.from(scoresMap.keys()).slice(0, 3)
+              console.log(`   Sample API game IDs: ${sampleIds.join(', ')}`)
+            }
           } else {
             skippedGames++
-            console.log(`⚠️ No scores found for ${game.homeTeam} vs ${game.awayTeam} (CFB ID: ${game.cfbId})`)
+            console.log(`⚠️ Game not completed in API: ${game.homeTeam} vs ${game.awayTeam}`)
           }
         }
 
