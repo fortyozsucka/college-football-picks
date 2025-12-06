@@ -80,19 +80,21 @@ const PLAYOFF_KEYWORDS = [
 ]
 
 /**
- * Classify a game based on team names, week, and other factors
+ * Classify a game based on team names, week, notes field, and other factors
  */
 export function classifyGame(
   homeTeam: string,
   awayTeam: string,
   week: number,
   season: number,
+  notes?: string,
   gameName?: string
 ): GameClassification {
   const homeTeamLower = homeTeam.toLowerCase()
   const awayTeamLower = awayTeam.toLowerCase()
+  const notesLower = notes?.toLowerCase() || ''
   const gameNameLower = gameName?.toLowerCase() || ''
-  
+
   // Check for Army-Navy game specifically
   if ((homeTeamLower.includes('army') && awayTeamLower.includes('navy')) ||
       (homeTeamLower.includes('navy') && awayTeamLower.includes('army'))) {
@@ -104,9 +106,22 @@ export function classifyGame(
     }
   }
 
-  // Check for playoff games (typically weeks 16+ or specific game names)
-  if (week >= 16 || PLAYOFF_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
-    if (gameNameLower.includes('national championship')) {
+  // Check for championship games using notes field (PRIMARY METHOD)
+  // Championship games have "Championship" in the notes field regardless of week
+  if (notesLower.includes('championship') || CHAMPIONSHIP_KEYWORDS.some(keyword => notesLower.includes(keyword))) {
+    return {
+      gameType: GameType.CHAMPIONSHIP,
+      isDoubleDownRequired: true,
+      countsTowardLimit: true,
+      description: 'Conference Championship (Mandatory Double Down)'
+    }
+  }
+
+  // Check for playoff games (specific game names or notes)
+  if (notesLower.includes('playoff') || notesLower.includes('national championship') ||
+      PLAYOFF_KEYWORDS.some(keyword => notesLower.includes(keyword)) ||
+      PLAYOFF_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
+    if (notesLower.includes('national championship') || gameNameLower.includes('national championship')) {
       return {
         gameType: GameType.PLAYOFF,
         isDoubleDownRequired: true,
@@ -114,37 +129,22 @@ export function classifyGame(
         description: 'National Championship (Mandatory Double Down)'
       }
     }
-    if (PLAYOFF_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
-      return {
-        gameType: GameType.PLAYOFF,
-        isDoubleDownRequired: true,
-        countsTowardLimit: true,
-        description: 'College Football Playoff (Mandatory Double Down)'
-      }
+    return {
+      gameType: GameType.PLAYOFF,
+      isDoubleDownRequired: true,
+      countsTowardLimit: true,
+      description: 'College Football Playoff (Mandatory Double Down)'
     }
   }
 
-  // Check for championship games (typically weeks 14-15)
-  if (week >= 14 && week <= 16) {
-    if (CHAMPIONSHIP_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
-      return {
-        gameType: GameType.CHAMPIONSHIP,
-        isDoubleDownRequired: true,
-        countsTowardLimit: true,
-        description: 'Conference Championship (Mandatory Double Down)'
-      }
-    }
-  }
-
-  // Check for bowl games (typically weeks 15+ and December/January)
-  if (week >= 15 || BOWL_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
-    if (BOWL_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
-      return {
-        gameType: GameType.BOWL,
-        isDoubleDownRequired: true,
-        countsTowardLimit: false, // Bowl games don't count toward 5-game limit
-        description: 'Bowl Game (Mandatory Double Down, Must Pick All)'
-      }
+  // Check for bowl games using notes or game name
+  if (notesLower.includes('bowl') || BOWL_KEYWORDS.some(keyword => notesLower.includes(keyword)) ||
+      BOWL_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
+    return {
+      gameType: GameType.BOWL,
+      isDoubleDownRequired: true,
+      countsTowardLimit: false, // Bowl games don't count toward 5-game limit
+      description: 'Bowl Game (Mandatory Double Down, Must Pick All)'
     }
   }
 

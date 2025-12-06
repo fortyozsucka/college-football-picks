@@ -706,13 +706,13 @@ export default function ChakraGamesPage() {
 }
 
 // Game Card Component
-const GameCard = ({ 
-  game, 
-  userPick, 
+const GameCard = ({
+  game,
+  userPick,
   gamePicks,
-  isPicking, 
-  isCelebrating, 
-  gameStarted, 
+  isPicking,
+  isCelebrating,
+  gameStarted,
   spreadWinner,
   onMakePick,
   onRemovePick,
@@ -733,7 +733,17 @@ const GameCard = ({
 }) => {
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
-  const [isDoubleDown, setIsDoubleDown] = useState(false)
+
+  // Special games (Championship, Bowl, Playoff, Army-Navy) are automatically double-downs
+  const isSpecialGame = game.gameType && game.gameType !== 'REGULAR'
+  const [isDoubleDown, setIsDoubleDown] = useState(isSpecialGame || false)
+
+  // Update isDoubleDown when game type changes
+  useEffect(() => {
+    if (isSpecialGame) {
+      setIsDoubleDown(true)
+    }
+  }, [isSpecialGame])
 
   return (
     <Card 
@@ -827,19 +837,29 @@ const GameCard = ({
                     <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")} textAlign="center">
                       Make your pick:
                     </Text>
-                    
-                    <Checkbox 
-                      isChecked={isDoubleDown} 
-                      onChange={(e) => setIsDoubleDown(e.target.checked)}
-                      colorScheme="orange"
-                      size="sm"
-                    >
-                      <HStack spacing={1}>
-                        <Text fontSize="sm">Double Down</Text>
-                        <Icon as={StarIcon} color="orange.500" boxSize={3} />
-                      </HStack>
-                    </Checkbox>
-                    
+
+                    {/* Show special game notice or regular double-down checkbox */}
+                    {isSpecialGame ? (
+                      <Alert status="info" variant="subtle" borderRadius="md" py={2}>
+                        <AlertIcon />
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {game.gameType} games are automatic double-downs! (+2 for win, -1 for loss)
+                        </Text>
+                      </Alert>
+                    ) : (
+                      <Checkbox
+                        isChecked={isDoubleDown}
+                        onChange={(e) => setIsDoubleDown(e.target.checked)}
+                        colorScheme="orange"
+                        size="sm"
+                      >
+                        <HStack spacing={1}>
+                          <Text fontSize="sm">Double Down</Text>
+                          <Icon as={StarIcon} color="orange.500" boxSize={3} />
+                        </HStack>
+                      </Checkbox>
+                    )}
+
                     <ButtonGroup size="sm" width="full" variant="outline">
                       <Button
                         flex={1}
@@ -860,8 +880,8 @@ const GameCard = ({
                         {game.homeTeam}
                       </Button>
                     </ButtonGroup>
-                    
-                    {isDoubleDown && (
+
+                    {isDoubleDown && !isSpecialGame && (
                       <Text fontSize="xs" color="orange.600" textAlign="center" fontWeight="semibold">
                         ⭐ Double Down: Worth 2x points!
                       </Text>

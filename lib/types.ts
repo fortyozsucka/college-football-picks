@@ -70,6 +70,7 @@ export interface CFBGame {
   period?: number
   clock?: string
   status?: string
+  notes?: string
 }
 
 export interface CFBLine {

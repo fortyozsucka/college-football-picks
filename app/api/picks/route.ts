@@ -257,12 +257,15 @@ export async function POST(request: Request) {
         )
       }
 
-      // If this is a double down pick, check if user already has one for this week
-      if (pickData.isDoubleDown) {
-        const existingDoubleDown = sameWeekPicks.find(pick => pick.isDoubleDown)
-        if (existingDoubleDown) {
+      // If this is a double down pick for a REGULAR game, check if user already has one for this week
+      // Special games (Championship, Bowl, Playoff, Army-Navy) can all be double-downs
+      if (pickData.isDoubleDown && (game.gameType === 'REGULAR' || !game.gameType)) {
+        const existingRegularDoubleDown = sameWeekPicks.find(pick =>
+          pick.isDoubleDown && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
+        )
+        if (existingRegularDoubleDown) {
           return NextResponse.json(
-            { error: 'You can only have one double down pick per week' },
+            { error: 'You can only have one double down pick per week for regular season games' },
             { status: 400 }
           )
         }
@@ -291,9 +294,10 @@ export async function POST(request: Request) {
         }
       }
     } else {
-      // For existing picks, validate double down rules
-      if (pickData.isDoubleDown && !existingPick.isDoubleDown) {
-        // User is trying to make an existing pick a double down
+      // For existing picks, validate double down rules for REGULAR games only
+      // Special games (Championship, Bowl, Playoff, Army-Navy) can all be double-downs
+      if (pickData.isDoubleDown && !existingPick.isDoubleDown && (game.gameType === 'REGULAR' || !game.gameType)) {
+        // User is trying to make an existing REGULAR game pick a double down
         const weeklyPicks = await db.pick.findMany({
           where: {
             userId: pickData.userId,
@@ -309,16 +313,16 @@ export async function POST(request: Request) {
           }
         })
 
-        const sameWeekPicks = weeklyPicks.filter(pick => 
+        const sameWeekPicks = weeklyPicks.filter(pick =>
           pick.game.week === game.week && pick.game.season === game.season
         )
 
-        const existingDoubleDown = sameWeekPicks.find(pick => 
-          pick.isDoubleDown && pick.id !== existingPick.id
+        const existingRegularDoubleDown = sameWeekPicks.find(pick =>
+          pick.isDoubleDown && pick.id !== existingPick.id && (!pick.game.gameType || pick.game.gameType === 'REGULAR')
         )
-        if (existingDoubleDown) {
+        if (existingRegularDoubleDown) {
           return NextResponse.json(
-            { error: 'You can only have one double down pick per week' },
+            { error: 'You can only have one double down pick per week for regular season games' },
             { status: 400 }
           )
         }

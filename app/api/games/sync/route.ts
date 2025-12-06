@@ -105,11 +105,12 @@ export async function POST(request: NextRequest) {
       const awayTeamData = awayTeamId ? teamsMap.get(awayTeamId) : null
 
       // Classify the game type using our classification system
-      const gameClassification = classifyGame(homeTeam, awayTeam, week, season)
+      // Pass the notes field from CFB API - this is the primary way to identify championship games
+      const gameClassification = classifyGame(homeTeam, awayTeam, week, season, cfbGame.notes)
       
       // Log special games for debugging
       if (gameClassification.gameType !== 'REGULAR') {
-        console.log(`🏆 Special game detected: ${awayTeam} @ ${homeTeam} - ${gameClassification.description}`)
+        console.log(`🏆 Special game detected: ${awayTeam} @ ${homeTeam} - ${gameClassification.description} (notes: "${cfbGame.notes || 'none'}")`)
       }
 
       const gameData = {
