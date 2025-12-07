@@ -3,13 +3,12 @@ import { db } from '@/lib/db'
 
 export async function GET() {
   try {
-    // Get all users with their total scores, ordered by totalScore descending
+    // Get all users with their picks (we'll calculate and sort by score afterwards)
     const leaderboard = await db.user.findMany({
       select: {
         id: true,
         name: true,
         email: true,
-        totalScore: true,
         picks: {
           select: {
             points: true,
@@ -29,16 +28,17 @@ export async function GET() {
             }
           }
         }
-      },
-      orderBy: {
-        totalScore: 'desc'
       }
     })
 
     // Calculate additional stats for each user
     const leaderboardWithStats = leaderboard.map(user => {
       const completedPicks = user.picks.filter(pick => pick.points !== null)
-      
+
+      // Calculate actual total score from picks (same as weekly picks route)
+      // This ensures the leaderboard always shows the correct current score
+      const actualTotalScore = completedPicks.reduce((sum, pick) => sum + (pick.points || 0), 0)
+
       // Use the new result field for accurate win/loss/push tracking, with fallback to points
       const wins = completedPicks.filter(pick => {
         if (pick.result) {
@@ -47,7 +47,7 @@ export async function GET() {
         // Fallback: wins are positive points
         return pick.points && pick.points > 0
       }).length
-      
+
       const losses = completedPicks.filter(pick => {
         if (pick.result) {
           return pick.result === 'loss'
@@ -61,7 +61,7 @@ export async function GET() {
         }
         return false
       }).length
-      
+
       const pushes = completedPicks.filter(pick => {
         if (pick.result) {
           return pick.result === 'push'
@@ -88,7 +88,7 @@ export async function GET() {
         id: user.id,
         name: user.name || user.email.split('@')[0],
         email: user.email,
-        totalScore: user.totalScore,
+        totalScore: actualTotalScore, // Use calculated score instead of cached user.totalScore
         totalPicks: completedPicks.length,
         wins,
         losses,
@@ -103,7 +103,10 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json(leaderboardWithStats)
+    // Sort by calculated total score (instead of cached user.totalScore)
+    const sortedLeaderboard = leaderboardWithStats.sort((a, b) => b.totalScore - a.totalScore)
+
+    return NextResponse.json(sortedLeaderboard)
   } catch (error) {
     console.error('Error fetching leaderboard:', error)
     return NextResponse.json(
