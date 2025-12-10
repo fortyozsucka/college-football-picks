@@ -40,22 +40,41 @@ export async function POST(request: NextRequest) {
     console.log(`🏈 Admin sync: Syncing postseason games for ${targetSeason}`)
     console.log(`   Current date: ${now.toLocaleDateString()}, Detected season: ${currentSeason}`)
 
-    // Call the game sync endpoint with postseason=true
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    // Build the URL - use request URL's origin for production compatibility
+    const requestUrl = new URL(request.url)
+    const baseUrl = process.env.NEXTAUTH_URL || `${requestUrl.protocol}//${requestUrl.host}`
     const syncUrl = `${baseUrl}/api/games/sync?season=${targetSeason}&week=16&postseason=true`
 
-    const syncResponse = await fetch(syncUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    console.log(`📡 Calling sync endpoint: ${syncUrl}`)
 
-    if (!syncResponse.ok) {
-      throw new Error(`Sync failed: ${syncResponse.statusText}`)
+    let syncResponse
+    try {
+      syncResponse = await fetch(syncUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    } catch (fetchError) {
+      console.error('❌ Fetch error:', fetchError)
+      throw new Error(`Network error calling sync endpoint: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`)
     }
 
-    const syncResult = await syncResponse.json()
+    if (!syncResponse.ok) {
+      const errorText = await syncResponse.text()
+      console.error(`❌ Sync endpoint returned ${syncResponse.status}: ${errorText}`)
+      throw new Error(`Sync failed with status ${syncResponse.status}: ${errorText}`)
+    }
+
+    let syncResult
+    try {
+      syncResult = await syncResponse.json()
+    } catch (parseError) {
+      console.error('❌ Failed to parse sync response:', parseError)
+      throw new Error('Invalid JSON response from sync endpoint')
+    }
+
+    console.log(`✅ Sync completed:`, syncResult)
 
     // Find all unique weeks that now have postseason games
     const postseasonWeeks = await db.game.groupBy({
@@ -116,11 +135,20 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error in postseason sync:', error)
+    console.error('❌ Error in postseason sync:', error)
+
+    // Log the full error for debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+
     return NextResponse.json(
       {
+        success: false,
         error: 'Failed to sync postseason games',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     )

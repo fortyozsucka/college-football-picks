@@ -444,11 +444,13 @@ export default function ChakraAdminPage() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to sync postseason games')
+        const data = await response.json().catch(() => ({ error: 'Unknown error', details: response.statusText }))
+        console.error('Postseason sync failed:', data)
+        throw new Error(data.details || data.error || `Failed to sync postseason games (${response.status})`)
       }
 
       const result = await response.json()
+      console.log('Postseason sync result:', result)
 
       // Refresh weeks data to show new postseason weeks
       await fetchWeeks()
