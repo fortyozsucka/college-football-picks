@@ -40,12 +40,15 @@ export async function POST(request: NextRequest) {
     console.log(`🏈 Admin sync: Syncing postseason games for ${targetSeason}`)
     console.log(`   Current date: ${now.toLocaleDateString()}, Detected season: ${currentSeason}`)
 
-    // Build the URL - use request URL's origin for production compatibility
-    const requestUrl = new URL(request.url)
-    const baseUrl = process.env.NEXTAUTH_URL || `${requestUrl.protocol}//${requestUrl.host}`
+    // Build the URL - properly handle production environment
+    // In production, use the request's host header, not localhost
+    const host = request.headers.get('host')
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const baseUrl = host ? `${protocol}://${host}` : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3006'
     const syncUrl = `${baseUrl}/api/games/sync?season=${targetSeason}&week=16&postseason=true`
 
     console.log(`📡 Calling sync endpoint: ${syncUrl}`)
+    console.log(`   Protocol: ${protocol}, Host: ${host}, Base URL: ${baseUrl}`)
 
     let syncResponse
     try {
