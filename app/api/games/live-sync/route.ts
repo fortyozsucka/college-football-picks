@@ -33,9 +33,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`🔴 LIVE sync for Week ${week}, Season ${season}`)
 
+    // Determine if this is a postseason week (14+)
+    const isPostseasonWeek = week >= 14
+
     // Use scoreboard API for better live score data
-    const cfbGames = await cfbApi.getScoreboard(season, week)
-    console.log(`Fetched ${cfbGames.length} games from CFB Scoreboard API`)
+    let cfbGames: any[] = []
+
+    if (isPostseasonWeek) {
+      // For postseason weeks, fetch both regular and postseason games
+      console.log('📊 Fetching postseason scoreboard...')
+      const regularGames = await cfbApi.getScoreboard(season, week, 'regular')
+      const postseasonGames = await cfbApi.getPostseasonScoreboard(season)
+      cfbGames = [...regularGames, ...postseasonGames]
+      console.log(`Fetched ${regularGames.length} regular + ${postseasonGames.length} postseason = ${cfbGames.length} total games from CFB Scoreboard API`)
+    } else {
+      cfbGames = await cfbApi.getScoreboard(season, week)
+      console.log(`Fetched ${cfbGames.length} games from CFB Scoreboard API`)
+    }
 
     let gamesUpdated = 0
     let liveGamesFound = 0

@@ -19,17 +19,30 @@ export async function POST(request: NextRequest) {
     const currentSeason = getCurrentSeason()
     const week = parseInt(searchParams.get('week') || '1')
     const season = parseInt(searchParams.get('season') || currentSeason.toString())
+    const includePostseason = searchParams.get('postseason') === 'true' || searchParams.get('postseason') === '1'
 
     console.log(`Syncing games for Week ${week}, Season ${season}`)
     console.log(`Current season detected: ${currentSeason}`)
+    console.log(`Include postseason: ${includePostseason}`)
 
     // Fetch games from CFB API
-    const cfbGames = await cfbApi.getGames(season, week)
-    console.log(`Fetched ${cfbGames.length} games from CFB API`)
+    let cfbGames = await cfbApi.getGames(season, week)
+    console.log(`Fetched ${cfbGames.length} regular season games from CFB API`)
 
     // Fetch betting lines
-    const cfbLines = await cfbApi.getLines(season, week)
-    console.log(`Fetched ${cfbLines.length} betting lines from CFB API`)
+    let cfbLines = await cfbApi.getLines(season, week)
+    console.log(`Fetched ${cfbLines.length} regular season betting lines from CFB API`)
+
+    // If postseason is requested or we're in weeks 14+, also fetch postseason games
+    if (includePostseason || week >= 14) {
+      const postseasonGames = await cfbApi.getPostseasonGames(season)
+      console.log(`Fetched ${postseasonGames.length} postseason games from CFB API`)
+      cfbGames = [...cfbGames, ...postseasonGames]
+
+      const postseasonLines = await cfbApi.getPostseasonLines(season)
+      console.log(`Fetched ${postseasonLines.length} postseason betting lines from CFB API`)
+      cfbLines = [...cfbLines, ...postseasonLines]
+    }
 
     // Fetch team data for logos
     const teams = await cfbApi.getTeams()
@@ -326,6 +339,16 @@ export async function GET() {
   return NextResponse.json({
     message: 'Game sync endpoint',
     usage: 'POST to this endpoint to sync games from CFB API',
-    parameters: '?week=1&season=2024'
+    parameters: '?week=1&season=2025&postseason=true',
+    examples: [
+      'Regular season: POST /api/games/sync?week=15&season=2024',
+      'Include postseason: POST /api/games/sync?week=15&season=2024&postseason=true',
+      'Postseason only: POST /api/games/sync?week=16&season=2024&postseason=true'
+    ],
+    notes: [
+      'Postseason games are automatically included for weeks 14+',
+      'Use postseason=true to explicitly include bowl games, playoffs, and Army-Navy',
+      'Postseason includes all bowl games, CFP games, and championship games'
+    ]
   })
 }

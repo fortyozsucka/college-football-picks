@@ -245,14 +245,21 @@ export async function POST(request: Request) {
       })
 
       // Filter picks for the same week/season as the game being picked
-      const sameWeekPicks = weeklyPicks.filter(pick => 
+      const sameWeekPicks = weeklyPicks.filter(pick =>
         pick.game.week === game.week && pick.game.season === game.season
       )
 
-      // Check if user already has 5 picks for this week
-      if (sameWeekPicks.length >= 5) {
+      // Only count REGULAR games toward the 5-game weekly limit
+      // Special games (BOWL, PLAYOFF, CHAMPIONSHIP, ARMY_NAVY) don't count toward the limit
+      const regularGamePicks = sameWeekPicks.filter(pick =>
+        !pick.game.gameType || pick.game.gameType === 'REGULAR'
+      )
+
+      // Check if user already has 5 REGULAR picks for this week
+      // Only enforce this limit if the current game is also REGULAR
+      if ((game.gameType === 'REGULAR' || !game.gameType) && regularGamePicks.length >= 5) {
         return NextResponse.json(
-          { error: 'You can only make 5 picks per week' },
+          { error: 'You can only make 5 regular season picks per week. Bowl games, playoffs, and special games do not count toward this limit.' },
           { status: 400 }
         )
       }

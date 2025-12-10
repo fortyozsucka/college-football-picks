@@ -46,16 +46,31 @@ export class CFBAPIClient {
     }
   }
 
-  async getGames(year: number, week: number): Promise<CFBGame[]> {
-    return this.fetchFromAPI(`/games?year=${year}&week=${week}&seasonType=regular&classification=fbs`)
+  async getGames(year: number, week: number, seasonType: 'regular' | 'postseason' = 'regular'): Promise<CFBGame[]> {
+    return this.fetchFromAPI(`/games?year=${year}&week=${week}&seasonType=${seasonType}&classification=fbs`)
   }
 
-  async getScoreboard(year: number, week: number): Promise<any[]> {
-    return this.fetchFromAPI(`/scoreboard?year=${year}&week=${week}&classification=fbs`)
+  async getPostseasonGames(year: number): Promise<CFBGame[]> {
+    // Fetch ALL postseason games (bowl games, playoffs, etc.) regardless of week
+    return this.fetchFromAPI(`/games?year=${year}&seasonType=postseason&classification=fbs`)
   }
 
-  async getLines(year: number, week: number): Promise<CFBLine[]> {
-    return this.fetchFromAPI(`/lines?year=${year}&week=${week}&seasonType=regular&classification=fbs`)
+  async getScoreboard(year: number, week: number, seasonType: 'regular' | 'postseason' = 'regular'): Promise<any[]> {
+    return this.fetchFromAPI(`/scoreboard?year=${year}&week=${week}&seasonType=${seasonType}&classification=fbs`)
+  }
+
+  async getPostseasonScoreboard(year: number): Promise<any[]> {
+    // Fetch ALL postseason game scores regardless of week
+    return this.fetchFromAPI(`/scoreboard?year=${year}&seasonType=postseason&classification=fbs`)
+  }
+
+  async getLines(year: number, week: number, seasonType: 'regular' | 'postseason' = 'regular'): Promise<CFBLine[]> {
+    return this.fetchFromAPI(`/lines?year=${year}&week=${week}&seasonType=${seasonType}&classification=fbs`)
+  }
+
+  async getPostseasonLines(year: number): Promise<CFBLine[]> {
+    // Fetch ALL postseason betting lines regardless of week
+    return this.fetchFromAPI(`/lines?year=${year}&seasonType=postseason&classification=fbs`)
   }
 
   async getCurrentWeek(year: number): Promise<number> {

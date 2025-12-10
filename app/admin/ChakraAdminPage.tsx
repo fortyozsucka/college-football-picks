@@ -117,6 +117,7 @@ export default function ChakraAdminPage() {
   const [syncingLive, setSyncingLive] = useState(false)
   const [syncingGames, setSyncingGames] = useState(false)
   const [syncingNewWeeks, setSyncingNewWeeks] = useState(false)
+  const [syncingPostseason, setSyncingPostseason] = useState(false)
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [apiLoading, setApiLoading] = useState(false)
   const [seasonInfo, setSeasonInfo] = useState<{availableSeasons: number[], archivedSeasons: number[]} | null>(null)
@@ -375,24 +376,24 @@ export default function ChakraAdminPage() {
   const syncNewWeeks = async () => {
     setSyncingNewWeeks(true)
     setError(null)
-    
+
     try {
       // Sync multiple weeks to find new data
       const currentYear = new Date().getFullYear()
       const seasons = [currentYear, currentYear - 1] // Current and previous year
       const weeksToSync = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] // All possible weeks
-      
+
       let totalCreated = 0
       let totalUpdated = 0
       let weeksFound = 0
-      
+
       for (const season of seasons) {
         for (const week of weeksToSync) {
           try {
             const response = await fetch(`/api/games/sync?week=${week}&season=${season}`, {
               method: 'POST'
             })
-            
+
             if (response.ok) {
               const result = await response.json()
               if (result.gamesCreated > 0 || result.gamesUpdated > 0) {
@@ -408,15 +409,56 @@ export default function ChakraAdminPage() {
           }
         }
       }
-      
+
       // Refresh weeks data to show new options
       await fetchWeeks()
-      
+
       alert(`Week sync completed!\n\nWeeks with new data found: ${weeksFound}\nGames created: ${totalCreated}\nGames updated: ${totalUpdated}\n\nNew weeks should now appear in your admin controls.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sync new weeks')
     } finally {
       setSyncingNewWeeks(false)
+    }
+  }
+
+  const syncPostseason = async () => {
+    setSyncingPostseason(true)
+    setError(null)
+
+    try {
+      // Use same season logic as game sync
+      const now = new Date()
+      const year = now.getFullYear()
+      // College football season runs from August to January of next year
+      const season = now.getMonth() >= 7 ? year : year - 1
+
+      const response = await fetch('/api/admin/sync-postseason', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          season,
+          autoActivate: true
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to sync postseason games')
+      }
+
+      const result = await response.json()
+
+      // Refresh weeks data to show new postseason weeks
+      await fetchWeeks()
+
+      const weeksList = result.postseasonWeeks.map((w: any) => `Week ${w.week} (${w.gameCount} games)`).join(', ')
+      alert(`Postseason sync completed! 🏈\n\nSeason: ${result.season}\nGames created: ${result.sync.gamesCreated}\nGames updated: ${result.sync.gamesUpdated}\nWeeks activated: ${result.activatedWeeks}\n\nPostseason weeks: ${weeksList}\n\nUsers can now make their bowl picks!`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sync postseason games')
+    } finally {
+      setSyncingPostseason(false)
     }
   }
 
@@ -769,8 +811,8 @@ export default function ChakraAdminPage() {
                     <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>
                       Manual backup controls for syncing. External cron service handles automation.
                     </Text>
-                    
-                    <SimpleGrid columns={3} spacing={4}>
+
+                    <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
                       <Button
                         leftIcon={<TimeIcon />}
                         onClick={syncLiveScores}
@@ -805,6 +847,19 @@ export default function ChakraAdminPage() {
                         size="sm"
                       >
                         Sync New Weeks
+                      </Button>
+
+                      <Button
+                        leftIcon={<Text>🏈</Text>}
+                        onClick={syncPostseason}
+                        isLoading={syncingPostseason}
+                        loadingText="Syncing..."
+                        colorScheme="orange"
+                        variant="solid"
+                        size="sm"
+                        fontWeight="bold"
+                      >
+                        Sync Postseason
                       </Button>
                     </SimpleGrid>
                   </VStack>

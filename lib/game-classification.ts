@@ -101,7 +101,7 @@ export function classifyGame(
     return {
       gameType: GameType.ARMY_NAVY,
       isDoubleDownRequired: true,
-      countsTowardLimit: true,
+      countsTowardLimit: false, // Army-Navy doesn't count toward 5-game limit
       description: 'Army-Navy Game (Mandatory Double Down)'
     }
   }
@@ -125,14 +125,14 @@ export function classifyGame(
       return {
         gameType: GameType.PLAYOFF,
         isDoubleDownRequired: true,
-        countsTowardLimit: true,
+        countsTowardLimit: false, // Playoff games don't count toward 5-game limit
         description: 'National Championship (Mandatory Double Down)'
       }
     }
     return {
       gameType: GameType.PLAYOFF,
       isDoubleDownRequired: true,
-      countsTowardLimit: true,
+      countsTowardLimit: false, // Playoff games don't count toward 5-game limit
       description: 'College Football Playoff (Mandatory Double Down)'
     }
   }
