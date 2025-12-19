@@ -22,12 +22,17 @@ export async function GET(
     const userId = params.id
 
     // Get all picks for this user, week, and season with game details
+    // ONLY show picks for games that have already started (to prevent seeing upcoming picks)
     const picks = await db.pick.findMany({
       where: {
         userId,
         game: {
           week,
-          season
+          season,
+          // Only show picks where game has started
+          startTime: {
+            lte: new Date()
+          }
         }
       },
       include: {
