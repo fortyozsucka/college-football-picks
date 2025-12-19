@@ -171,23 +171,45 @@ export default function ChakraPage() {
                           Weeks 15+
                         </Text>
                       </HStack>
-                      
+
                       <VStack align="start" spacing={2}>
                         <Text fontSize="md" fontWeight="semibold" color="gray.800">🏈 Bowl Rules:</Text>
                         <Text fontSize="sm" color="orange.600" fontWeight="bold">• Must pick ALL bowl games</Text>
-                        <Text fontSize="sm" color="orange.600" fontWeight="bold">• ALL picks are mandatory double-downs</Text>
+                        <Text fontSize="sm">• Tier-based scoring system</Text>
                         <Text fontSize="sm">• Don&apos;t count toward 5-game weekly limit</Text>
-                        <Text fontSize="sm">• Postseason elimination games</Text>
+                        <Text fontSize="sm">• Postseason games</Text>
                       </VStack>
 
                       <Divider />
 
-                      <VStack align="start" spacing={2} w="full">
-                        <Text fontSize="sm" fontWeight="semibold" color="orange.800">Bowl Scoring:</Text>
-                        <HStack justify="space-between" w="full">
-                          <Text fontSize="sm" color="green.600" fontWeight="bold">Win: +2 points</Text>
-                          <Text fontSize="sm" color="red.600" fontWeight="bold">Loss/Push: -1 point</Text>
-                        </HStack>
+                      <VStack align="start" spacing={3} w="full">
+                        <Text fontSize="sm" fontWeight="semibold" color="orange.800">Bowl Scoring (Tier-Based):</Text>
+
+                        <Box w="full" p={2} bg="orange.50" borderRadius="md">
+                          <Text fontSize="xs" fontWeight="bold" color="orange.900" mb={1}>
+                            🏆 Premium Bowls (NY6 Bowls):
+                          </Text>
+                          <Text fontSize="xs" color="gray.700">
+                            Rose, Sugar, Orange, Cotton, Fiesta, Peach
+                          </Text>
+                          <HStack justify="space-between" mt={1}>
+                            <Text fontSize="sm" color="green.600" fontWeight="bold">Win: +2 pts</Text>
+                            <Text fontSize="sm" color="red.600" fontWeight="bold">Loss: -1 pt</Text>
+                          </HStack>
+                          <Text fontSize="xs" color="red.600" fontWeight="bold" mt={1}>
+                            No Pick Penalty: -1 pt
+                          </Text>
+                        </Box>
+
+                        <Box w="full" p={2} bg="blue.50" borderRadius="md">
+                          <Text fontSize="xs" fontWeight="bold" color="blue.900" mb={1}>
+                            🎯 Standard Bowls (All Other Bowls):
+                          </Text>
+                          <HStack justify="space-between" mt={1}>
+                            <Text fontSize="sm" color="green.600" fontWeight="bold">Win: +1 pt</Text>
+                            <Text fontSize="sm" color="gray.600">Loss: 0 pts</Text>
+                          </HStack>
+                        </Box>
                       </VStack>
                     </VStack>
                   </CardBody>
@@ -204,11 +226,11 @@ export default function ChakraPage() {
                             CFP & National Championship
                           </Text>
                         </HStack>
-                        
+
                         <VStack align="start" spacing={1}>
                           <Text fontSize="sm">• College Football Playoff games</Text>
                           <Text fontSize="sm">• National Championship</Text>
-                          <Text fontSize="sm" color="red.600" fontWeight="bold">• Mandatory double-downs</Text>
+                          <Text fontSize="sm" color="red.600" fontWeight="bold">• Must pick all playoff games</Text>
                         </VStack>
                       </VStack>
 
@@ -221,7 +243,7 @@ export default function ChakraPage() {
                             Special Tradition Game
                           </Text>
                         </HStack>
-                        
+
                         <VStack align="start" spacing={1}>
                           <Text fontSize="sm">• Annual Army vs Navy game</Text>
                           <Text fontSize="sm" color="yellow.600" fontWeight="bold">• Mandatory double-down</Text>
@@ -232,11 +254,14 @@ export default function ChakraPage() {
                       <Divider />
 
                       <VStack align="start" spacing={2} w="full">
-                        <Text fontSize="sm" fontWeight="semibold" color="red.800">Special Game Scoring:</Text>
+                        <Text fontSize="sm" fontWeight="semibold" color="red.800">Playoff & Special Game Scoring:</Text>
                         <HStack justify="space-between" w="full">
                           <Text fontSize="sm" color="green.600" fontWeight="bold">Win: +2 points</Text>
                           <Text fontSize="sm" color="red.600" fontWeight="bold">Loss/Push: -1 point</Text>
                         </HStack>
+                        <Text fontSize="xs" color="red.600" fontWeight="bold">
+                          No Pick Penalty (Playoff only): -1 pt
+                        </Text>
                       </VStack>
                     </VStack>
                   </CardBody>

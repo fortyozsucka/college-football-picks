@@ -26,6 +26,7 @@ export interface Game {
   completed: boolean
   winner: string | null
   gameType: 'REGULAR' | 'CHAMPIONSHIP' | 'BOWL' | 'PLAYOFF' | 'ARMY_NAVY'
+  notes: string | null
   period: number | null
   clock: string | null
   status: string | null
