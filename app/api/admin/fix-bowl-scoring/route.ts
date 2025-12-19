@@ -164,7 +164,7 @@ export async function POST(request: Request) {
     // Step 3: Update user total scores
     console.log('Step 3: Updating user total scores...')
 
-    for (const [userId, userData] of userPointChanges.entries()) {
+    for (const [userId, userData] of Array.from(userPointChanges.entries())) {
       if (userData.change !== 0) {
         results.step3.userScoreChanges.push({
           name: userData.name,
