@@ -37,6 +37,13 @@ export async function POST(request: NextRequest) {
     if (includePostseason || week >= 14) {
       const postseasonGames = await cfbApi.getPostseasonGames(season)
       console.log(`Fetched ${postseasonGames.length} postseason games from CFB API`)
+
+      // Debug: Show first postseason game with notes
+      if (postseasonGames.length > 0) {
+        const firstGame = postseasonGames[0]
+        console.log(`📝 Sample postseason game: ${firstGame.awayTeam} @ ${firstGame.homeTeam}, notes: "${firstGame.notes}"`)
+      }
+
       cfbGames = [...cfbGames, ...postseasonGames]
 
       const postseasonLines = await cfbApi.getPostseasonLines(season)
@@ -145,9 +152,15 @@ export async function POST(request: NextRequest) {
         period: cfbGame.period || null,
         clock: cfbGame.clock || null,
         status: cfbGame.status || null,
-        winner: cfbGame.completed ? 
+        notes: cfbGame.notes || null,
+        winner: cfbGame.completed ?
           ((cfbGame.home_points || cfbGame.homePoints || 0) > (cfbGame.away_points || cfbGame.awayPoints || 0) ? homeTeam : awayTeam) : null,
         gameType: gameClassification.gameType
+      }
+
+      // Debug logging for bowl/playoff games
+      if (gameClassification.gameType === 'BOWL' || gameClassification.gameType === 'PLAYOFF') {
+        console.log(`📝 Bowl/Playoff notes for ${homeTeam} vs ${awayTeam}: "${cfbGame.notes}"`)
       }
 
       // Check if game already exists

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { emailService, GameResult } from '@/lib/email'
 import { cfbApi } from '@/lib/cfb-api'
+import { calculatePoints, determineBowlTier, GameType } from '@/lib/game-classification'
 
 function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string {
   // Spread is stored from home team's perspective
@@ -104,17 +105,28 @@ export async function POST() {
       let points = 0
       let result = ""
 
-      if (spreadWinner === 'Push') {
-        // Push (tie against spread) = treated as a loss
-        points = pick.isDoubleDown ? -1 : 0
+      const isPush = spreadWinner === 'Push'
+      const isWin = !isPush && spreadWinner === pick.pickedTeam
+
+      // Determine bowl tier for playoff/bowl games
+      const bowlTier = (game.gameType === 'BOWL' || game.gameType === 'PLAYOFF')
+        ? determineBowlTier(game.notes || '', '')
+        : undefined
+
+      // Calculate points using the new tier-based system
+      points = calculatePoints(
+        game.gameType as GameType,
+        bowlTier,
+        isWin,
+        isPush,
+        pick.isDoubleDown
+      )
+
+      if (isPush) {
         result = "push"
-      } else if (spreadWinner === pick.pickedTeam) {
-        // User picked correctly
-        points = pick.isDoubleDown ? 2 : 1
+      } else if (isWin) {
         result = "win"
       } else {
-        // User picked incorrectly
-        points = pick.isDoubleDown ? -1 : 0
         result = "loss"
       }
 
@@ -190,11 +202,75 @@ export async function POST() {
       }
     }
 
+    // Handle missing picks penalty for premium bowl/playoff games
+    // Get all completed premium bowl/playoff games that need penalties
+    const completedPremiumGames = await db.game.findMany({
+      where: {
+        completed: true,
+        gameType: {
+          in: ['BOWL', 'PLAYOFF']
+        }
+      }
+    })
+
+    let missingPickPenalties = 0
+    for (const game of completedPremiumGames) {
+      // Check if this is a premium tier game
+      const bowlTier = determineBowlTier(game.notes || '', '')
+      if (bowlTier !== 'PREMIUM') continue // Only penalize for premium games
+
+      // Get all users
+      const allUsers = await db.user.findMany({
+        select: { id: true }
+      })
+
+      // Check each user for missing picks
+      for (const user of allUsers) {
+        const existingPick = await db.pick.findUnique({
+          where: {
+            userId_gameId: {
+              userId: user.id,
+              gameId: game.id
+            }
+          }
+        })
+
+        // If no pick exists, create a penalty pick
+        if (!existingPick) {
+          await db.pick.create({
+            data: {
+              userId: user.id,
+              gameId: game.id,
+              pickedTeam: 'NO_PICK',
+              lockedSpread: game.spread,
+              isDoubleDown: false,
+              points: -1,
+              result: 'no_pick'
+            }
+          })
+
+          // Update user's total score
+          await db.user.update({
+            where: { id: user.id },
+            data: {
+              totalScore: {
+                decrement: 1
+              }
+            }
+          })
+
+          missingPickPenalties++
+          console.log(`❌ No pick penalty: User ${user.id} did not pick premium game ${game.homeTeam} vs ${game.awayTeam} (-1 pt)`)
+        }
+      }
+    }
+
     return NextResponse.json({
       message: 'Points calculated successfully',
       updatedPicks,
       totalPointsAwarded,
-      emailsSent: userPicksMap.size
+      emailsSent: userPicksMap.size,
+      missingPickPenalties
     })
 
   } catch (error) {

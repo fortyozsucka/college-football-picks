@@ -6,11 +6,17 @@ export enum GameType {
   ARMY_NAVY = 'ARMY_NAVY'
 }
 
+export enum BowlTier {
+  PREMIUM = 'PREMIUM', // NY6 bowls and playoff games (2 pts win, -1 loss/no pick)
+  STANDARD = 'STANDARD' // Other bowl games (1 pt win, 0 loss)
+}
+
 export interface GameClassification {
   gameType: GameType
   isDoubleDownRequired: boolean
   countsTowardLimit: boolean
   description: string
+  bowlTier?: BowlTier
 }
 
 export interface SpecialGameRules {
@@ -79,6 +85,85 @@ const PLAYOFF_KEYWORDS = [
   'college football playoff'
 ]
 
+// New Year's Six bowl games (premium tier)
+const NY6_BOWLS = [
+  'rose bowl',
+  'sugar bowl',
+  'orange bowl',
+  'cotton bowl',
+  'fiesta bowl',
+  'peach bowl'
+]
+
+/**
+ * Determine the tier of a bowl/playoff game for scoring purposes
+ * PREMIUM = NY6 bowls + playoff games (2 pts win, -1 loss/no pick)
+ * STANDARD = Other bowl games (1 pt win, 0 loss)
+ */
+export function determineBowlTier(
+  notes: string = '',
+  gameName: string = ''
+): BowlTier {
+  const notesLower = notes.toLowerCase()
+  const gameNameLower = gameName.toLowerCase()
+  const combined = `${notesLower} ${gameNameLower}`
+
+  // Check for playoff games (National Championship, Semifinals)
+  if (combined.includes('national championship') ||
+      combined.includes('semifinal') ||
+      combined.includes('semi-final') ||
+      combined.includes('playoff')) {
+    return BowlTier.PREMIUM
+  }
+
+  // Check for NY6 bowls
+  if (NY6_BOWLS.some(bowl => combined.includes(bowl))) {
+    return BowlTier.PREMIUM
+  }
+
+  // All other bowls are standard
+  return BowlTier.STANDARD
+}
+
+/**
+ * Calculate points based on game type, bowl tier, and result
+ *
+ * PREMIUM bowls/playoffs (NY6 + Playoff): 2 pts win, -1 loss/push
+ * STANDARD bowls: 1 pt win, 0 loss/push
+ * Regular games: 2 pts double-down win, 1 pt win, -1 double-down loss, 0 loss
+ */
+export function calculatePoints(
+  gameType: GameType,
+  bowlTier: BowlTier | undefined,
+  isWin: boolean,
+  isPush: boolean,
+  isDoubleDown: boolean
+): number {
+  // Handle bowl and playoff games with tier-based scoring
+  if (gameType === GameType.BOWL || gameType === GameType.PLAYOFF) {
+    if (bowlTier === BowlTier.PREMIUM) {
+      // Premium bowls/playoffs: 2 pts win, -1 loss/push
+      if (isWin && !isPush) return 2
+      return -1
+    } else {
+      // Standard bowls: 1 pt win, 0 loss/push
+      if (isWin && !isPush) return 1
+      return 0
+    }
+  }
+
+  // Regular season and championship games use standard double-down logic
+  if (isPush) {
+    return isDoubleDown ? -1 : 0
+  }
+
+  if (isWin) {
+    return isDoubleDown ? 2 : 1
+  } else {
+    return isDoubleDown ? -1 : 0
+  }
+}
+
 /**
  * Classify a game based on team names, week, notes field, and other factors
  */
@@ -121,30 +206,39 @@ export function classifyGame(
   if (notesLower.includes('playoff') || notesLower.includes('national championship') ||
       PLAYOFF_KEYWORDS.some(keyword => notesLower.includes(keyword)) ||
       PLAYOFF_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
+    const bowlTier = determineBowlTier(notes, gameName)
     if (notesLower.includes('national championship') || gameNameLower.includes('national championship')) {
       return {
         gameType: GameType.PLAYOFF,
         isDoubleDownRequired: true,
         countsTowardLimit: false, // Playoff games don't count toward 5-game limit
-        description: 'National Championship (Mandatory Double Down)'
+        description: 'National Championship (Must Pick, 2 pts win / -1 loss)',
+        bowlTier
       }
     }
     return {
       gameType: GameType.PLAYOFF,
       isDoubleDownRequired: true,
       countsTowardLimit: false, // Playoff games don't count toward 5-game limit
-      description: 'College Football Playoff (Mandatory Double Down)'
+      description: 'College Football Playoff (Must Pick, 2 pts win / -1 loss)',
+      bowlTier
     }
   }
 
   // Check for bowl games using notes or game name
   if (notesLower.includes('bowl') || BOWL_KEYWORDS.some(keyword => notesLower.includes(keyword)) ||
       BOWL_KEYWORDS.some(keyword => gameNameLower.includes(keyword))) {
+    const bowlTier = determineBowlTier(notes, gameName)
+    const pointDescription = bowlTier === BowlTier.PREMIUM
+      ? '2 pts win / -1 loss'
+      : '1 pt win / 0 loss'
+
     return {
       gameType: GameType.BOWL,
       isDoubleDownRequired: true,
       countsTowardLimit: false, // Bowl games don't count toward 5-game limit
-      description: 'Bowl Game (Mandatory Double Down, Must Pick All)'
+      description: `Bowl Game (Must Pick, ${pointDescription})`,
+      bowlTier
     }
   }
 

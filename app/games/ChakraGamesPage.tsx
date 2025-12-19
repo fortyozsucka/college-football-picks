@@ -40,6 +40,7 @@ import Link from 'next/link'
 import { Game, Pick } from '@/lib/types'
 import { useAuth } from '@/lib/context/AuthContext'
 import GameSideBets from '@/components/GameSideBets'
+import { determineBowlTier, BowlTier } from '@/lib/game-classification'
 
 interface SyncStatus {
   lastSync: string | null
@@ -757,12 +758,12 @@ const GameCard = ({
       <CardBody>
         <VStack spacing={4} align="stretch">
           {/* Game Header */}
-          <HStack justify="space-between">
+          <HStack justify="space-between" wrap="wrap">
             <Badge colorScheme={game.completed ? 'green' : gameStarted ? 'orange' : 'blue'}>
               {(() => {
                 if (game.completed) return 'Final'
                 if (!gameStarted) return 'Upcoming'
-                
+
                 const status = getGameStatusDisplay(game)
                 if (status.isLive) {
                   return `Live - ${status.display}`
@@ -774,6 +775,15 @@ const GameCard = ({
               {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </HStack>
+
+          {/* Bowl/Playoff Game Name */}
+          {game.notes && (game.gameType === 'BOWL' || game.gameType === 'PLAYOFF') && (
+            <Box bg="purple.50" p={2} borderRadius="md" borderLeft="4px" borderColor="purple.500">
+              <Text fontSize="sm" fontWeight="bold" color="purple.800">
+                🏆 {game.notes}
+              </Text>
+            </Box>
+          )}
 
           {/* Teams */}
           <VStack spacing={3}>
@@ -843,7 +853,19 @@ const GameCard = ({
                       <Alert status="info" variant="subtle" borderRadius="md" py={2}>
                         <AlertIcon />
                         <Text fontSize="xs" fontWeight="semibold">
-                          {game.gameType} games are automatic double-downs! (+2 for win, -1 for loss)
+                          {(() => {
+                            // For Bowl and Playoff games, show tier-based scoring
+                            if (game.gameType === 'BOWL' || game.gameType === 'PLAYOFF') {
+                              const bowlTier = determineBowlTier(game.notes || '', '')
+                              if (bowlTier === BowlTier.PREMIUM) {
+                                return `${game.gameType} game - Must Pick! (+2 for win, -1 for loss)`
+                              } else {
+                                return `${game.gameType} game - Must Pick! (+1 for win, 0 for loss)`
+                              }
+                            }
+                            // For other special games (Championship, Army-Navy), show standard message
+                            return `${game.gameType} games are automatic double-downs! (+2 for win, -1 for loss)`
+                          })()}
                         </Text>
                       </Alert>
                     ) : (
