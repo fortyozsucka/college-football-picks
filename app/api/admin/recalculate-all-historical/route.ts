@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { calculatePoints, determineBowlTier, GameType } from '@/lib/game-classification'
 
 function getSpreadWinner(homeScore: number, awayScore: number, spread: number, homeTeam: string, awayTeam: string): string {
   // Match frontend logic: scoreDiff + spread
@@ -55,17 +56,32 @@ export async function POST() {
         game.awayTeam
       )
 
-      let points = 0
-      let result = ""
+      const isPush = spreadWinner === 'Push'
+      const isWin = !isPush && spreadWinner === pick.pickedTeam
 
-      if (spreadWinner === 'Push') {
-        points = pick.isDoubleDown ? -1 : 0
+      // Determine bowl tier for playoff/bowl games
+      const bowlTier = (game.gameType === 'BOWL' || game.gameType === 'PLAYOFF')
+        ? determineBowlTier(game.notes || '', '')
+        : undefined
+
+      // Calculate points using the tier-based system
+      // PREMIUM bowls/playoffs: 2 pts win, -1 loss/push
+      // STANDARD bowls: 1 pt win, 0 loss/push
+      // Regular/Championship games: standard double-down logic
+      const points = calculatePoints(
+        game.gameType as GameType,
+        bowlTier,
+        isWin,
+        isPush,
+        pick.isDoubleDown
+      )
+
+      let result = ""
+      if (isPush) {
         result = "push"
-      } else if (spreadWinner === pick.pickedTeam) {
-        points = pick.isDoubleDown ? 2 : 1
+      } else if (isWin) {
         result = "win"
       } else {
-        points = pick.isDoubleDown ? -1 : 0
         result = "loss"
       }
 
