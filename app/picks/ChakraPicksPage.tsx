@@ -543,15 +543,16 @@ const PickCard = ({
           {/* Header */}
           <HStack justify="space-between">
             <HStack>
-              <Badge 
+              <Badge
                 colorScheme={
-                  game.completed ? 'green' : 
+                  game.completed ? 'green' :
                   gameStarted ? 'orange' : 'blue'
                 }
               >
                 {game.completed ? 'Final' : gameStarted ? 'Live' : 'Upcoming'}
               </Badge>
-              {pick.isDoubleDown && (
+              {/* Only show "DOUBLE DOWN" badge for regular/championship games, not bowl/playoff */}
+              {pick.isDoubleDown && game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF' && (
                 <Badge colorScheme="orange" variant="solid">
                   <Icon as={StarIcon} mr={1} />
                   Double Down

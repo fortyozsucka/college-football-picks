@@ -917,7 +917,8 @@ const GameCard = ({
                     <Text fontWeight="semibold">
                       You picked: {userPick.pickedTeam}
                     </Text>
-                    {userPick.isDoubleDown && (
+                    {/* Only show "DOUBLE DOWN" badge for regular/championship games, not bowl/playoff */}
+                    {userPick.isDoubleDown && game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF' && (
                       <Badge colorScheme="orange" variant="solid">
                         Double Down
                       </Badge>
