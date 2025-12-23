@@ -551,8 +551,19 @@ const PickCard = ({
               >
                 {game.completed ? 'Final' : gameStarted ? 'Live' : 'Upcoming'}
               </Badge>
-              {/* Only show "DOUBLE DOWN" badge for regular/championship games, not bowl/playoff */}
-              {pick.isDoubleDown && game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF' && (
+              {/* Show "DOUBLE DOWN" badge for +2/-1 scoring games (Regular DD, Championship, Playoff, Premium Bowls/NY6) */}
+              {pick.isDoubleDown && (() => {
+                // Show for all non-bowl games
+                if (game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF') return true
+                // For bowl/playoff games, only show if notes indicate it's premium (contains playoff keywords or NY6 bowl names)
+                const notes = game.notes?.toLowerCase() || ''
+                const isPremium = notes.includes('playoff') || notes.includes('national championship') ||
+                                 notes.includes('semifinal') || notes.includes('rose bowl') ||
+                                 notes.includes('sugar bowl') || notes.includes('orange bowl') ||
+                                 notes.includes('cotton bowl') || notes.includes('fiesta bowl') ||
+                                 notes.includes('peach bowl')
+                return isPremium
+              })() && (
                 <Badge colorScheme="orange" variant="solid">
                   <Icon as={StarIcon} mr={1} />
                   Double Down
