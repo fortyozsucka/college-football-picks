@@ -1,8 +1,30 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyToken } from '@/lib/auth'
 import { db } from '@/lib/db'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Verify admin access
+    const token = request.cookies.get('auth-token')?.value
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const payload = await verifyToken(token)
+    if (!payload || !payload.userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: payload.userId as string },
+      select: { isAdmin: true }
+    })
+
+    if (!user?.isAdmin) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
     const { season } = await request.json()
 
     if (!season || typeof season !== 'number') {
@@ -30,7 +52,6 @@ export async function POST(request: Request) {
         id: true,
         name: true,
         email: true,
-        totalScore: true,
       }
     })
 
@@ -53,7 +74,7 @@ export async function POST(request: Request) {
 
     // Calculate stats for each user
     const userStatsMap = new Map()
-    
+
     for (const user of users) {
       const userPicks = allPicks.filter(pick => pick.userId === user.id)
       const completedPicks = userPicks.filter(pick => pick.game.completed && pick.points !== null)
@@ -61,11 +82,14 @@ export async function POST(request: Request) {
       const doubleDowns = userPicks.filter(pick => pick.isDoubleDown)
       const correctDoubleDowns = doubleDowns.filter(pick => pick.points !== null && pick.points > 0)
 
+      // Calculate season-specific score from picks (not cached totalScore which includes all seasons)
+      const seasonScore = completedPicks.reduce((sum, pick) => sum + (pick.points || 0), 0)
+
       userStatsMap.set(user.id, {
         userId: user.id,
         userName: user.name || 'Unknown User',
         userEmail: user.email,
-        finalScore: user.totalScore,
+        finalScore: seasonScore, // Use season-specific score, not user.totalScore
         totalPicks: userPicks.length,
         correctPicks: correctPicks.length,
         winPercentage: completedPicks.length > 0 ? (correctPicks.length / completedPicks.length) * 100 : 0,
@@ -123,8 +147,29 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Verify admin access
+    const token = request.cookies.get('auth-token')?.value
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const payload = await verifyToken(token)
+    if (!payload || !payload.userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: payload.userId as string },
+      select: { isAdmin: true }
+    })
+
+    if (!user?.isAdmin) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    }
+
     // Get available seasons that could be archived
     const seasons = await db.game.findMany({
       select: { season: true },

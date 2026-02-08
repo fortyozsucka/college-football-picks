@@ -136,6 +136,7 @@ export default function ChakraAdminPage() {
     if (user) {
       fetchInvites()
       fetchWeeks()
+      fetchSeasonInfo()
     }
   }, [user, router])
 
@@ -490,28 +491,33 @@ export default function ChakraAdminPage() {
 
   const fetchSeasonInfo = async () => {
     try {
-      const response = await fetch('/api/admin/archive-season')
+      const response = await fetch('/api/admin/archive-season', {
+        credentials: 'include'
+      })
       if (response.ok) {
         const info = await response.json()
         setSeasonInfo(info)
       } else {
-        console.error('Failed to fetch season info')
+        console.error('Failed to fetch season info:', response.status, response.statusText)
+        setError('Failed to fetch season information')
       }
     } catch (err) {
       console.error('Error fetching season info:', err)
+      setError('Error loading season data')
     }
   }
 
   const archiveSeason = async (season: number) => {
     setArchiving(true)
     setError(null)
-    
+
     try {
       const response = await fetch('/api/admin/archive-season', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ season })
       })
 
