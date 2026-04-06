@@ -242,7 +242,7 @@ export default function ChakraGolfPicksPage() {
               ⛳ Make Your Picks
             </Heading>
             {tournament && (
-              <Text color={mutedText}>{tournament.name} · Pick 2 from each group</Text>
+              <Text color={mutedText}>{tournament?.name} · Pick 2 from each group</Text>
             )}
           </Box>
 
@@ -273,17 +273,17 @@ export default function ChakraGolfPicksPage() {
                   <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
                     <Box>
                       <Text fontWeight="800" fontSize="lg" color="white" letterSpacing="0.05em">
-                        {tournament.name} — Pick Summary
+                        {tournament?.name} — Pick Summary
                       </Text>
                       <Text fontSize="xs" color="whiteAlpha.700" mt={0.5}>
                         Picks locked · {users.length} {users.length === 1 ? 'entry' : 'entries'}
                       </Text>
                     </Box>
                     <Badge
-                      colorScheme={tournament.status === 'IN_PROGRESS' ? 'green' : 'gray'}
+                      colorScheme={tournament?.status === 'IN_PROGRESS' ? 'green' : 'gray'}
                       fontSize="sm" px={2} py={1}
                     >
-                      {tournament.status === 'IN_PROGRESS' ? '● Live' : 'Final'}
+                      {tournament?.status === 'IN_PROGRESS' ? '● Live' : 'Final'}
                     </Badge>
                   </Flex>
                 </Box>
