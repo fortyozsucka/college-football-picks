@@ -29,6 +29,13 @@ import {
   Divider,
   Tooltip,
   Icon,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
 } from '@chakra-ui/react'
 import { CheckIcon } from '@chakra-ui/icons'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -92,6 +99,7 @@ export default function ChakraGolfPicksPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [existingPicks, setExistingPicks] = useState(false)
+  const [allPicks, setAllPicks] = useState<any[]>([])
 
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -123,6 +131,12 @@ export default function ChakraGolfPicksPage() {
               fullName: pick.golfer.fullName,
             }))
           )
+          // If tournament is locked, also load all users' picks
+          if (t?.status !== 'UPCOMING') {
+            fetch(`/api/golf/picks?tournamentId=${tournamentId}`)
+              .then(r => r.json())
+              .then(all => { if (Array.isArray(all)) setAllPicks(all) })
+          }
         }
       })
       .catch(() => setError('Failed to load picks data'))
@@ -235,12 +249,112 @@ export default function ChakraGolfPicksPage() {
           {loading && <Flex justify="center" py={12}><Spinner size="lg" /></Flex>}
           {error && <Alert status="error" borderRadius="md"><AlertIcon />{error}</Alert>}
 
-          {tournament?.status !== 'UPCOMING' && !loading && (
-            <Alert status="warning" borderRadius="md">
-              <AlertIcon />
-              This tournament has already started — picks are locked.
-            </Alert>
-          )}
+          {tournament?.status !== 'UPCOMING' && !loading && (() => {
+            // Group picks by user
+            const byUser = new Map<string, { name: string; userId: string; picks: any[] }>()
+            for (const pick of allPicks) {
+              const uid = pick.userId
+              if (!byUser.has(uid)) {
+                byUser.set(uid, {
+                  userId: uid,
+                  name: pick.user?.name || pick.user?.email?.split('@')[0] || 'Unknown',
+                  picks: [],
+                })
+              }
+              byUser.get(uid)!.picks.push(pick)
+            }
+            const users = Array.from(byUser.values())
+            const GREEN = '#1a472a'
+            const LIGHT_GREEN = '#2d6a4f'
+
+            return (
+              <VStack spacing={4} align="stretch">
+                <Box bg={GREEN} borderRadius="lg" px={5} py={4}>
+                  <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                    <Box>
+                      <Text fontWeight="800" fontSize="lg" color="white" letterSpacing="0.05em">
+                        {tournament.name} — Pick Summary
+                      </Text>
+                      <Text fontSize="xs" color="whiteAlpha.700" mt={0.5}>
+                        Picks locked · {users.length} {users.length === 1 ? 'entry' : 'entries'}
+                      </Text>
+                    </Box>
+                    <Badge
+                      colorScheme={tournament.status === 'IN_PROGRESS' ? 'green' : 'gray'}
+                      fontSize="sm" px={2} py={1}
+                    >
+                      {tournament.status === 'IN_PROGRESS' ? '● Live' : 'Final'}
+                    </Badge>
+                  </Flex>
+                </Box>
+
+                {users.length === 0 && (
+                  <Alert status="info" borderRadius="md"><AlertIcon />No picks submitted for this tournament.</Alert>
+                )}
+
+                {users.map(({ userId: uid, name, picks }) => {
+                  const isMe = uid === user?.id
+                  const byGroup: Record<string, any[]> = { A: [], B: [], C: [] }
+                  for (const p of picks) byGroup[p.golferGroup]?.push(p)
+
+                  return (
+                    <Box
+                      key={uid}
+                      borderRadius="lg"
+                      overflow="hidden"
+                      border="1px solid"
+                      borderColor={isMe ? LIGHT_GREEN : borderColor}
+                      boxShadow={isMe ? `0 0 0 2px ${LIGHT_GREEN}` : 'sm'}
+                    >
+                      <Box bg={GREEN} px={4} py={2.5}>
+                        <Text fontWeight="800" fontSize="sm" color="white" letterSpacing="0.08em" textTransform="uppercase">
+                          {name}
+                          {isMe && <Text as="span" fontSize="xs" color="green.300" ml={2}>(you)</Text>}
+                        </Text>
+                      </Box>
+                      <Box bg={cardBg}>
+                        <TableContainer>
+                          <Table variant="unstyled" size="sm">
+                            <Thead>
+                              <Tr bg={useColorModeValue('gray.50', 'gray.700')}>
+                                {(['A', 'B', 'C'] as const).map(g => (
+                                  <Th key={g} py={2} fontSize="xs" color={GREEN} fontWeight="800">
+                                    <Badge colorScheme={GROUP_COLORS[g]} variant="subtle" mr={1}>{g}</Badge>
+                                    {g === 'A' ? 'Favorites' : g === 'B' ? 'Mid-tier' : 'Longshots'}
+                                  </Th>
+                                ))}
+                              </Tr>
+                            </Thead>
+                            <Tbody>
+                              <Tr>
+                                {(['A', 'B', 'C'] as const).map(g => (
+                                  <Td key={g} py={3} verticalAlign="top">
+                                    <VStack align="start" spacing={2}>
+                                      {byGroup[g].map((p: any) => (
+                                        <HStack key={p.id} spacing={2}>
+                                          <Avatar size="xs" name={p.golfer.fullName} src={p.golfer.photoUrl ?? undefined} />
+                                          <Text fontSize="sm" fontWeight="600">{p.golfer.fullName}</Text>
+                                        </HStack>
+                                      ))}
+                                      {byGroup[g].length === 0 && (
+                                        <Text fontSize="xs" color={mutedText}>—</Text>
+                                      )}
+                                    </VStack>
+                                  </Td>
+                                ))}
+                              </Tr>
+                            </Tbody>
+                          </Table>
+                        </TableContainer>
+                      </Box>
+                    </Box>
+                  )
+                })}
+              </VStack>
+            )
+          })()}
+
+          {tournament?.status !== 'UPCOMING' && !loading && null}
 
           {existingPicks && tournament?.status === 'UPCOMING' && (
             <Alert status="info" borderRadius="md">
@@ -250,7 +364,7 @@ export default function ChakraGolfPicksPage() {
           )}
 
           {/* Selection Summary */}
-          {!loading && (
+          {!loading && tournament?.status === 'UPCOMING' && (
             <Card bg={cardBg} border="1px" borderColor={borderColor}>
               <CardBody>
                 <HStack justify="space-between" wrap="wrap" gap={2}>
@@ -269,7 +383,7 @@ export default function ChakraGolfPicksPage() {
           )}
 
           {/* Golfer Groups */}
-          {!loading && (['A', 'B', 'C'] as const).map((group) => (
+          {!loading && tournament?.status === 'UPCOMING' && (['A', 'B', 'C'] as const).map((group) => (
             <Box key={group}>
               <HStack mb={3}>
                 <Badge colorScheme={GROUP_COLORS[group]} fontSize="sm" px={2} py={1}>
