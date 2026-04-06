@@ -78,6 +78,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'userId, tournamentId, and golfers are required' }, { status: 400 })
     }
 
+    if (tiebreakerScore === undefined || tiebreakerScore === null || tiebreakerScore === '') {
+      return NextResponse.json({ error: 'Tiebreaker score is required' }, { status: 400 })
+    }
+
     if (!Array.isArray(golfers) || golfers.length !== 6) {
       return NextResponse.json({ error: 'Must pick exactly 6 golfers' }, { status: 400 })
     }

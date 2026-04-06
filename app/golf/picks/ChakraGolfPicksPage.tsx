@@ -176,7 +176,8 @@ export default function ChakraGolfPicksPage() {
   const canSubmit =
     selectionsForGroup('A').length === 2 &&
     selectionsForGroup('B').length === 2 &&
-    selectionsForGroup('C').length === 2
+    selectionsForGroup('C').length === 2 &&
+    tiebreaker !== ''
 
   const handleSubmit = async () => {
     if (!user || !tournamentId || !canSubmit) return
@@ -442,9 +443,9 @@ export default function ChakraGolfPicksPage() {
             <Card bg={cardBg} border="1px" borderColor={borderColor}>
               <CardBody>
                 <VStack align="stretch" spacing={2}>
-                  <Text fontWeight="600">Tiebreaker (optional)</Text>
+                  <Text fontWeight="600">Tiebreaker <Text as="span" color="red.500">*</Text></Text>
                   <Text fontSize="sm" color={mutedText}>
-                    Predict the winner's final score (relative to par). Closest without going over wins ties.
+                    Predict the winner's final score (relative to par). Required to submit — closest without going over wins ties.
                   </Text>
                   <HStack>
                     <NumberInput
@@ -470,7 +471,7 @@ export default function ChakraGolfPicksPage() {
           {/* Submit */}
           {!loading && tournament?.status === 'UPCOMING' && (
             <Tooltip
-              label={!canSubmit ? 'Pick 2 golfers from each group to continue' : ''}
+              label={!canSubmit ? 'Pick 2 golfers from each group and enter a tiebreaker score to continue' : ''}
               isDisabled={canSubmit}
             >
               <Button
