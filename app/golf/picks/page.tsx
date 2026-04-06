@@ -1,5 +1,10 @@
+import { Suspense } from 'react'
 import ChakraGolfPicksPage from './ChakraGolfPicksPage'
 
 export default function GolfPicksPage() {
-  return <ChakraGolfPicksPage />
+  return (
+    <Suspense>
+      <ChakraGolfPicksPage />
+    </Suspense>
+  )
 }
