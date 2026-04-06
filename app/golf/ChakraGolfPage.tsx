@@ -49,6 +49,13 @@ const STATUS_LABELS: Record<string, string> = {
   COMPLETED: 'Final',
 }
 
+// Returns true when the tournament is UPCOMING and within 3 days of starting (Mon–Wed pick window)
+function isPickWindow(tournament: Tournament): boolean {
+  if (tournament.status !== 'UPCOMING') return false
+  const daysUntilStart = (new Date(tournament.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  return daysUntilStart <= 3
+}
+
 export default function ChakraGolfPage() {
   const { user } = useAuth()
   const [tournaments, setTournaments] = useState<Tournament[]>([])
@@ -195,8 +202,11 @@ function TournamentCard({
       <CardBody>
         <VStack align="stretch" spacing={3}>
           <HStack justify="space-between">
-            <Badge colorScheme={STATUS_COLORS[tournament.status]} variant="subtle">
-              {STATUS_LABELS[tournament.status]}
+            <Badge
+              colorScheme={isPickWindow(tournament) ? 'purple' : STATUS_COLORS[tournament.status]}
+              variant="subtle"
+            >
+              {isPickWindow(tournament) ? 'Make Your Picks' : STATUS_LABELS[tournament.status]}
             </Badge>
             <Badge variant="outline" colorScheme="purple" fontSize="xs">
               {tournament.tournamentType === 'PLAYERS' ? "THE PLAYERS" : "MAJOR"}
