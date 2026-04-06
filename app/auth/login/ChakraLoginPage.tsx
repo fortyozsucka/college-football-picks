@@ -49,7 +49,7 @@ export default function ChakraLoginPage() {
     const result = await login(email, password)
 
     if (result.success) {
-      router.push('/games')
+      router.push('/')
     } else {
       setError(result.error || 'Login failed')
     }

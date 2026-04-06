@@ -104,6 +104,7 @@ export default function GolfNavigation() {
                   <NavLink href="/golf/leaderboard">Leaderboard</NavLink>
                   <NavLink href="/golf/scorecard">Scorecard</NavLink>
                   <NavLink href="/golf/field">Field</NavLink>
+                  <NavLink href="/golf/history">History</NavLink>
                 </>
               )}
               {user?.isAdmin && (
@@ -146,6 +147,7 @@ export default function GolfNavigation() {
                     <MenuItem as={Link} href="/golf/leaderboard">Leaderboard</MenuItem>
                     <MenuItem as={Link} href="/golf/scorecard">Scorecard</MenuItem>
                     <MenuItem as={Link} href="/golf/field">Field</MenuItem>
+                    <MenuItem as={Link} href="/golf/history">History</MenuItem>
                     <MenuItem as={Link} href="/settings">Settings</MenuItem>
                     {user.isAdmin && <MenuItem as={Link} href="/admin" color="red.500">Admin</MenuItem>}
                     <MenuItem onClick={handleLogout} color="red.500">Logout</MenuItem>
@@ -178,6 +180,7 @@ export default function GolfNavigation() {
               <NavLink href="/golf/leaderboard">Leaderboard</NavLink>
               <NavLink href="/golf/scorecard">Scorecard</NavLink>
               <NavLink href="/golf/field">Field</NavLink>
+              <NavLink href="/golf/history">History</NavLink>
               <NavLink href="/settings">Settings</NavLink>
               {user.isAdmin && (
                 <NavLink href="/admin">
