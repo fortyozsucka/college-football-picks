@@ -18,11 +18,16 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   venmoHandle             String?
+  playFootball            Boolean                  @default(true)
+  playGolf                Boolean                  @default(false)
   notificationPreferences NotificationPreferences?
   picks                   Pick[]
   pushSubscriptions       PushSubscription[]
   proposedSideBets        SideBet[]                @relation("ProposedBets")
   acceptedSideBets        SideBetAcceptance[]
+  golfPicks               GolfPick[]
+  golfTiebreakers         GolfTiebreaker[]
+  golfTournamentResults   GolfTournamentResult[]
 }
 
 model Game {
@@ -210,4 +215,178 @@ enum SideBetStatus {
   ACCEPTED
   COMPLETED
   CANCELLED
+}
+
+// ─── Golf League ─────────────────────────────────────────────────────────────
+
+model GolfTournament {
+  id             String           @id @default(cuid())
+  espnId         String           @unique
+  name           String
+  tournamentType TournamentType
+  startDate      DateTime
+  endDate        DateTime
+  season         Int
+  status         TournamentStatus @default(UPCOMING)
+  cutLine        Int?
+  winningScore   Int?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  rounds             GolfRound[]
+  golfPicks          GolfPick[]
+  tournamentResults  GolfTournamentResult[]
+
+  @@index([season])
+  @@index([status])
+}
+
+model GolfRound {
+  id          String      @id @default(cuid())
+  tournamentId String
+  roundNumber Int
+  roundDate   DateTime
+  isCompleted Boolean     @default(false)
+  status      RoundStatus @default(NOT_STARTED)
+
+  tournament       GolfTournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  roundScores      GolfRoundScore[]
+  pickRoundPoints  GolfPickRoundPoints[]
+
+  @@unique([tournamentId, roundNumber])
+  @@index([tournamentId])
+}
+
+model Golfer {
+  id        String  @id @default(cuid())
+  espnId    String  @unique
+  firstName String
+  lastName  String
+  fullName  String
+  country   String?
+  photoUrl  String?
+
+  roundScores    GolfRoundScore[]
+  golfPicks      GolfPick[]
+  tournamentOdds GolferTournamentOdds[]
+
+  @@index([espnId])
+}
+
+model GolferTournamentOdds {
+  id           String      @id @default(cuid())
+  golferId     String
+  tournamentId String
+  odds         Int
+  group        GolferGroup
+  updatedAt    DateTime    @updatedAt
+
+  golfer Golfer @relation(fields: [golferId], references: [id], onDelete: Cascade)
+
+  @@unique([golferId, tournamentId])
+  @@index([tournamentId])
+  @@index([group])
+}
+
+model GolfRoundScore {
+  id         String   @id @default(cuid())
+  roundId    String
+  golferId   String
+  score      Int?
+  totalScore Int?
+  position   Int?
+  missedCut  Boolean  @default(false)
+  withdrawn  Boolean  @default(false)
+
+  round  GolfRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  golfer Golfer    @relation(fields: [golferId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, golferId])
+  @@index([roundId])
+}
+
+model GolfPick {
+  id           String      @id @default(cuid())
+  userId       String
+  tournamentId String
+  golferId     String
+  golferGroup  GolferGroup
+  isUserCut    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament  GolfTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  golfer      Golfer         @relation(fields: [golferId], references: [id], onDelete: Cascade)
+  roundPoints GolfPickRoundPoints[]
+
+  @@unique([userId, tournamentId, golferId])
+  @@index([userId])
+  @@index([tournamentId])
+}
+
+model GolfPickRoundPoints {
+  id      String @id @default(cuid())
+  pickId  String
+  roundId String
+  points  Int
+
+  pick  GolfPick  @relation(fields: [pickId], references: [id], onDelete: Cascade)
+  round GolfRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([pickId, roundId])
+  @@index([pickId])
+}
+
+model GolfTiebreaker {
+  id             String @id @default(cuid())
+  userId         String
+  tournamentId   String
+  predictedScore Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tournamentId])
+  @@index([userId])
+}
+
+model GolfTournamentResult {
+  id           String   @id @default(cuid())
+  userId       String
+  tournamentId String
+  totalPoints  Int
+  rank         Int
+  totalUsers   Int
+  isUserCut    Boolean  @default(false)
+  archivedAt   DateTime @default(now())
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament GolfTournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tournamentId])
+  @@index([tournamentId])
+  @@index([userId])
+}
+
+enum GolferGroup {
+  A
+  B
+  C
+}
+
+enum TournamentType {
+  MAJOR
+  PLAYERS
+}
+
+enum TournamentStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum RoundStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }

@@ -53,7 +53,9 @@ export async function getCurrentUser() {
         name: true,
         totalScore: true,
         isAdmin: true,
-        createdAt: true
+        createdAt: true,
+        playGolf: true,
+        playFootball: true,
       }
     })
 

@@ -8,6 +8,8 @@ interface User {
   name: string | null
   totalScore: number
   isAdmin: boolean
+  playGolf: boolean
+  playFootball: boolean
 }
 
 interface AuthContextType {

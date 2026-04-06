@@ -25,6 +25,7 @@ import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons'
 import Link from 'next/link'
 import { useAuth } from '@/lib/context/AuthContext'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { DarkModeToggle } from './DarkModeToggle'
 
 const NavLink = ({ children, href, isActive = false }: { 
@@ -67,7 +68,7 @@ export default function ChakraNavigationFixed() {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
-  
+  const pathname = usePathname()
   const navBg = useColorModeValue('white', 'neutral.800')
   const navBorder = useColorModeValue('neutral.200', 'neutral.700')
   const logoGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
@@ -76,6 +77,10 @@ export default function ChakraNavigationFixed() {
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  // Hide on sport picker and all golf pages (golf has its own nav)
+  // Must be after all hooks to avoid "more hooks than previous render" error
+  if (pathname === '/' || pathname?.startsWith('/golf')) return null
 
   const handleLogout = async () => {
     await logout()
@@ -185,6 +190,7 @@ export default function ChakraNavigationFixed() {
                         Admin
                       </MenuItem>
                     )}
+                    <MenuItem as={Link} href="/">← Switch Sport</MenuItem>
                     <MenuItem onClick={handleLogout} color="red.500">
                       Logout
                     </MenuItem>

@@ -18,7 +18,9 @@ export async function GET() {
         email: user.email,
         name: user.name,
         totalScore: user.totalScore,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        playGolf: user.playGolf,
+        playFootball: user.playFootball,
       }
     })
   } catch (error) {

@@ -68,6 +68,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import GolfAdminPanel from '@/components/GolfAdminPanel'
 
 interface Invite {
   id: string
@@ -666,6 +667,7 @@ export default function ChakraAdminPage() {
             <Tab>📅 Weekly Controls</Tab>
             <Tab>📊 API Monitoring</Tab>
             <Tab>🏆 Season Archive</Tab>
+            <Tab>⛳ Golf</Tab>
           </TabList>
 
           <TabPanels>
@@ -1192,10 +1194,15 @@ export default function ChakraAdminPage() {
                 </Card>
               </VStack>
             </TabPanel>
+
+            {/* Golf Tab */}
+            <TabPanel px={0}>
+              <GolfAdminPanel />
+            </TabPanel>
           </TabPanels>
         </Tabs>
       </VStack>
-      
+
       {/* Confirmation Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}

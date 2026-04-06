@@ -1,5 +1,5 @@
-import ChakraPage from './ChakraPage'
+import SportPickerPage from './SportPickerPage'
 
 export default function Home() {
-  return <ChakraPage />
+  return <SportPickerPage />
 }
