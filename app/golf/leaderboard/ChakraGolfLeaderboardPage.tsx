@@ -10,6 +10,7 @@ import {
   VStack,
   HStack,
   Badge,
+  Tooltip,
   Spinner,
   Alert,
   AlertIcon,
@@ -37,6 +38,8 @@ interface LeaderboardEntry {
   isUserCut: boolean
   roundTotals?: Record<number, number>
   bonusPoints?: number
+  tiebreakerScore: number | null
+  tiebreakerRank: number | null
 }
 
 interface Tournament {
@@ -92,6 +95,12 @@ export default function ChakraGolfLeaderboardPage() {
   const completedRounds = tournament?.rounds.filter((r) => r.isCompleted) ?? []
   const liveRound = tournament?.rounds.find((r) => r.status === 'IN_PROGRESS')
   const hasBonus = leaderboard.some((e) => (e.bonusPoints ?? 0) > 0)
+
+  // Show tiebreaker column only when 2+ users share the same total points
+  const pointCounts = new Map<number, number>()
+  leaderboard.forEach((e) => pointCounts.set(e.totalPoints, (pointCounts.get(e.totalPoints) ?? 0) + 1))
+  const hasTies = Array.from(pointCounts.values()).some((c) => c > 1)
+  const showTiebreaker = hasTies && leaderboard.some((e) => e.tiebreakerScore !== null)
 
   // Auto-redirect to active or most recent tournament if none selected
   useEffect(() => {
@@ -256,6 +265,11 @@ export default function ChakraGolfLeaderboardPage() {
                       >
                         TOTAL
                       </Th>
+                      {showTiebreaker && (
+                        <Th isNumeric fontSize="xs" fontWeight="900" color="purple.600" letterSpacing="0.1em" py={3}>
+                          TB
+                        </Th>
+                      )}
                     </Tr>
                   </Thead>
 
@@ -345,6 +359,24 @@ export default function ChakraGolfLeaderboardPage() {
                           >
                             {entry.totalPoints}
                           </Td>
+
+                          {/* Tiebreaker */}
+                          {showTiebreaker && (
+                            <Td isNumeric py={3}>
+                              {entry.tiebreakerScore !== null ? (
+                                <VStack spacing={0} align="flex-end">
+                                  <Text fontSize="xs" fontWeight="700" color="purple.600">
+                                    {entry.tiebreakerScore > 0 ? `+${entry.tiebreakerScore}` : entry.tiebreakerScore}
+                                  </Text>
+                                  {entry.tiebreakerRank !== null && (
+                                    <Text fontSize="9px" color="purple.400">#{entry.tiebreakerRank}</Text>
+                                  )}
+                                </VStack>
+                              ) : (
+                                <Text fontSize="xs" color="gray.400">—</Text>
+                              )}
+                            </Td>
+                          )}
                         </Tr>
                       )
                     })}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import {
   Box,
   Container,
@@ -16,8 +17,18 @@ import {
   Td,
   TableContainer,
   useColorModeValue,
+  Spinner,
 } from '@chakra-ui/react'
 import ProtectedRoute from '@/components/ProtectedRoute'
+
+interface AppResult {
+  season: number
+  tournamentName: string
+  tournamentType: string
+  winner: string
+  totalPoints: number
+  totalUsers: number
+}
 
 // ─── Static historical data ───────────────────────────────────────────────────
 
@@ -80,12 +91,62 @@ function StatCell({ value }: { value: number }) {
   return <Text fontSize="sm" fontWeight="700" color={LIGHT_GREEN}>{value}</Text>
 }
 
+// Map tournament name → wins column key
+function tournamentToKey(name: string): 'masters' | 'usOpen' | 'theOpen' | 'pga' | 'players' | null {
+  const n = name.toLowerCase()
+  if (n.includes('masters')) return 'masters'
+  if (n.includes('u.s. open') || n.includes('us open')) return 'usOpen'
+  if (n.includes('open championship') || n.includes('the open')) return 'theOpen'
+  if (n.includes('pga championship')) return 'pga'
+  if (n.includes('players')) return 'players'
+  return null
+}
+
 export default function ChakraGolfHistoryPage() {
+  const [appResults, setAppResults] = useState<AppResult[]>([])
+  const [loadingResults, setLoadingResults] = useState(true)
+
   const cardBg = useColorModeValue('white', 'gray.800')
   const headerBg = useColorModeValue('gray.50', 'gray.700')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const mutedText = useColorModeValue('gray.500', 'gray.400')
   const sectionHeadBg = useColorModeValue('gray.100', 'gray.700')
+
+  useEffect(() => {
+    fetch('/api/golf/history')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setAppResults(data) })
+      .catch(() => {})
+      .finally(() => setLoadingResults(false))
+  }, [])
+
+  // Merge app results into standings
+  type StandingKey = 'masters' | 'usOpen' | 'theOpen' | 'pga' | 'players'
+  const mergedStandings = [...STANDINGS.map(p => ({ ...p }))]
+  for (const result of appResults) {
+    const key = tournamentToKey(result.tournamentName)
+    if (!key) continue
+    let player = mergedStandings.find(p => p.name.toLowerCase() === result.winner.toLowerCase())
+    if (!player) {
+      player = { name: result.winner, masters: 0, usOpen: 0, theOpen: 0, pga: 0, players: 0, total: 0, mc: 0 }
+      mergedStandings.push(player)
+    }
+    player[key as StandingKey] = (player[key as StandingKey] ?? 0) + 1
+    player.total = player.masters + player.usOpen + player.theOpen + player.pga + player.players
+  }
+  mergedStandings.sort((a, b) => b.total - a.total || a.mc - b.mc)
+
+  // Merge app results into wins table (group by year)
+  const appWinsByYear = new Map<number, Partial<typeof WINS[0]>>()
+  for (const result of appResults) {
+    if (!appWinsByYear.has(result.season)) appWinsByYear.set(result.season, { year: result.season })
+    const key = tournamentToKey(result.tournamentName)
+    if (key) (appWinsByYear.get(result.season) as any)[key] = result.winner
+  }
+  const appWinRows = Array.from(appWinsByYear.values()).sort((a, b) => (a.year ?? 0) - (b.year ?? 0))
+  // Only show years not already in static WINS
+  const staticYears = new Set(WINS.map(w => w.year))
+  const newWinRows = appWinRows.filter(r => !staticYears.has(r.year ?? 0)) as typeof WINS
 
   return (
     <ProtectedRoute>
@@ -100,7 +161,7 @@ export default function ChakraGolfHistoryPage() {
             <Text fontSize={{ base: '2xl', md: '3xl' }} fontWeight="900" color="white" letterSpacing="0.05em">
               All-Time History
             </Text>
-            <Text fontSize="sm" color="whiteAlpha.700" mt={1}>2015 – 2025 · The Majors</Text>
+            <Text fontSize="sm" color="whiteAlpha.700" mt={1}>2015 – Present · The Majors</Text>
           </Box>
 
           {/* ── All-Time Standings ── */}
@@ -125,7 +186,7 @@ export default function ChakraGolfHistoryPage() {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {STANDINGS.map((p, i) => {
+                  {mergedStandings.map((p, i) => {
                     const rowBg = i % 2 === 0 ? cardBg : useColorModeValue('#f9f9f9', 'gray.750')
                     const isTop = p.total > 0
                     return (
@@ -189,11 +250,15 @@ export default function ChakraGolfHistoryPage() {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {WINS.map((row, i) => {
+                  {[...WINS, ...newWinRows].map((row, i) => {
                     const rowBg = i % 2 === 0 ? cardBg : useColorModeValue('#f9f9f9', 'gray.750')
+                    const isAppTracked = !staticYears.has(row.year ?? 0)
                     return (
                       <Tr key={row.year} bg={rowBg}>
-                        <Td py={2.5} fontWeight="800" color={GREEN} fontSize="sm">{row.year}</Td>
+                        <Td py={2.5} fontWeight="800" color={GREEN} fontSize="sm">
+                          {row.year}
+                          {isAppTracked && <Badge ml={1} colorScheme="green" fontSize="9px">APP</Badge>}
+                        </Td>
                         <Td py={2.5}><WinCell value={row.masters} /></Td>
                         <Td py={2.5}><WinCell value={row.usOpen} /></Td>
                         <Td py={2.5}><WinCell value={row.theOpen} /></Td>

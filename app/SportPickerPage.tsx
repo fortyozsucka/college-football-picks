@@ -64,31 +64,53 @@ export default function SportPickerPage() {
 
             <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={6} w="full">
               {/* Football */}
-              <Card
-                as={Link}
-                href="/picks"
-                bg={cardBg}
-                border="2px"
-                borderColor={borderColor}
-                _hover={{ borderColor: 'blue.400', shadow: 'lg', transform: 'translateY(-2px)' }}
-                transition="all 0.2s"
-                cursor="pointer"
-              >
-                <CardBody>
-                  <VStack spacing={4} align="center" py={6}>
-                    <Text fontSize="5xl">🏈</Text>
-                    <VStack spacing={1}>
-                      <Heading size="md">College Football</Heading>
-                      <Text fontSize="sm" color={mutedText} textAlign="center">
-                        Weekly picks, double downs, and leaderboard
-                      </Text>
+              {user?.playFootball ? (
+                <Card
+                  as={Link}
+                  href="/picks"
+                  bg={cardBg}
+                  border="2px"
+                  borderColor={borderColor}
+                  _hover={{ borderColor: 'blue.400', shadow: 'lg', transform: 'translateY(-2px)' }}
+                  transition="all 0.2s"
+                  cursor="pointer"
+                >
+                  <CardBody>
+                    <VStack spacing={4} align="center" py={6}>
+                      <Text fontSize="5xl">🏈</Text>
+                      <VStack spacing={1}>
+                        <Heading size="md">College Football</Heading>
+                        <Text fontSize="sm" color={mutedText} textAlign="center">
+                          Weekly picks, double downs, and leaderboard
+                        </Text>
+                      </VStack>
+                      <Button colorScheme="blue" size="sm" w="full">
+                        Enter
+                      </Button>
                     </VStack>
-                    <Button colorScheme="blue" size="sm" w="full">
-                      Enter
-                    </Button>
-                  </VStack>
-                </CardBody>
-              </Card>
+                  </CardBody>
+                </Card>
+              ) : (
+                <Card bg={cardBg} border="2px" borderColor={borderColor} opacity={0.5}>
+                  <CardBody>
+                    <VStack spacing={4} align="center" py={6}>
+                      <Text fontSize="5xl">🏈</Text>
+                      <VStack spacing={1}>
+                        <HStack>
+                          <Heading size="md">College Football</Heading>
+                          <Badge colorScheme="gray" fontSize="xs">Not enrolled</Badge>
+                        </HStack>
+                        <Text fontSize="sm" color={mutedText} textAlign="center">
+                          Ask an admin to enable football access
+                        </Text>
+                      </VStack>
+                      <Button colorScheme="blue" size="sm" w="full" isDisabled>
+                        Enter
+                      </Button>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
 
               {/* Golf */}
               {user?.playGolf ? (

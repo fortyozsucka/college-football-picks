@@ -50,6 +50,24 @@ export async function GET(request: Request) {
       }
     }
 
+    // Load tiebreakers for this tournament
+    const tiebreakers = await db.golfTiebreaker.findMany({ where: { tournamentId } })
+    const tiebreakerByUser = new Map(tiebreakers.map((tb) => [tb.userId, tb.predictedScore]))
+
+    // Resolve tiebreaker ranks based on winning score (if known)
+    const tiebreakerRankByUser = new Map<string, number>()
+    if (tournament.winningScore !== null && tournament.winningScore !== undefined) {
+      const ranked = tiebreakers
+        .map((tb) => ({
+          userId: tb.userId,
+          diff: tb.predictedScore <= tournament.winningScore!
+            ? tournament.winningScore! - tb.predictedScore
+            : Number.MAX_SAFE_INTEGER,
+        }))
+        .sort((a, b) => a.diff - b.diff)
+      ranked.forEach((entry, i) => tiebreakerRankByUser.set(entry.userId, i + 1))
+    }
+
     // Fast path for completed tournaments — use archived results
     if (tournament.status === 'COMPLETED') {
       const archived = await db.golfTournamentResult.findMany({
@@ -80,7 +98,6 @@ export async function GET(request: Request) {
         leaderboard: archived.map((r) => {
           const rt = roundTotalsByUser.get(r.userId) ?? {}
           const bonus = bonusByUser.get(r.userId) ?? 0
-          // Bonus was added into R4 — show R4 without bonus, then bonus separately
           const r4Raw = rt[4] ?? 0
           return {
             userId: r.userId,
@@ -91,6 +108,8 @@ export async function GET(request: Request) {
             isUserCut: r.isUserCut,
             roundTotals: { ...rt, 4: r4Raw - bonus },
             bonusPoints: bonus,
+            tiebreakerScore: tiebreakerByUser.get(r.userId) ?? null,
+            tiebreakerRank: tiebreakerRankByUser.get(r.userId) ?? null,
           }
         }),
       })
@@ -158,6 +177,8 @@ export async function GET(request: Request) {
         ...entry,
         roundTotals: { ...entry.roundTotals, 4: r4Raw - bonus },
         bonusPoints: bonus,
+        tiebreakerScore: tiebreakerByUser.get(entry.userId) ?? null,
+        tiebreakerRank: tiebreakerRankByUser.get(entry.userId) ?? null,
         rank:
           i === 0 || sorted[i - 1].totalPoints !== entry.totalPoints
             ? i + 1

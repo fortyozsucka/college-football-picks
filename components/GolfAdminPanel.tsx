@@ -112,6 +112,29 @@ export default function GolfAdminPanel() {
     }
   }
 
+  const toggleFootball = async (userId: string, currentValue: boolean) => {
+    setTogglingUser(userId)
+    try {
+      const res = await fetch('/api/admin/golf', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, playFootball: !currentValue }),
+      })
+      const updated = await res.json()
+      if (!res.ok) throw new Error(updated.error)
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, playFootball: updated.playFootball } : u)))
+      toast({
+        title: `Football ${updated.playFootball ? 'enabled' : 'disabled'} for ${updated.name ?? updated.email}`,
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (e: any) {
+      toast({ title: e.message ?? 'Failed to update', status: 'error', duration: 3000 })
+    } finally {
+      setTogglingUser(null)
+    }
+  }
+
   const toggleGolf = async (userId: string, currentValue: boolean) => {
     setTogglingUser(userId)
     try {
@@ -406,9 +429,12 @@ export default function GolfAdminPanel() {
                                 </VStack>
                               </Td>
                               <Td isNumeric>
-                                <Badge colorScheme={u.playFootball ? 'blue' : 'gray'} variant="subtle">
-                                  {u.playFootball ? 'Yes' : 'No'}
-                                </Badge>
+                                <Switch
+                                  isChecked={u.playFootball}
+                                  isDisabled={togglingUser === u.id}
+                                  colorScheme="blue"
+                                  onChange={() => toggleFootball(u.id, u.playFootball)}
+                                />
                               </Td>
                               <Td isNumeric>
                                 <Switch
