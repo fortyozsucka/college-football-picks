@@ -8,8 +8,8 @@ import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Squad College Football Picks',
-  description: 'Make your college football picks',
+  title: 'Squad Sports',
+  description: 'Make your picks',
   icons: {
     icon: [
       {

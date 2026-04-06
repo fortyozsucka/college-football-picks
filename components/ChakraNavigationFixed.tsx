@@ -106,7 +106,7 @@ export default function ChakraNavigationFixed() {
                   bgGradient={logoGradient}
                   bgClip="text"
                 >
-                  Squad College Football Picks
+                  Squad Sports
                 </Text>
               </ChakraLink>
             </HStack>
@@ -130,7 +130,7 @@ export default function ChakraNavigationFixed() {
                 bgGradient={logoGradient}
                 bgClip="text"
               >
-                Squad College Football Picks
+                Squad Sports
               </Text>
             </ChakraLink>
             
