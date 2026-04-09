@@ -32,6 +32,7 @@ interface RoundEntry {
   roundNumber: number
   roundStatus: string
   score: number | null
+  roundToPar: number | null
   position: number | null
   missedCut: boolean
   withdrawn: boolean
@@ -71,13 +72,28 @@ function formatScore(score: number | null): string {
   return score > 0 ? `+${score}` : `${score}`
 }
 
-// Round scores are raw strokes (68, 70, etc.) — show as plain number
-function ScoreCell({ score, missedCut, withdrawn }: { score: number | null; missedCut: boolean; withdrawn: boolean }) {
+function formatToPar(n: number): string {
+  if (n === 0) return 'E'
+  return n > 0 ? `+${n}` : `${n}`
+}
+
+// Round scores: raw strokes with to-par in parens, e.g. "68 (-4)"
+function ScoreCell({ score, roundToPar, missedCut, withdrawn }: { score: number | null; roundToPar: number | null; missedCut: boolean; withdrawn: boolean }) {
   const mutedText = useColorModeValue('gray.400', 'gray.500')
   if (withdrawn) return <Text fontSize="xs" color="orange.400" fontWeight="600">WD</Text>
   if (missedCut) return <Text fontSize="xs" color="red.400" fontWeight="600">MC</Text>
   if (score === null) return <Text color={mutedText}>—</Text>
-  return <Text fontSize="sm" fontWeight="600" color="gray.700">{score}</Text>
+  const toParColor = roundToPar !== null ? (roundToPar < 0 ? 'red.500' : roundToPar > 0 ? 'blue.600' : 'gray.500') : 'gray.500'
+  return (
+    <Text fontSize="sm" fontWeight="600" color="gray.700">
+      {score}
+      {roundToPar !== null && (
+        <Text as="span" fontSize="xs" fontWeight="500" color={toParColor} ml={1}>
+          ({formatToPar(roundToPar)})
+        </Text>
+      )}
+    </Text>
+  )
 }
 
 export default function ChakraGolfScorecardPage() {
@@ -282,7 +298,7 @@ export default function ChakraGolfScorecardPage() {
                                 return (
                                   <Td key={round.id} isNumeric py={2.5}>
                                     <VStack spacing={0} align="flex-end">
-                                      <ScoreCell score={rd?.score ?? null} missedCut={rd?.missedCut ?? false} withdrawn={rd?.withdrawn ?? false} />
+                                      <ScoreCell score={rd?.score ?? null} roundToPar={rd?.roundToPar ?? null} missedCut={rd?.missedCut ?? false} withdrawn={rd?.withdrawn ?? false} />
                                       {rd?.points !== null && rd?.points !== undefined && (
                                         <Text
                                           fontSize="xs"

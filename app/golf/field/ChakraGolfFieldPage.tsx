@@ -144,7 +144,19 @@ export default function ChakraGolfFieldPage() {
 
   const activeRounds = tournament?.rounds.filter(r => r.isCompleted || r.status === 'IN_PROGRESS') ?? []
   const liveRound = tournament?.rounds.find(r => r.status === 'IN_PROGRESS')
-  const playing = field.filter(f => !f.missedCut && !f.withdrawn)
+
+  // Detect players who haven't teed off yet (thru is an ISO tee time or null/dash)
+  const hasStarted = (thru: string | null) => {
+    if (!thru || thru === '-' || thru === '') return false
+    if (/^\d{4}-\d{2}-\d{2}T/.test(thru)) return false  // ISO timestamp = tee time
+    return true  // hole number ("2"), "F", "Thru N", etc.
+  }
+
+  const allPlaying = field.filter(f => !f.missedCut && !f.withdrawn)
+  const playing = [
+    ...allPlaying.filter(f => hasStarted(f.thru)),
+    ...allPlaying.filter(f => !hasStarted(f.thru)),
+  ]
   const cut = field.filter(f => f.missedCut && !f.withdrawn)
   const wd = field.filter(f => f.withdrawn)
 
@@ -276,9 +288,15 @@ export default function ChakraGolfFieldPage() {
                                   <Text
                                     fontSize="xs"
                                     fontWeight="600"
-                                    color={entry.thru === 'F' ? 'gray.500' : /AM|PM/.test(entry.thru) ? 'purple.500' : 'green.600'}
+                                    color={
+                                      entry.thru === 'F' ? 'gray.500'
+                                      : /^\d{4}-\d{2}-\d{2}T/.test(entry.thru) ? 'purple.400'
+                                      : 'green.600'
+                                    }
                                   >
-                                    {entry.thru}
+                                    {/^\d{4}-\d{2}-\d{2}T/.test(entry.thru)
+                                      ? new Date(entry.thru).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })
+                                      : entry.thru}
                                   </Text>
                                 ) : (
                                   <Text fontSize="xs" color={mutedText}>—</Text>

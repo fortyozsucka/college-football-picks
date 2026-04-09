@@ -67,21 +67,30 @@ export async function GET(request: Request) {
       if (pick.isUserCut) entry.isUserCut = true
 
       // Build per-round breakdown for this golfer
-      const rounds = tournament.rounds.map((round) => {
+      const roundData = tournament.rounds.map((round) => {
         const score = roundScores.find(
           (rs) => rs.roundId === round.id && rs.golferId === pick.golferId
         )
         const pointsRecord = pick.roundPoints.find((rp) => rp.roundId === round.id)
-
         return {
           roundNumber: round.roundNumber,
           roundStatus: round.status,
           score: score?.score ?? null,
+          cumulativeToPar: score?.totalScore ?? null,
           position: score?.position ?? null,
           missedCut: score?.missedCut ?? false,
           withdrawn: score?.withdrawn ?? false,
           points: pointsRecord?.points ?? null,
         }
+      }).sort((a, b) => a.roundNumber - b.roundNumber)
+
+      // Derive per-round to-par from consecutive cumulative values
+      const rounds = roundData.map((rd, i) => {
+        const prev = roundData[i - 1]
+        const roundToPar = rd.cumulativeToPar !== null
+          ? (i === 0 ? rd.cumulativeToPar : rd.cumulativeToPar - (prev?.cumulativeToPar ?? 0))
+          : null
+        return { ...rd, roundToPar }
       })
 
       const golferTotal = rounds.reduce((sum, r) => sum + (r.points ?? 0), 0)

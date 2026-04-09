@@ -118,7 +118,7 @@ export async function POST(request: Request) {
             roundId: round.id,
             golferId: golfer.id,
             score: entry.withdrawn ? null : rs.score,
-            totalScore: entry.totalScore,
+            totalScore: rs.cumulativeToPar,  // cumulative to-par as of this round
             position: entry.position,
             thru: entry.thru ?? null,
             missedCut: entry.missedCut,
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
           },
           update: {
             score: entry.withdrawn ? null : rs.score,
-            totalScore: entry.totalScore,
+            totalScore: rs.cumulativeToPar,  // cumulative to-par as of this round
             position: entry.position,
             thru: entry.thru ?? null,
             missedCut: entry.missedCut,
