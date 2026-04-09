@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:cfbfastr.sportsdataverse.org)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(psql:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:squadtriangle.com)",
+      "Bash(npx eslint:*)",
+      "Bash(python3:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:sportsdata.io)",
+      "WebSearch",
+      "WebFetch(domain:discoverylab.sportsdata.io)",
+      "WebFetch(domain:sportsapi.com)",
+      "WebFetch(domain:slashgolf.dev)",
+      "WebFetch(domain:rapidapi.com)",
+      "WebFetch(domain:datagolf.com)",
+      "WebFetch(domain:sportsapis.dev)",
+      "WebFetch(domain:developer.sportradar.com)",
+      "WebFetch(domain:the-odds-api.com)",
+      "WebFetch(domain:golfcourseapi.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:api-sports.io)",
+      "WebFetch(domain:sportbex.com)",
+      "Bash(npx tsc:*)",
+      "Bash(head -5 app/api/golf/tournaments/[id]/route.ts)",
+      "Bash(cp /tmp/run-scoring.js scripts/run-scoring.js)",
+      "Bash(node -e \"require\\(''./scripts/run-scoring.js''\\)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
