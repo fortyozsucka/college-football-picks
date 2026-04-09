@@ -1,17 +1,18 @@
 import webpush from 'web-push'
 import { db } from './db'
 
-// Configure web-push
-const vapidKeys = {
-  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-  privateKey: process.env.VAPID_PRIVATE_KEY || ''
+// Lazy VAPID initialization — only called at request time, not module load time
+let vapidInitialized = false
+function ensureVapidInitialized() {
+  if (vapidInitialized) return
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+  const privateKey = process.env.VAPID_PRIVATE_KEY || ''
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID keys not configured')
+  }
+  webpush.setVapidDetails('mailto:your-email@example.com', publicKey, privateKey)
+  vapidInitialized = true
 }
-
-webpush.setVapidDetails(
-  'mailto:your-email@example.com', // Replace with your email
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-)
 
 export interface PushNotificationPayload {
   title: string
@@ -99,6 +100,7 @@ export class PushNotificationService {
     payload: PushNotificationPayload
   ) {
     try {
+      ensureVapidInitialized()
       const pushSubscription = {
         endpoint: subscription.endpoint,
         keys: {
