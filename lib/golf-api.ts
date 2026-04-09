@@ -67,7 +67,8 @@ export async function getESPNTournaments(season: number): Promise<ESPNTournament
 export async function getESPNLeaderboard(espnEventId: string): Promise<ESPNLeaderboardEntry[]> {
   const data = await fetchESPN(`${ESPN_BASE}/leaderboard?league=pga&event=${espnEventId}`)
   const competitors: any[] = data?.events?.[0]?.competitions?.[0]?.competitors ?? []
-  return competitors.map(mapCompetitor)
+  // Log first 3 competitors for debugging score field structure
+  return competitors.map((c, i) => mapCompetitor(c, i < 3))
 }
 
 // Returns a single golfer's profile by ESPN athlete ID
@@ -110,7 +111,10 @@ function parseToParScore(displayValue: string | null | undefined): number {
   return isNaN(n) ? 0 : n
 }
 
-function mapCompetitor(c: any): ESPNLeaderboardEntry {
+function mapCompetitor(c: any, debug = false): ESPNLeaderboardEntry {
+  if (debug) {
+    console.log(`ESPN RAW [${c.athlete?.displayName}]: score=${JSON.stringify(c.score)}, linescores=${JSON.stringify(c.linescores)}, status=${JSON.stringify(c.status)}`)
+  }
   // linescores contain raw strokes per round (e.g., 68, 70)
   const roundScores: { round: number; score: number }[] = (c.linescores ?? []).map((ls: any) => ({
     round: ls.period ?? ls.type?.id,

@@ -146,6 +146,23 @@ export async function POST(request: Request) {
       }
     }
 
+    // Clear stale scores for picked golfers who are NOT in the ESPN field
+    // (e.g. golfers added during testing but not actually in this tournament)
+    const espnGolferIds = new Set(espnEntries.map(e => e.espnPlayerId))
+    const roundIds = tournament.rounds.map(r => r.id)
+    const pickedGolfers = await db.golfPick.findMany({
+      where: { tournamentId },
+      include: { golfer: true },
+    })
+    for (const pick of pickedGolfers) {
+      if (!espnGolferIds.has(pick.golfer.espnId)) {
+        await db.golfRoundScore.updateMany({
+          where: { golferId: pick.golferId, roundId: { in: roundIds } },
+          data: { score: null, totalScore: null, thru: null },
+        })
+      }
+    }
+
     // Update round statuses and calculate points for completed rounds
     const completedRoundNumbers = Array.from(syncedRounds).filter((rn) => {
       // A round is complete if all players are past it or it's before the current round
