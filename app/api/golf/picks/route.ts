@@ -53,6 +53,7 @@ export async function GET(request: Request) {
       include: {
         golfer: true,
         tournament: true,
+        user: { select: { id: true, name: true, email: true } },
         roundPoints: {
           include: { round: true },
           orderBy: { round: { roundNumber: 'asc' } },
