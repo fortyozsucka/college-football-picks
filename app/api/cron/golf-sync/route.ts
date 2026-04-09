@@ -4,41 +4,45 @@ import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const headersList = headers()
     const cronSecret = headersList.get('Authorization')
 
     if (cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.log('Golf cron: unauthorized — check CRON_SECRET env var and Authorization header in cron-job.org')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const now = new Date()
 
-    // Find all in-progress golf tournaments
     const activeTournaments = await db.golfTournament.findMany({
       where: { status: 'IN_PROGRESS', isActive: true },
     })
 
     if (activeTournaments.length === 0) {
+      console.log('Golf cron: no IN_PROGRESS tournaments found')
       return NextResponse.json({ message: 'No active golf tournaments', action: 'skipped', timestamp: now.toISOString() })
     }
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = (process.env.NEXTAUTH_URL || 'http://localhost:3000').replace(/\/$/, '')
+    console.log(`Golf cron: syncing ${activeTournaments.length} tournament(s) via ${baseUrl}/api/golf/sync`)
+
     const results = []
 
     for (const tournament of activeTournaments) {
       try {
-        // Delegate to the main sync endpoint so all fixes stay in one place
         const res = await fetch(`${baseUrl}/api/golf/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tournamentId: tournament.id }),
         })
 
-        const data = await res.json()
-        results.push({ tournament: tournament.name, ...data })
-        console.log(`⛳ Golf cron sync: ${tournament.name}`, data)
+        const text = await res.text()
+        console.log(`Golf cron sync response [${res.status}] for ${tournament.name}: ${text.substring(0, 200)}`)
+
+        const data = JSON.parse(text)
+        results.push({ tournament: tournament.name, status: res.status, ...data })
       } catch (err) {
         console.error(`Golf cron sync failed for ${tournament.name}:`, err)
         results.push({ tournament: tournament.name, error: err instanceof Error ? err.message : 'Unknown error' })
@@ -52,6 +56,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  return GET(request)
+export async function POST() {
+  return GET()
 }
