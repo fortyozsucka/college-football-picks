@@ -71,13 +71,13 @@ function formatScore(score: number | null): string {
   return score > 0 ? `+${score}` : `${score}`
 }
 
+// Round scores are raw strokes (68, 70, etc.) — show as plain number
 function ScoreCell({ score, missedCut, withdrawn }: { score: number | null; missedCut: boolean; withdrawn: boolean }) {
   const mutedText = useColorModeValue('gray.400', 'gray.500')
   if (withdrawn) return <Text fontSize="xs" color="orange.400" fontWeight="600">WD</Text>
   if (missedCut) return <Text fontSize="xs" color="red.400" fontWeight="600">MC</Text>
   if (score === null) return <Text color={mutedText}>—</Text>
-  const color = score < 0 ? 'red.500' : score > 0 ? 'blue.500' : 'gray.700'
-  return <Text fontSize="sm" fontWeight="600" color={color}>{formatScore(score)}</Text>
+  return <Text fontSize="sm" fontWeight="600" color="gray.700">{score}</Text>
 }
 
 export default function ChakraGolfScorecardPage() {
