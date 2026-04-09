@@ -60,6 +60,14 @@ function formatScore(score: number | null): string {
   return score > 0 ? `+${score}` : `${score}`
 }
 
+// RoundScore shows raw strokes (65, 70, etc.) — standard golf leaderboard style
+function RoundScore({ score }: { score: number | null }) {
+  const mutedText = useColorModeValue('gray.400', 'gray.500')
+  if (score === null) return <Text color={mutedText} fontSize="sm">—</Text>
+  return <Text fontSize="sm" fontWeight="600" color="gray.700">{score}</Text>
+}
+
+// TotalScore shows to-par (−8, E, +2) in color
 function ScoreText({ score, isTotal = false }: { score: number | null; isTotal?: boolean }) {
   const mutedText = useColorModeValue('gray.400', 'gray.500')
   if (score === null) return <Text color={mutedText} fontSize="sm">—</Text>
@@ -283,7 +291,7 @@ export default function ChakraGolfFieldPage() {
                                 <Td key={r.id} isNumeric py={2.5}>
                                   {rd?.withdrawn
                                     ? <Text fontSize="xs" color="orange.500" fontWeight="700">WD</Text>
-                                    : <ScoreText score={rd?.score ?? null} />}
+                                    : <RoundScore score={rd?.score ?? null} />}
                                 </Td>
                               )
                             })}
@@ -322,7 +330,7 @@ export default function ChakraGolfFieldPage() {
                           </Td>
                           {activeRounds.map(r => (
                             <Td key={r.id} isNumeric py={2}>
-                              <ScoreText score={entry.rounds[r.roundNumber]?.score ?? null} />
+                              <RoundScore score={entry.rounds[r.roundNumber]?.score ?? null} />
                             </Td>
                           ))}
                           <Td isNumeric py={2} borderLeft="2px solid" borderColor={borderCol}>
@@ -363,7 +371,7 @@ export default function ChakraGolfFieldPage() {
                               <Td key={r.id} isNumeric py={2}>
                                 {rd?.withdrawn
                                   ? <Text fontSize="xs" color="orange.400" fontWeight="700">WD</Text>
-                                  : <ScoreText score={rd?.score ?? null} />}
+                                  : <RoundScore score={rd?.score ?? null} />}
                               </Td>
                             )
                           })}

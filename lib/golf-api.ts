@@ -101,7 +101,17 @@ function mapTournament(event: any): ESPNTournament {
   }
 }
 
+// ESPN stores the total-to-par in score.displayValue as "-12", "E", "+2", etc.
+// score.value is sometimes raw strokes so we always parse displayValue.
+function parseToParScore(displayValue: string | null | undefined): number {
+  if (!displayValue || displayValue === '-') return 0
+  if (displayValue === 'E' || displayValue === 'EVEN') return 0
+  const n = parseInt(displayValue, 10)
+  return isNaN(n) ? 0 : n
+}
+
 function mapCompetitor(c: any): ESPNLeaderboardEntry {
+  // linescores contain raw strokes per round (e.g., 68, 70)
   const roundScores: { round: number; score: number }[] = (c.linescores ?? []).map((ls: any) => ({
     round: ls.period ?? ls.type?.id,
     score: ls.value ?? 0,
@@ -135,7 +145,7 @@ function mapCompetitor(c: any): ESPNLeaderboardEntry {
     photoUrl: c.athlete?.headshot?.href ?? null,
     position: parseInt(c.status?.position?.id ?? '999', 10),
     positionDisplay: posDisplay,
-    totalScore: c.score?.value ?? 0,
+    totalScore: parseToParScore(c.score?.displayValue),
     currentRound: c.status?.period ?? 1,
     thru: c.status?.displayValue ?? '-',
     missedCut,
