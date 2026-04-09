@@ -4,10 +4,14 @@ import { db } from './db'
 
 /**
  * Calculate and store points for every pick in a given round.
- * - Best round score = 20 pts
- * - Each stroke behind best = -2 pts (floor 0)
+ * - Best to-par score = 20 pts
+ * - Each shot-to-par behind leader = -2 pts (floor 0)
  * - Golfer missed cut (R3/R4) = 0 pts
  * - User was cut after R2 (last place) = 0 pts for R3/R4
+ *
+ * Uses totalScore (to-par) not raw strokes so live scoring is fair across
+ * players who have played different numbers of holes mid-round.
+ * Players with null totalScore (haven't teed off) earn 0 pts.
  */
 export async function calculateRoundPoints(roundId: string): Promise<void> {
   const round = await db.golfRound.findUnique({
@@ -16,14 +20,14 @@ export async function calculateRoundPoints(roundId: string): Promise<void> {
   })
   if (!round) throw new Error(`Round ${roundId} not found`)
 
-  // Only include golfers who completed the round (have a score, didn't MC or WD)
+  // Only include golfers who have a to-par score for this round (have teed off, didn't MC or WD)
   const playedScores = round.roundScores.filter(
-    (rs) => rs.score !== null && !rs.missedCut && !rs.withdrawn
+    (rs) => rs.totalScore !== null && !rs.missedCut && !rs.withdrawn
   )
 
-  // Best (lowest) round score among those who completed the round
+  // Best (lowest/most negative) to-par among those who have played
   const bestScore = playedScores.length > 0
-    ? Math.min(...playedScores.map((rs) => rs.score!))
+    ? Math.min(...playedScores.map((rs) => rs.totalScore!))
     : null
 
   // Get all picks for this tournament
@@ -56,10 +60,10 @@ export async function calculateRoundPoints(roundId: string): Promise<void> {
       })
     }
 
-    // Golfer has a score this round — calculate points
-    if (golferScore?.score !== null && golferScore?.score !== undefined && bestScore !== null) {
-      const strokesBehind = golferScore.score - bestScore
-      points = Math.max(0, 20 - strokesBehind * 2)
+    // Golfer has a to-par score this round — calculate points
+    if (golferScore?.totalScore !== null && golferScore?.totalScore !== undefined && bestScore !== null) {
+      const shotsBehind = golferScore.totalScore - bestScore
+      points = Math.max(0, 20 - shotsBehind * 2)
     }
 
     return db.golfPickRoundPoints.upsert({
