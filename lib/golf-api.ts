@@ -116,17 +116,23 @@ function mapCompetitor(c: any, debug = false): ESPNLeaderboardEntry {
   }
 
   // linescores: value = raw strokes, displayValue = to-par for that round ("-1", "E", "+2")
-  // Only include linescores that have actual score data (have a value/displayValue)
+  // Only include linescores that have actual score data
   const rawLinescores: any[] = (c.linescores ?? []).filter((ls: any) => ls.value !== undefined || ls.displayValue)
-  const roundScores: { round: number; score: number }[] = rawLinescores.map((ls: any) => ({
-    round: ls.period ?? ls.type?.id,
-    score: ls.value ?? 0,
-  }))
 
-  // Total to-par = sum of each round's to-par from displayValue (not c.score which ESPN misuses)
-  const totalScore = rawLinescores.reduce((sum: number, ls: any) => {
-    return sum + parseToParScore(ls.displayValue)
-  }, 0)
+  // Build round scores with per-round to-par and running cumulative
+  let cumulative = 0
+  const roundScores: { round: number; score: number; roundToPar: number; cumulativeToPar: number }[] = rawLinescores.map((ls: any) => {
+    const roundToPar = parseToParScore(ls.displayValue)
+    cumulative += roundToPar
+    return {
+      round: ls.period ?? ls.type?.id,
+      score: ls.value ?? 0,
+      roundToPar,
+      cumulativeToPar: cumulative,
+    }
+  })
+
+  const totalScore = cumulative
 
   const posDisplay: string = c.status?.position?.displayName ?? c.status?.displayValue ?? ''
   const posUpper = posDisplay.toUpperCase()
@@ -210,7 +216,7 @@ export interface ESPNLeaderboardEntry {
   thru: string             // "F", "12", "-"
   missedCut: boolean
   withdrawn: boolean
-  roundScores: { round: number; score: number }[]
+  roundScores: { round: number; score: number; roundToPar: number; cumulativeToPar: number }[]
 }
 
 export interface ESPNGolfer {
