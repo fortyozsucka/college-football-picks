@@ -3,7 +3,11 @@ import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
 function normalizeName(name: string): string {
-  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '')
+  return name
+    .toLowerCase()
+    .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/þ/g, 'th')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
 }
 
 async function mergeInto(keepId: string, dropId: string, label: string, merged: string[]) {

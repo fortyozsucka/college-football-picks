@@ -23,7 +23,11 @@ function getSportKey(tournamentName: string): string | null {
 
 // Normalize a name for fuzzy matching: decompose Unicode (å→a, ü→u), lowercase, strip non-alpha
 function normalizeName(name: string): string {
-  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '')
+  return name
+    .toLowerCase()
+    .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/þ/g, 'th')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
 }
 
 // Extract normalized last name (everything after first word)

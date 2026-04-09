@@ -5,7 +5,11 @@ import { calculateRoundPoints, processRound2Cuts, calculateTournamentBonuses, ar
 
 // Normalize name: strip accents, lowercase, keep only letters/numbers/hyphens
 function normalizeName(name: string): string {
-  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  return name
+    .toLowerCase()
+    .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/þ/g, 'th')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
 }
 
 function makeSlugId(name: string): string {
