@@ -65,16 +65,28 @@ export async function POST(request: Request) {
       }
 
       if (slugRecord) {
-        await db.golfer.update({
-          where: { id: slugRecord.id },
-          data: {
-            espnId: entry.espnPlayerId,
-            fullName: entry.fullName,
-            firstName: entry.firstName,
-            lastName: entry.lastName,
-            photoUrl: entry.photoUrl ?? undefined,
-          },
-        })
+        // Check if the real ESPN golfer already exists
+        const existingReal = await db.golfer.findUnique({ where: { espnId: entry.espnPlayerId } })
+
+        if (existingReal) {
+          // Real record already exists — re-point slug's picks/scores to it, then delete slug
+          await db.golfPick.updateMany({ where: { golferId: slugRecord.id }, data: { golferId: existingReal.id } })
+          await db.golfRoundScore.updateMany({ where: { golferId: slugRecord.id }, data: { golferId: existingReal.id } })
+          await db.golferTournamentOdds.updateMany({ where: { golferId: slugRecord.id }, data: { golferId: existingReal.id } })
+          await db.golfer.delete({ where: { id: slugRecord.id } })
+        } else {
+          // No real record yet — update the slug record to become the real one
+          await db.golfer.update({
+            where: { id: slugRecord.id },
+            data: {
+              espnId: entry.espnPlayerId,
+              fullName: entry.fullName,
+              firstName: entry.firstName,
+              lastName: entry.lastName,
+              photoUrl: entry.photoUrl ?? undefined,
+            },
+          })
+        }
       }
 
       // Upsert golfer by real ESPN ID
