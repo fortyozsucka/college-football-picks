@@ -3,6 +3,15 @@ import { db } from '@/lib/db'
 import { getESPNLeaderboard } from '@/lib/golf-api'
 import { calculateRoundPoints, processRound2Cuts, calculateTournamentBonuses, archiveTournamentResults } from '@/lib/golf-scoring'
 
+// Normalize name: strip accents, lowercase, keep only letters/numbers/hyphens
+function normalizeName(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function makeSlugId(name: string): string {
+  return `slug:${name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+}
+
 // POST /api/golf/sync — admin/cron: pull latest scores from ESPN and update DB
 // Body: { tournamentId } — uses the tournament's espnId to fetch from ESPN
 export async function POST(request: Request) {
@@ -36,15 +45,35 @@ export async function POST(request: Request) {
     // Sync golfer records and round scores
     const syncedRounds = new Set<number>()
 
+    // Build a normalized name → golfer map for fuzzy matching
+    const allGolfers = await db.golfer.findMany({ select: { id: true, fullName: true, espnId: true } })
+    const golferByNorm = new Map(allGolfers.map(g => [normalizeName(g.fullName), g]))
+
     for (const entry of espnEntries) {
-      // Check if a slug placeholder exists for this golfer and update it first
-      // so we don't create a duplicate real-ESPN record alongside it
-      const slugId = `slug:${entry.fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
-      const slugRecord = await db.golfer.findUnique({ where: { espnId: slugId } })
+      const normalizedEntryName = normalizeName(entry.fullName)
+
+      // 1. Check for slug placeholder by normalized slug (handles accented names)
+      const slugId = makeSlugId(entry.fullName)
+      let slugRecord = await db.golfer.findUnique({ where: { espnId: slugId } })
+
+      // 2. If no slug found, also try matching by normalized full name (catches "Aberg" vs "Åberg")
+      if (!slugRecord) {
+        const byName = golferByNorm.get(normalizedEntryName)
+        if (byName && byName.espnId.startsWith('slug:')) {
+          slugRecord = await db.golfer.findUnique({ where: { id: byName.id } })
+        }
+      }
+
       if (slugRecord) {
         await db.golfer.update({
           where: { id: slugRecord.id },
-          data: { espnId: entry.espnPlayerId, photoUrl: entry.photoUrl ?? undefined },
+          data: {
+            espnId: entry.espnPlayerId,
+            fullName: entry.fullName,
+            firstName: entry.firstName,
+            lastName: entry.lastName,
+            photoUrl: entry.photoUrl ?? undefined,
+          },
         })
       }
 

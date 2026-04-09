@@ -125,7 +125,7 @@ export async function POST(request: Request) {
         const parts = outcome.name.trim().split(' ')
         const lastName = parts.slice(1).join(' ') || parts[0]
         const firstName = parts[0]
-        const slugId = `slug:${outcome.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+        const slugId = `slug:${outcome.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 
         golfer = await db.golfer.create({
           data: {
