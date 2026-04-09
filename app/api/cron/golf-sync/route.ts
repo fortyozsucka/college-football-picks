@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { db } from '@/lib/db'
 
@@ -25,7 +25,9 @@ export async function GET() {
       return NextResponse.json({ message: 'No active golf tournaments', action: 'skipped', timestamp: now.toISOString() })
     }
 
-    const baseUrl = (process.env.NEXTAUTH_URL || 'http://localhost:3000').replace(/\/$/, '')
+    const host = headersList.get('host') || 'localhost:3000'
+    const protocol = host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https'
+    const baseUrl = (process.env.NEXTAUTH_URL || `${protocol}://${host}`).replace(/\/$/, '')
     console.log(`Golf cron: syncing ${activeTournaments.length} tournament(s) via ${baseUrl}/api/golf/sync`)
 
     const results = []
