@@ -102,8 +102,7 @@ function mapTournament(event: any): ESPNTournament {
   }
 }
 
-// ESPN stores the total-to-par in score.displayValue as "-12", "E", "+2", etc.
-// score.value is sometimes raw strokes so we always parse displayValue.
+// Parse a to-par string ("-1", "E", "+2") into a signed integer
 function parseToParScore(displayValue: string | null | undefined): number {
   if (!displayValue || displayValue === '-') return 0
   if (displayValue === 'E' || displayValue === 'EVEN') return 0
@@ -115,11 +114,19 @@ function mapCompetitor(c: any, debug = false): ESPNLeaderboardEntry {
   if (debug) {
     console.log(`ESPN RAW [${c.athlete?.displayName}]: score=${JSON.stringify(c.score)}, linescores=${JSON.stringify(c.linescores)}, status=${JSON.stringify(c.status)}`)
   }
-  // linescores contain raw strokes per round (e.g., 68, 70)
-  const roundScores: { round: number; score: number }[] = (c.linescores ?? []).map((ls: any) => ({
+
+  // linescores: value = raw strokes, displayValue = to-par for that round ("-1", "E", "+2")
+  // Only include linescores that have actual score data (have a value/displayValue)
+  const rawLinescores: any[] = (c.linescores ?? []).filter((ls: any) => ls.value !== undefined || ls.displayValue)
+  const roundScores: { round: number; score: number }[] = rawLinescores.map((ls: any) => ({
     round: ls.period ?? ls.type?.id,
     score: ls.value ?? 0,
   }))
+
+  // Total to-par = sum of each round's to-par from displayValue (not c.score which ESPN misuses)
+  const totalScore = rawLinescores.reduce((sum: number, ls: any) => {
+    return sum + parseToParScore(ls.displayValue)
+  }, 0)
 
   const posDisplay: string = c.status?.position?.displayName ?? c.status?.displayValue ?? ''
   const posUpper = posDisplay.toUpperCase()
@@ -149,7 +156,7 @@ function mapCompetitor(c: any, debug = false): ESPNLeaderboardEntry {
     photoUrl: c.athlete?.headshot?.href ?? null,
     position: parseInt(c.status?.position?.id ?? '999', 10),
     positionDisplay: posDisplay,
-    totalScore: parseToParScore(c.score?.displayValue),
+    totalScore,
     currentRound: c.status?.period ?? 1,
     thru: c.status?.displayValue ?? '-',
     missedCut,
