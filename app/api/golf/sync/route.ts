@@ -102,6 +102,9 @@ export async function POST(request: Request) {
         update: { photoUrl: entry.photoUrl ?? undefined },
       })
 
+      // Build a set of rounds ESPN has linescore data for
+      const roundsWithScores = new Set(entry.roundScores.map((rs) => rs.round))
+
       // Sync each round score this golfer has played
       for (const rs of entry.roundScores) {
         const round = tournament.rounds.find((r) => r.roundNumber === rs.round)
@@ -129,6 +132,16 @@ export async function POST(request: Request) {
             missedCut: entry.missedCut,
             withdrawn: entry.withdrawn,
           },
+        })
+      }
+
+      // Clear stale scores for rounds ESPN has no linescore data yet
+      // (handles players in the field who haven't teed off)
+      for (const round of tournament.rounds) {
+        if (roundsWithScores.has(round.roundNumber)) continue
+        await db.golfRoundScore.updateMany({
+          where: { roundId: round.id, golferId: golfer.id },
+          data: { score: null, thru: null },
         })
       }
     }
