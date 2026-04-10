@@ -176,17 +176,23 @@ export async function POST(request: Request) {
 
     for (const roundNumber of completedRoundNumbers) {
       const round = tournament.rounds.find((r) => r.roundNumber === roundNumber)
-      if (!round || round.isCompleted) continue
+      if (!round) continue
 
-      await db.golfRound.update({
-        where: { id: round.id },
-        data: { isCompleted: true, status: 'COMPLETED' },
-      })
+      // Always ensure completed rounds have correct status (fixes stuck IN_PROGRESS state)
+      if (!round.isCompleted || round.status !== 'COMPLETED') {
+        await db.golfRound.update({
+          where: { id: round.id },
+          data: { isCompleted: true, status: 'COMPLETED' },
+        })
+      }
 
-      await calculateRoundPoints(round.id)
+      // Only recalculate points on first completion
+      if (!round.isCompleted) {
+        await calculateRoundPoints(round.id)
 
-      if (roundNumber === 2) {
-        await processRound2Cuts(tournamentId)
+        if (roundNumber === 2) {
+          await processRound2Cuts(tournamentId)
+        }
       }
     }
 
