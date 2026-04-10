@@ -153,10 +153,18 @@ export default function ChakraGolfFieldPage() {
   }
 
   const allPlaying = field.filter(f => !f.missedCut && !f.withdrawn)
-  const playing = [
-    ...allPlaying.filter(f => hasStarted(f.thru)),
-    ...allPlaying.filter(f => !hasStarted(f.thru)),
-  ]
+  const playing = [...allPlaying].sort((a, b) => {
+    const aStarted = hasStarted(a.thru)
+    const bStarted = hasStarted(b.thru)
+    // Not-yet-started players always go to the bottom
+    if (aStarted && !bStarted) return -1
+    if (!aStarted && bStarted) return 1
+    // Both started (or both not started) — sort by position
+    if (a.position === null && b.position === null) return 0
+    if (a.position === null) return 1
+    if (b.position === null) return -1
+    return a.position - b.position
+  })
   const cut = field.filter(f => f.missedCut && !f.withdrawn)
   const wd = field.filter(f => f.withdrawn)
 
