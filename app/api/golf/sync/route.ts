@@ -44,7 +44,8 @@ export async function POST(request: Request) {
 
     // Determine current round from ESPN data
     const maxRound = Math.max(...espnEntries.map((e) => e.currentRound).filter(Boolean), 1)
-    const tournamentCompleted = espnEntries.every((e) => e.thru === 'F' || e.missedCut)
+    const allDone = espnEntries.every((e) => e.thru === 'F' || e.missedCut)
+    const tournamentCompleted = allDone && maxRound >= tournament.rounds.length
 
     // Sync golfer records and round scores
     const syncedRounds = new Set<number>()
