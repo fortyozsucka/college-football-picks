@@ -20,14 +20,34 @@ export async function calculateRoundPoints(roundId: string): Promise<void> {
   })
   if (!round) throw new Error(`Round ${roundId} not found`)
 
-  // Only include golfers who have a to-par score for this round (have teed off, didn't MC or WD)
-  const playedScores = round.roundScores.filter(
-    (rs) => rs.totalScore !== null && !rs.missedCut && !rs.withdrawn
-  )
+  // Fetch previous round scores to compute per-round to-par (totalScore is cumulative)
+  let prevRoundScores: { golferId: string; totalScore: number | null }[] = []
+  if (round.roundNumber > 1) {
+    const prevRound = await db.golfRound.findUnique({
+      where: { tournamentId_roundNumber: { tournamentId: round.tournamentId, roundNumber: round.roundNumber - 1 } },
+      include: { roundScores: { select: { golferId: true, totalScore: true } } },
+    })
+    prevRoundScores = prevRound?.roundScores ?? []
+  }
 
-  // Best (lowest/most negative) to-par among those who have played
+  // Per-round to-par = cumulative(this round) - cumulative(prev round)
+  const prevByGolfer = new Map(prevRoundScores.map(rs => [rs.golferId, rs.totalScore]))
+  const getPerRoundToPar = (rs: { golferId: string; totalScore: number | null }): number | null => {
+    if (rs.totalScore === null) return null
+    const prev = prevByGolfer.get(rs.golferId) ?? null
+    if (round.roundNumber === 1 || prev === null) return rs.totalScore
+    return rs.totalScore - prev
+  }
+
+  // Only include golfers who have a per-round to-par score (have teed off, didn't MC or WD)
+  const playedScores = round.roundScores
+    .filter(rs => rs.totalScore !== null && !rs.missedCut && !rs.withdrawn)
+    .map(rs => ({ ...rs, perRoundToPar: getPerRoundToPar(rs)! }))
+    .filter(rs => rs.perRoundToPar !== null)
+
+  // Best (lowest/most negative) per-round to-par among those who have played this round
   const bestScore = playedScores.length > 0
-    ? Math.min(...playedScores.map((rs) => rs.totalScore!))
+    ? Math.min(...playedScores.map(rs => rs.perRoundToPar))
     : null
 
   // Get all picks for this tournament
@@ -60,9 +80,10 @@ export async function calculateRoundPoints(roundId: string): Promise<void> {
       })
     }
 
-    // Golfer has a to-par score this round — calculate points
-    if (golferScore?.totalScore !== null && golferScore?.totalScore !== undefined && bestScore !== null) {
-      const shotsBehind = golferScore.totalScore - bestScore
+    // Golfer has a per-round to-par score — calculate points
+    const perRoundToPar = golferScore ? getPerRoundToPar(golferScore) : null
+    if (perRoundToPar !== null && bestScore !== null) {
+      const shotsBehind = perRoundToPar - bestScore
       points = Math.max(0, 20 - shotsBehind * 2)
     }
 
