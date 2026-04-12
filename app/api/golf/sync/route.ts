@@ -45,7 +45,6 @@ export async function POST(request: Request) {
     // Determine current round from ESPN data
     const maxRound = Math.max(...espnEntries.map((e) => e.currentRound).filter(Boolean), 1)
     const allDone = espnEntries.every((e) => e.thru === 'F' || e.missedCut)
-    const tournamentCompleted = allDone && maxRound >= tournament.rounds.length
 
     // Sync golfer records and round scores
     const syncedRounds = new Set<number>()
@@ -167,6 +166,12 @@ export async function POST(request: Request) {
         })
       }
     }
+
+    // Tournament is only complete when ALL players are done AND we have actual R4 linescore data.
+    // Requiring syncedRounds.has(finalRound) prevents false completion between rounds (e.g. after
+    // R3 everyone shows thru='F' but ESPN bumps currentRound to 4 before anyone tees off).
+    const finalRound = tournament.rounds.length
+    const tournamentCompleted = allDone && maxRound >= finalRound && syncedRounds.has(finalRound)
 
     // Update round statuses and calculate points for completed rounds
     const completedRoundNumbers = Array.from(syncedRounds).filter((rn) => {
