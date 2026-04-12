@@ -334,6 +334,35 @@ export default function GolfAdminPanel() {
 
   // ── Sync functions ─────────────────────────────────────────────────────────
 
+  const [resetting, setResetting] = useState(false)
+
+  const resetTournament = async () => {
+    if (!syncTournamentId) {
+      toast({ title: 'Select a tournament to reset', status: 'warning', duration: 3000 })
+      return
+    }
+    setResetting(true)
+    try {
+      const res = await fetch('/api/admin/golf/reset-tournament', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentId: syncTournamentId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({
+        title: `Tournament reset to IN_PROGRESS (R${data.currentRound} active)`,
+        status: 'success',
+        duration: 4000,
+      })
+      fetchTournaments()
+    } catch (e: any) {
+      toast({ title: e.message ?? 'Reset failed', status: 'error', duration: 4000 })
+    } finally {
+      setResetting(false)
+    }
+  }
+
   const triggerSync = async () => {
     if (!syncTournamentId) {
       toast({ title: 'Select a tournament to sync', status: 'warning', duration: 3000 })
@@ -741,24 +770,34 @@ export default function GolfAdminPanel() {
                   value={syncTournamentId}
                   onChange={(e) => setSyncTournamentId(e.target.value)}
                 >
-                  {tournaments
-                    .filter((t) => t.status === 'IN_PROGRESS' || t.status === 'UPCOMING')
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>{t.name} ({t.status})</option>
-                    ))}
+                  {tournaments.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} ({t.status})</option>
+                  ))}
                 </Select>
               </FormControl>
 
-              <Button
-                colorScheme="blue"
-                size="sm"
-                leftIcon={<RepeatIcon />}
-                isLoading={syncing}
-                loadingText="Syncing from ESPN..."
-                onClick={triggerSync}
-              >
-                Sync Now
-              </Button>
+              <HStack>
+                <Button
+                  colorScheme="blue"
+                  size="sm"
+                  leftIcon={<RepeatIcon />}
+                  isLoading={syncing}
+                  loadingText="Syncing..."
+                  onClick={triggerSync}
+                >
+                  Sync Now
+                </Button>
+                <Button
+                  colorScheme="orange"
+                  size="sm"
+                  variant="outline"
+                  isLoading={resetting}
+                  loadingText="Resetting..."
+                  onClick={resetTournament}
+                >
+                  Reset to In Progress
+                </Button>
+              </HStack>
 
               {syncResult && (
                 <Card bg={cardBg} border="1px" borderColor={borderColor}>
