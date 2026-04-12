@@ -143,11 +143,13 @@ export async function processRound2Cuts(tournamentId: string): Promise<string[]>
 
 /**
  * After the tournament completes: award finish bonuses to users who picked
- * the top 3 finishers. Bonuses are added on top of the golfer's R4 points.
- *   1st = +20, 2nd = +10, 3rd = +5
+ * the top 3 distinct finishers. Ties share the bonus for their finishing group.
+ *   Best score (1st place, even if tied) = +20
+ *   2nd distinct score (even if tied) = +10
+ *   3rd distinct score (even if tied) = +5
  */
 export async function calculateTournamentBonuses(tournamentId: string): Promise<void> {
-  const BONUSES: Record<number, number> = { 1: 20, 2: 10, 3: 5 }
+  const BONUSES = [20, 10, 5]
 
   // Get R4 round record
   const round4 = await db.golfRound.findUnique({
@@ -155,19 +157,29 @@ export async function calculateTournamentBonuses(tournamentId: string): Promise<
   })
   if (!round4) return
 
-  // Get top 3 finishers from round scores (position 1, 2, 3)
-  const topFinishers = await db.golfRoundScore.findMany({
-    where: {
-      roundId: round4.id,
-      position: { in: [1, 2, 3] },
-    },
+  // Get all R4 scores for non-cut, non-withdrawn golfers, sorted by position
+  const allScores = await db.golfRoundScore.findMany({
+    where: { roundId: round4.id, missedCut: false, withdrawn: false, position: { not: null } },
+    orderBy: { position: 'asc' },
   })
 
+  // Find the 3 distinct finishing positions in order
+  const distinctPositions: number[] = []
+  for (const rs of allScores) {
+    if (rs.position !== null && !distinctPositions.includes(rs.position)) {
+      distinctPositions.push(rs.position)
+      if (distinctPositions.length === 3) break
+    }
+  }
+
+  // All golfers at each of those 3 positions get the corresponding bonus
+  const topFinishers = allScores.filter(rs => rs.position !== null && distinctPositions.includes(rs.position))
+  const getBonusForGolfer = (position: number) => BONUSES[distinctPositions.indexOf(position)] ?? 0
+
   for (const finisher of topFinishers) {
-    const bonus = BONUSES[finisher.position!]
+    const bonus = getBonusForGolfer(finisher.position!)
     if (!bonus) continue
 
-    // Find all picks for this golfer in this tournament
     const picks = await db.golfPick.findMany({
       where: { tournamentId, golferId: finisher.golferId },
     })

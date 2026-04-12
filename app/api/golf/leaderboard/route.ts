@@ -3,8 +3,6 @@ import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-const BONUS_MAP: Record<number, number> = { 1: 20, 2: 10, 3: 5 }
-
 // GET /api/golf/leaderboard?tournamentId=
 export async function GET(request: Request) {
   try {
@@ -34,12 +32,25 @@ export async function GET(request: Request) {
 
     const round4 = tournament.rounds.find((r) => r.roundNumber === 4)
     if (round4) {
-      const topFinishers = await db.golfRoundScore.findMany({
-        where: { roundId: round4.id, position: { in: [1, 2, 3] } },
+      const allScores = await db.golfRoundScore.findMany({
+        where: { roundId: round4.id, missedCut: false, withdrawn: false, position: { not: null } },
+        orderBy: { position: 'asc' },
       })
 
+      // Find the 3 distinct finishing positions
+      const distinctPositions: number[] = []
+      for (const rs of allScores) {
+        if (rs.position !== null && !distinctPositions.includes(rs.position)) {
+          distinctPositions.push(rs.position)
+          if (distinctPositions.length === 3) break
+        }
+      }
+
+      const bonusValues = [20, 10, 5]
+      const topFinishers = allScores.filter(rs => rs.position !== null && distinctPositions.includes(rs.position))
+
       for (const finisher of topFinishers) {
-        const bonus = BONUS_MAP[finisher.position!]
+        const bonus = bonusValues[distinctPositions.indexOf(finisher.position!)] ?? 0
         if (!bonus) continue
         const picksForGolfer = await db.golfPick.findMany({
           where: { tournamentId, golferId: finisher.golferId },
