@@ -181,7 +181,7 @@ export async function calculateTournamentBonuses(tournamentId: string): Promise<
     if (!bonus) continue
 
     const picks = await db.golfPick.findMany({
-      where: { tournamentId, golferId: finisher.golferId },
+      where: { tournamentId, golferId: finisher.golferId, isUserCut: false },
     })
 
     for (const pick of picks) {

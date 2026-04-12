@@ -58,6 +58,7 @@ export default function ChakraGolfLeaderboardPage() {
 
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [pot, setPot] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -79,6 +80,7 @@ export default function ChakraGolfLeaderboardPage() {
         if (data.error) { setError(data.error); return }
         setTournament(data.tournament)
         setLeaderboard(data.leaderboard ?? [])
+        setPot(data.pot ?? null)
       })
       .catch(() => setError('Failed to load leaderboard'))
       .finally(() => setLoading(false))
@@ -163,8 +165,9 @@ export default function ChakraGolfLeaderboardPage() {
             </HStack>
           </Flex>
 
-          {/* Round progress pills */}
+          {/* Round progress pills + pot */}
           {tournament && (
+            <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
             <HStack spacing={2} wrap="wrap">
               {[1, 2, 3, 4].map((rn) => {
                 const round = tournament.rounds.find((r) => r.roundNumber === rn)
@@ -181,6 +184,12 @@ export default function ChakraGolfLeaderboardPage() {
                 )
               })}
             </HStack>
+            {pot != null && (
+              <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full" variant="solid">
+                💰 Pot: ${pot.toFixed(0)}
+              </Badge>
+            )}
+            </Flex>
           )}
 
           {loading && <Flex justify="center" py={12}><Spinner size="lg" color="green.500" /></Flex>}

@@ -36,8 +36,15 @@ import {
   Th,
   Td,
   TableContainer,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
 } from '@chakra-ui/react'
-import { CheckIcon } from '@chakra-ui/icons'
+import { CheckIcon, ExternalLinkIcon } from '@chakra-ui/icons'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/lib/context/AuthContext'
 
@@ -64,6 +71,7 @@ interface Tournament {
   name: string
   startDate: string
   status: string
+  entryFee: number | null
 }
 
 interface Selection {
@@ -100,6 +108,8 @@ export default function ChakraGolfPicksPage() {
   const [error, setError] = useState<string | null>(null)
   const [existingPicks, setExistingPicks] = useState(false)
   const [allPicks, setAllPicks] = useState<any[]>([])
+  const [adminVenmo, setAdminVenmo] = useState<string | null>(null)
+  const { isOpen: isVenmoOpen, onOpen: onVenmoOpen, onClose: onVenmoClose } = useDisclosure()
 
   const cardBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -110,6 +120,10 @@ export default function ChakraGolfPicksPage() {
     'linear(to-r, neutral.900, brand.600)',
     'linear(to-r, neutral.100, brand.400)'
   )
+
+  useEffect(() => {
+    fetch('/api/golf/settings').then(r => r.json()).then(d => setAdminVenmo(d.venmoHandle ?? null)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!tournamentId || !user) return
@@ -202,8 +216,13 @@ export default function ChakraGolfPicksPage() {
         return
       }
 
-      toast({ title: 'Picks submitted!', status: 'success', duration: 3000, isClosable: true })
-      router.push(`/golf/leaderboard?tournamentId=${tournamentId}`)
+      // Show Venmo payment prompt if entry fee is set and this is a new submission
+      if (tournament?.entryFee && adminVenmo && !existingPicks) {
+        onVenmoOpen()
+      } else {
+        toast({ title: 'Picks submitted!', status: 'success', duration: 3000, isClosable: true })
+        router.push(`/golf/leaderboard?tournamentId=${tournamentId}`)
+      }
     } catch {
       toast({ title: 'Network error. Please try again.', status: 'error', duration: 4000, isClosable: true })
     } finally {
@@ -233,8 +252,49 @@ export default function ChakraGolfPicksPage() {
     )
   }
 
+  const venmoUrl = adminVenmo && tournament?.entryFee
+    ? `https://venmo.com/${adminVenmo}?txn=pay&amount=${tournament.entryFee}&note=${encodeURIComponent(`${tournament.name} Golf Pool Entry`)}`
+    : null
+
   return (
     <ProtectedRoute>
+      {/* Venmo payment modal */}
+      <Modal isOpen={isVenmoOpen} onClose={() => { onVenmoClose(); router.push(`/golf/leaderboard?tournamentId=${tournamentId}`) }} isCentered>
+        <ModalOverlay />
+        <ModalContent mx={4}>
+          <ModalHeader>Picks Submitted!</ModalHeader>
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Text>Your picks are locked in. Please pay the entry fee to complete your registration.</Text>
+              <Box bg="green.50" borderRadius="md" p={4} border="1px solid" borderColor="green.200" textAlign="center">
+                <Text fontSize="sm" color="gray.600" mb={1}>Entry Fee</Text>
+                <Text fontSize="3xl" fontWeight="900" color="green.700">${tournament?.entryFee}</Text>
+                {adminVenmo && (
+                  <Text fontSize="sm" color="gray.600" mt={1}>Venmo: @{adminVenmo}</Text>
+                )}
+              </Box>
+              {venmoUrl && (
+                <Button
+                  as="a"
+                  href={venmoUrl}
+                  target="_blank"
+                  colorScheme="blue"
+                  size="lg"
+                  rightIcon={<ExternalLinkIcon />}
+                >
+                  Pay with Venmo
+                </Button>
+              )}
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={() => { onVenmoClose(); router.push(`/golf/leaderboard?tournamentId=${tournamentId}`) }}>
+              I'll pay later
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <Container maxW="4xl" py={6}>
         <VStack spacing={6} align="stretch">
           {/* Header */}

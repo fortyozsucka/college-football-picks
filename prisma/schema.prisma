@@ -230,6 +230,7 @@ model GolfTournament {
   status         TournamentStatus @default(UPCOMING)
   cutLine        Int?
   winningScore   Int?
+  entryFee       Float?
   isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt

@@ -58,6 +58,7 @@ interface Tournament {
   status: string
   season: number
   startDate: string
+  entryFee: number | null
   _count: { golfPicks: number }
 }
 
@@ -335,6 +336,28 @@ export default function GolfAdminPanel() {
   // ── Sync functions ─────────────────────────────────────────────────────────
 
   const [resetting, setResetting] = useState(false)
+  const [entryFeeEdits, setEntryFeeEdits] = useState<Record<string, string>>({})
+  const [savingEntryFee, setSavingEntryFee] = useState<string | null>(null)
+
+  const saveEntryFee = async (tournamentId: string) => {
+    const fee = parseFloat(entryFeeEdits[tournamentId])
+    if (isNaN(fee)) return
+    setSavingEntryFee(tournamentId)
+    try {
+      const res = await fetch(`/api/golf/tournaments/${tournamentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryFee: fee }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      toast({ title: `Entry fee set to $${fee}`, status: 'success', duration: 2000 })
+      fetchTournaments()
+    } catch {
+      toast({ title: 'Failed to save entry fee', status: 'error', duration: 3000 })
+    } finally {
+      setSavingEntryFee(null)
+    }
+  }
 
   const resetTournament = async () => {
     if (!syncTournamentId) {
@@ -574,6 +597,18 @@ export default function GolfAdminPanel() {
                           onChange={(e) => setNewTournament((p) => ({ ...p, season: e.target.value }))}
                         />
                       </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="sm">Entry Fee ($)</FormLabel>
+                        <NumberInput
+                          size="sm"
+                          min={0}
+                          precision={2}
+                          value={(newTournament as any).entryFee ?? ''}
+                          onChange={(val) => setNewTournament((p) => ({ ...p, entryFee: val }))}
+                        >
+                          <NumberInputField placeholder="e.g. 20" />
+                        </NumberInput>
+                      </FormControl>
                     </SimpleGrid>
                     <Button
                       mt={4}
@@ -616,6 +651,7 @@ export default function GolfAdminPanel() {
                                 <Text fontWeight="500" fontSize="sm">{t.name}</Text>
                                 <Text fontSize="xs" color={mutedText}>
                                   ESPN ID: {t.espnId} · {Math.floor(t._count.golfPicks / 6)} entries
+                                  {t.entryFee != null ? ` · $${t.entryFee} entry` : ''}
                                 </Text>
                               </Box>
                             </HStack>
@@ -636,6 +672,27 @@ export default function GolfAdminPanel() {
                                 </>
                               )}
                             </HStack>
+                          </HStack>
+                          <HStack mt={2} spacing={2}>
+                            <NumberInput
+                              size="xs"
+                              min={0}
+                              precision={2}
+                              maxW="100px"
+                              value={entryFeeEdits[t.id] ?? (t.entryFee != null ? String(t.entryFee) : '')}
+                              onChange={(val) => setEntryFeeEdits(p => ({ ...p, [t.id]: val }))}
+                            >
+                              <NumberInputField placeholder="Entry $" />
+                            </NumberInput>
+                            <Button
+                              size="xs"
+                              colorScheme="green"
+                              variant="outline"
+                              isLoading={savingEntryFee === t.id}
+                              onClick={() => saveEntryFee(t.id)}
+                            >
+                              Set Entry Fee
+                            </Button>
                           </HStack>
                         </CardBody>
                       </Card>

@@ -22,8 +22,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Tournament not found' }, { status: 404 })
     }
 
+    // Count distinct enrolled users (players who submitted picks)
+    const enrolledUsers = await db.golfPick.findMany({
+      where: { tournamentId },
+      select: { userId: true },
+      distinct: ['userId'],
+    })
+    const playerCount = enrolledUsers.length
+    const pot = tournament.entryFee != null ? tournament.entryFee * playerCount : null
+
     if (tournament.status === 'UPCOMING') {
-      return NextResponse.json({ tournament, leaderboard: [] })
+      return NextResponse.json({ tournament, leaderboard: [], playerCount, pot })
     }
 
     // Work out who earned finish bonuses so we can separate them from R4
@@ -106,6 +115,8 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         tournament,
+        playerCount,
+        pot,
         leaderboard: archived.map((r) => {
           const rt = roundTotalsByUser.get(r.userId) ?? {}
           const bonus = bonusByUser.get(r.userId) ?? 0
@@ -197,7 +208,7 @@ export async function GET(request: Request) {
       }
     })
 
-    return NextResponse.json({ tournament, leaderboard })
+    return NextResponse.json({ tournament, leaderboard, playerCount, pot })
   } catch (error) {
     console.error('Error fetching golf leaderboard:', error)
     return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 })

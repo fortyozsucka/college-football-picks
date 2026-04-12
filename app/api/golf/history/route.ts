@@ -10,7 +10,7 @@ export async function GET() {
       where: { rank: 1 },
       include: {
         user: { select: { name: true, email: true } },
-        tournament: { select: { id: true, name: true, season: true, tournamentType: true } },
+        tournament: { select: { id: true, name: true, season: true, tournamentType: true, entryFee: true } },
       },
       orderBy: [{ tournament: { season: 'desc' } }],
     })
@@ -23,6 +23,8 @@ export async function GET() {
         winner: r.user.name ?? r.user.email.split('@')[0],
         totalPoints: r.totalPoints,
         totalUsers: r.totalUsers,
+        entryFee: r.tournament.entryFee,
+        pot: r.tournament.entryFee != null ? r.tournament.entryFee * r.totalUsers : null,
       }))
     )
   } catch (error) {

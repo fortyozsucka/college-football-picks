@@ -28,6 +28,8 @@ interface AppResult {
   winner: string
   totalPoints: number
   totalUsers: number
+  entryFee: number | null
+  pot: number | null
 }
 
 // ─── Static historical data ───────────────────────────────────────────────────
@@ -271,6 +273,50 @@ export default function ChakraGolfHistoryPage() {
               </Table>
             </TableContainer>
           </Box>
+
+          {/* ── App Results & Cash Prizes ── */}
+          {appResults.some(r => r.pot != null) && (
+            <Box borderRadius="lg" overflow="hidden" boxShadow="md" border="1px solid" borderColor={borderColor}>
+              <Box bg={LIGHT_GREEN} px={5} py={3}>
+                <Text fontWeight="800" fontSize="sm" color="white" letterSpacing="0.12em" textTransform="uppercase">
+                  Cash Prizes
+                </Text>
+              </Box>
+              <TableContainer>
+                <Table variant="unstyled" size="sm">
+                  <Thead>
+                    <Tr bg={sectionHeadBg}>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800">YEAR</Th>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800">TOURNAMENT</Th>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800">WINNER</Th>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800" isNumeric>PLAYERS</Th>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800" isNumeric>ENTRY FEE</Th>
+                      <Th py={2} fontSize="xs" color={GREEN} fontWeight="800" isNumeric borderLeft="2px solid" borderColor={LIGHT_GREEN}>PRIZE</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {[...appResults].reverse().map((r, i) => {
+                      const rowBg = i % 2 === 0 ? cardBg : useColorModeValue('#f9f9f9', 'gray.750')
+                      return (
+                        <Tr key={`${r.season}-${r.tournamentName}`} bg={rowBg}>
+                          <Td py={2.5} fontWeight="700" fontSize="sm" color={GREEN}>{r.season}</Td>
+                          <Td py={2.5} fontSize="sm">{r.tournamentName}</Td>
+                          <Td py={2.5} fontSize="sm" fontWeight="600">{r.winner}</Td>
+                          <Td py={2.5} fontSize="sm" isNumeric>{r.totalUsers}</Td>
+                          <Td py={2.5} fontSize="sm" isNumeric color={mutedText}>
+                            {r.entryFee != null ? `$${r.entryFee}` : '—'}
+                          </Td>
+                          <Td py={2.5} fontWeight="800" fontSize="sm" color="green.600" isNumeric borderLeft="2px solid" borderColor={LIGHT_GREEN}>
+                            {r.pot != null ? `$${r.pot.toFixed(0)}` : '—'}
+                          </Td>
+                        </Tr>
+                      )
+                    })}
+                  </Tbody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
 
           {/* ── Missed Cuts by Year ── */}
           <Box borderRadius="lg" overflow="hidden" boxShadow="md" border="1px solid" borderColor={borderColor}>

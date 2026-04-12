@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 // POST /api/golf/tournaments — admin: create a tournament
 export async function POST(request: Request) {
   try {
-    const { espnId, name, startDate, endDate, season } = await request.json()
+    const { espnId, name, startDate, endDate, season, entryFee } = await request.json()
 
     if (!espnId || !name || !startDate || !season) {
       return NextResponse.json({ error: 'espnId, name, startDate, and season are required' }, { status: 400 })
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
         endDate: endDate ? new Date(endDate) : new Date(startDate),
         season: parseInt(season),
         status: 'UPCOMING',
+        ...(entryFee != null && entryFee !== '' && { entryFee: parseFloat(entryFee) }),
       },
     })
 

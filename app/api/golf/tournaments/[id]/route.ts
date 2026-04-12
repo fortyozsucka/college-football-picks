@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   try {
     const data = await request.json()
 
-    const allowed = ['status', 'cutLine', 'winningScore', 'isActive', 'endDate']
+    const allowed = ['status', 'cutLine', 'winningScore', 'entryFee', 'isActive', 'endDate']
     const update: Record<string, any> = {}
     for (const key of allowed) {
       if (data[key] !== undefined) update[key] = data[key]
