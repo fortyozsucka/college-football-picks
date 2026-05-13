@@ -49,7 +49,7 @@ export interface InviteInfo {
 }
 
 export class EmailService {
-  private fromEmail = 'Squad CFB Picks <picks@your-domain.com>' // Update with your verified domain
+  private fromEmail = 'Squad Picks <noreply@squadtriangle.com>'
 
   async sendEmail(template: EmailTemplate): Promise<void> {
     try {
