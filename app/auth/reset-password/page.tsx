@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react'
 import { LockIcon } from '@chakra-ui/icons'
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token') ?? ''
@@ -179,5 +179,13 @@ export default function ResetPasswordPage() {
         </Card>
       </VStack>
     </Container>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<Flex justify="center" py={12}><Spinner size="lg" /></Flex>}>
+      <ResetPasswordForm />
+    </Suspense>
   )
 }
