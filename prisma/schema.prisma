@@ -18,6 +18,8 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   venmoHandle             String?
+  passwordResetToken      String?
+  passwordResetExpires    DateTime?
   playFootball            Boolean                  @default(true)
   playGolf                Boolean                  @default(false)
   notificationPreferences NotificationPreferences?

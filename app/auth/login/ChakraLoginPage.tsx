@@ -136,6 +136,18 @@ export default function ChakraLoginPage() {
                     </InputGroup>
                   </FormControl>
 
+                  <Flex w="full" justify="flex-end">
+                    <ChakraLink
+                      as={Link}
+                      href="/auth/forgot-password"
+                      fontSize="sm"
+                      color="football.600"
+                      _hover={{ color: 'football.700', textDecoration: 'underline' }}
+                    >
+                      Forgot password?
+                    </ChakraLink>
+                  </Flex>
+
                   <Button
                     type="submit"
                     isLoading={loading}
