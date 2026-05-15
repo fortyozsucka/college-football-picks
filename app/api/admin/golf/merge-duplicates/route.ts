@@ -10,6 +10,15 @@ function normalizeName(name: string): string {
     .replace(/[^a-z]/g, '')
 }
 
+function normalizeLast(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return parts.slice(1).join('')
+    .toLowerCase()
+    .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ð/g, 'd').replace(/þ/g, 'th')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '')
+}
+
 async function mergeInto(keepId: string, dropId: string, label: string, merged: string[]) {
   // Move picks, round scores, odds from drop → keep, then delete drop
   await db.golfPick.updateMany({ where: { golferId: dropId }, data: { golferId: keepId } })
@@ -48,7 +57,21 @@ export async function POST() {
 
     for (const slug of slugGolfers) {
       const norm = normalizeName(slug.fullName)
-      const real = realByNorm.get(norm)
+      let real = realByNorm.get(norm)
+
+      // Fallback: match by last name (handles Matt/Matthew, Chris/Christopher, etc.)
+      if (!real) {
+        const slugLast = normalizeLast(slug.fullName)
+        if (slugLast.length >= 4) {
+          for (const [, candidate] of Array.from(realByNorm)) {
+            if (normalizeLast(candidate.fullName) === slugLast) {
+              real = candidate
+              break
+            }
+          }
+        }
+      }
+
       if (!real) { noMatch.push(slug.fullName); continue }
       await mergeInto(real.id, slug.id, `${slug.fullName} (slug) → ${real.fullName}`, merged)
     }
