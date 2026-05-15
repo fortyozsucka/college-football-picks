@@ -191,13 +191,12 @@ export async function POST(request: Request) {
         })
       }
 
-      // Only recalculate points on first completion
-      if (!round.isCompleted) {
-        await calculateRoundPoints(round.id)
+      // Always recalculate points — handles cases where picks were re-pointed after
+      // a merge-duplicates run (e.g. Matthew→Matt, Christopher→Chris name fixes)
+      await calculateRoundPoints(round.id)
 
-        if (roundNumber === 2) {
-          await processRound2Cuts(tournamentId)
-        }
+      if (roundNumber === 2 && !round.isCompleted) {
+        await processRound2Cuts(tournamentId)
       }
     }
 
