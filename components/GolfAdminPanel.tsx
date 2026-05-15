@@ -62,6 +62,44 @@ interface Tournament {
   _count: { golfPicks: number }
 }
 
+function MergeDuplicatesButton() {
+  const toast = useToast()
+  const [merging, setMerging] = useState(false)
+  const [result, setResult] = useState<{ mergedCount: number; noMatch: string[] } | null>(null)
+
+  const run = async () => {
+    setMerging(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/golf/merge-duplicates', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setResult(data)
+      toast({ title: `Merged ${data.mergedCount} duplicate(s)`, status: 'success', duration: 3000 })
+    } catch (e: any) {
+      toast({ title: e.message ?? 'Merge failed', status: 'error', duration: 4000 })
+    } finally {
+      setMerging(false)
+    }
+  }
+
+  return (
+    <Box>
+      <Button size="sm" colorScheme="purple" isLoading={merging} loadingText="Merging..." onClick={run}>
+        Merge Duplicate Golfers
+      </Button>
+      {result && (
+        <Box mt={2} fontSize="xs">
+          <Text color="green.600" fontWeight="600">Merged: {result.mergedCount}</Text>
+          {result.noMatch.length > 0 && (
+            <Text color="orange.500">No match: {result.noMatch.join(', ')}</Text>
+          )}
+        </Box>
+      )}
+    </Box>
+  )
+}
+
 export default function GolfAdminPanel() {
   const toast = useToast()
   const cardBg = useColorModeValue('white', 'gray.800')
@@ -883,6 +921,19 @@ export default function GolfAdminPanel() {
                   </CardBody>
                 </Card>
               )}
+
+              <Divider />
+
+              {/* Merge Duplicates */}
+              <Box>
+                <Text fontWeight="600" fontSize="sm" mb={1}>Fix Name Mismatches</Text>
+                <Text fontSize="sm" color={mutedText} mb={3}>
+                  Merges slug golfers (from odds import) into real ESPN records. Fixes cases like
+                  "Matthew Fitzpatrick" → "Matt Fitzpatrick" by last-name matching. Run this after
+                  importing odds, then sync to repopulate scores.
+                </Text>
+                <MergeDuplicatesButton />
+              </Box>
 
               <Divider />
 
