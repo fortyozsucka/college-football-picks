@@ -344,11 +344,11 @@ export default function ChakraGolfHistoryPage() {
                 mcRows.push(row)
               }
               // Append name to existing cell value (multiple people can miss cut)
-              const existing = row[key as keyof MCRow] as string | undefined
+              const existing = (row as Record<string, string | undefined>)[key]
               if (!existing) {
-                row[key as keyof MCRow] = mc.name as any
+                (row as Record<string, string>)[key] = mc.name
               } else if (!existing.includes(mc.name)) {
-                row[key as keyof MCRow] = `${existing} / ${mc.name}` as any
+                (row as Record<string, string>)[key] = `${existing} / ${mc.name}`
               }
               if (!staticMCYears.has(mc.season)) row.isApp = true
             }
