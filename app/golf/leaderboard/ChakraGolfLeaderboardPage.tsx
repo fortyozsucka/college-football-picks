@@ -286,6 +286,8 @@ export default function ChakraGolfLeaderboardPage() {
                     {leaderboard.map((entry, i) => {
                       const isCurrentUser = entry.userId === user?.id
                       const bg = isCurrentUser ? highlightBg : i % 2 === 0 ? rowBg : altRowBg
+                      // Compute display total from round columns + bonus so it always matches what's shown
+                      const displayTotal = Object.values(entry.roundTotals ?? {}).reduce((s, v) => s + v, 0) + (entry.bonusPoints ?? 0)
 
                       return (
                         <Tr
@@ -366,7 +368,7 @@ export default function ChakraGolfLeaderboardPage() {
                             borderColor={borderCol}
                             py={3}
                           >
-                            {entry.totalPoints}
+                            {displayTotal}
                           </Td>
 
                           {/* Tiebreaker */}
