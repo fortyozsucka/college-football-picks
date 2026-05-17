@@ -192,10 +192,10 @@ export async function GET(request: Request) {
     }
 
     // Add bonus to each entry's totalPoints before sorting so ranking is correct
-    for (const [userId, entry] of userMap) {
+    userMap.forEach((entry, userId) => {
       const bonus = bonusByUser.get(userId) ?? 0
       entry.totalPoints += bonus
-    }
+    })
 
     const sorted = Array.from(userMap.values()).sort((a, b) => b.totalPoints - a.totalPoints)
     const leaderboard = sorted.map((entry, i) => {
