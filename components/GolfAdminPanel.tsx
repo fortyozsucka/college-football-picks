@@ -374,6 +374,7 @@ export default function GolfAdminPanel() {
   // ── Sync functions ─────────────────────────────────────────────────────────
 
   const [resetting, setResetting] = useState(false)
+  const [recalculating, setRecalculating] = useState(false)
   const [entryFeeEdits, setEntryFeeEdits] = useState<Record<string, string>>({})
   const [savingEntryFee, setSavingEntryFee] = useState<string | null>(null)
 
@@ -421,6 +422,28 @@ export default function GolfAdminPanel() {
       toast({ title: e.message ?? 'Reset failed', status: 'error', duration: 4000 })
     } finally {
       setResetting(false)
+    }
+  }
+
+  const recalculateTournament = async () => {
+    if (!syncTournamentId) {
+      toast({ title: 'Select a tournament to recalculate', status: 'warning', duration: 3000 })
+      return
+    }
+    setRecalculating(true)
+    try {
+      const res = await fetch('/api/admin/golf/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentId: syncTournamentId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast({ title: data.message, status: 'success', duration: 4000 })
+    } catch (e: any) {
+      toast({ title: e.message ?? 'Recalculation failed', status: 'error', duration: 4000 })
+    } finally {
+      setRecalculating(false)
     }
   }
 
@@ -891,6 +914,16 @@ export default function GolfAdminPanel() {
                   onClick={resetTournament}
                 >
                   Reset to In Progress
+                </Button>
+                <Button
+                  colorScheme="purple"
+                  size="sm"
+                  variant="outline"
+                  isLoading={recalculating}
+                  loadingText="Recalculating..."
+                  onClick={recalculateTournament}
+                >
+                  Recalculate & Re-archive
                 </Button>
               </HStack>
 

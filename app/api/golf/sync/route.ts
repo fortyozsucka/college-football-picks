@@ -141,11 +141,12 @@ export async function POST(request: Request) {
 
       // Clear stale scores for rounds ESPN has no linescore data yet
       // (handles players in the field who haven't teed off)
+      // Must also clear totalScore — stale cumulative values skew per-round scoring
       for (const round of tournament.rounds) {
         if (roundsWithScores.has(round.roundNumber)) continue
         await db.golfRoundScore.updateMany({
           where: { roundId: round.id, golferId: golfer.id },
-          data: { score: null, thru: null },
+          data: { score: null, totalScore: null, thru: null },
         })
       }
     }
