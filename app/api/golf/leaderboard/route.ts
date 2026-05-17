@@ -120,7 +120,6 @@ export async function GET(request: Request) {
         leaderboard: archived.map((r) => {
           const rt = roundTotalsByUser.get(r.userId) ?? {}
           const bonus = bonusByUser.get(r.userId) ?? 0
-          const r4Raw = rt[4] ?? 0
           return {
             userId: r.userId,
             name: r.user.name ?? r.user.email.split('@')[0],
@@ -128,7 +127,7 @@ export async function GET(request: Request) {
             totalPoints: r.totalPoints,
             rank: r.rank,
             isUserCut: r.isUserCut,
-            roundTotals: { ...rt, 4: r4Raw - bonus },
+            roundTotals: rt,
             bonusPoints: bonus,
             tiebreakerScore: tiebreakerByUser.get(r.userId) ?? null,
             tiebreakerRank: tiebreakerRankByUser.get(r.userId) ?? null,
@@ -194,10 +193,8 @@ export async function GET(request: Request) {
     const sorted = Array.from(userMap.values()).sort((a, b) => b.totalPoints - a.totalPoints)
     const leaderboard = sorted.map((entry, i) => {
       const bonus = bonusByUser.get(entry.userId) ?? 0
-      const r4Raw = entry.roundTotals[4] ?? 0
       return {
         ...entry,
-        roundTotals: { ...entry.roundTotals, 4: r4Raw - bonus },
         bonusPoints: bonus,
         tiebreakerScore: tiebreakerByUser.get(entry.userId) ?? null,
         tiebreakerRank: tiebreakerRankByUser.get(entry.userId) ?? null,
