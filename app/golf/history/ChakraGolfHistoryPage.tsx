@@ -32,6 +32,12 @@ interface AppResult {
   pot: number | null
 }
 
+interface AppMissedCut {
+  season: number
+  tournamentName: string
+  name: string
+}
+
 // ─── Static historical data ───────────────────────────────────────────────────
 
 const STANDINGS = [
@@ -106,6 +112,7 @@ function tournamentToKey(name: string): 'masters' | 'usOpen' | 'theOpen' | 'pga'
 
 export default function ChakraGolfHistoryPage() {
   const [appResults, setAppResults] = useState<AppResult[]>([])
+  const [appMissedCuts, setAppMissedCuts] = useState<AppMissedCut[]>([])
   const [loadingResults, setLoadingResults] = useState(true)
 
   const cardBg = useColorModeValue('white', 'gray.800')
@@ -117,7 +124,10 @@ export default function ChakraGolfHistoryPage() {
   useEffect(() => {
     fetch('/api/golf/history')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setAppResults(data) })
+      .then(data => {
+        if (data.winners) setAppResults(data.winners)
+        if (data.missedCuts) setAppMissedCuts(data.missedCuts)
+      })
       .catch(() => {})
       .finally(() => setLoadingResults(false))
   }, [])
@@ -319,47 +329,78 @@ export default function ChakraGolfHistoryPage() {
           )}
 
           {/* ── Missed Cuts by Year ── */}
-          <Box borderRadius="lg" overflow="hidden" boxShadow="md" border="1px solid" borderColor={borderColor}>
-            <Box bg="red.800" px={5} py={3}>
-              <Text fontWeight="800" fontSize="sm" color="white" letterSpacing="0.12em" textTransform="uppercase">
-                Missed Cuts by Year
-              </Text>
-            </Box>
-            <TableContainer>
-              <Table variant="unstyled" size="sm">
-                <Thead>
-                  <Tr bg={sectionHeadBg}>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800" letterSpacing="0.08em">YEAR</Th>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800">MASTERS</Th>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800">US OPEN</Th>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800">THE OPEN</Th>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800">PGA CHAMP.</Th>
-                    <Th py={2} fontSize="xs" color="red.700" fontWeight="800">PLAYERS</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {MISSED_CUTS.map((row, i) => {
-                    const rowBg = i % 2 === 0 ? cardBg : useColorModeValue('#f9f9f9', 'gray.750')
-                    return (
-                      <Tr key={row.year} bg={rowBg}>
-                        <Td py={2.5} fontWeight="800" color="red.700" fontSize="sm">{row.year}</Td>
-                        <Td py={2.5}><WinCell value={row.masters} /></Td>
-                        <Td py={2.5}><WinCell value={row.usOpen} /></Td>
-                        <Td py={2.5}><WinCell value={row.theOpen} /></Td>
-                        <Td py={2.5}><WinCell value={row.pga} /></Td>
-                        <Td py={2.5}><WinCell value={row.players} /></Td>
+          {(() => {
+            // Merge static missed cuts with app data
+            type MCRow = { year: number; masters?: string; usOpen?: string; theOpen?: string; pga?: string; players?: string; isApp?: boolean }
+            const mcRows: MCRow[] = MISSED_CUTS.map(r => ({ ...r }))
+            const staticMCYears = new Set(MISSED_CUTS.map(r => r.year))
+
+            for (const mc of appMissedCuts) {
+              const key = tournamentToKey(mc.tournamentName)
+              if (!key) continue
+              let row = mcRows.find(r => r.year === mc.season)
+              if (!row) {
+                row = { year: mc.season, isApp: true }
+                mcRows.push(row)
+              }
+              // Append name to existing cell value (multiple people can miss cut)
+              const existing = row[key as keyof MCRow] as string | undefined
+              if (!existing) {
+                row[key as keyof MCRow] = mc.name as any
+              } else if (!existing.includes(mc.name)) {
+                row[key as keyof MCRow] = `${existing} / ${mc.name}` as any
+              }
+              if (!staticMCYears.has(mc.season)) row.isApp = true
+            }
+            mcRows.sort((a, b) => a.year - b.year)
+
+            return (
+              <Box borderRadius="lg" overflow="hidden" boxShadow="md" border="1px solid" borderColor={borderColor}>
+                <Box bg="red.800" px={5} py={3}>
+                  <Text fontWeight="800" fontSize="sm" color="white" letterSpacing="0.12em" textTransform="uppercase">
+                    Missed Cuts by Year
+                  </Text>
+                </Box>
+                <TableContainer>
+                  <Table variant="unstyled" size="sm">
+                    <Thead>
+                      <Tr bg={sectionHeadBg}>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800" letterSpacing="0.08em">YEAR</Th>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800">MASTERS</Th>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800">US OPEN</Th>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800">THE OPEN</Th>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800">PGA CHAMP.</Th>
+                        <Th py={2} fontSize="xs" color="red.700" fontWeight="800">PLAYERS</Th>
                       </Tr>
-                    )
-                  })}
-                </Tbody>
-              </Table>
-            </TableContainer>
-            <Box bg={headerBg} px={5} py={2} borderTop="1px solid" borderColor={borderColor}>
-              <Text fontSize="xs" color={mutedText}>
-                Missed cut tracking began in 2021 · Players Championship added in 2023
-              </Text>
-            </Box>
-          </Box>
+                    </Thead>
+                    <Tbody>
+                      {mcRows.map((row, i) => {
+                        const rowBg = i % 2 === 0 ? cardBg : useColorModeValue('#f9f9f9', 'gray.750')
+                        return (
+                          <Tr key={row.year} bg={rowBg}>
+                            <Td py={2.5} fontWeight="800" color="red.700" fontSize="sm">
+                              {row.year}
+                              {row.isApp && <Badge ml={1} colorScheme="red" fontSize="9px">APP</Badge>}
+                            </Td>
+                            <Td py={2.5}><WinCell value={row.masters} /></Td>
+                            <Td py={2.5}><WinCell value={row.usOpen} /></Td>
+                            <Td py={2.5}><WinCell value={row.theOpen} /></Td>
+                            <Td py={2.5}><WinCell value={row.pga} /></Td>
+                            <Td py={2.5}><WinCell value={row.players} /></Td>
+                          </Tr>
+                        )
+                      })}
+                    </Tbody>
+                  </Table>
+                </TableContainer>
+                <Box bg={headerBg} px={5} py={2} borderTop="1px solid" borderColor={borderColor}>
+                  <Text fontSize="xs" color={mutedText}>
+                    Missed cut tracking began in 2021 · Players Championship added in 2023
+                  </Text>
+                </Box>
+              </Box>
+            )
+          })()}
 
         </VStack>
       </Container>

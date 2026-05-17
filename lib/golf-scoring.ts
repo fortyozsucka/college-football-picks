@@ -159,6 +159,11 @@ export async function calculateTournamentBonuses(tournamentId: string): Promise<
   })
   if (!round4) return
 
+  // Always reset R4 pick points to pure scoring before applying bonus.
+  // This makes the function idempotent — calling it multiple times won't
+  // double-count the bonus even if a prior run already incremented.
+  await calculateRoundPoints(round4.id)
+
   // Get all R4 scores for non-cut, non-withdrawn golfers, sorted by position
   const allScores = await db.golfRoundScore.findMany({
     where: { roundId: round4.id, missedCut: false, withdrawn: false, position: { not: null } },
