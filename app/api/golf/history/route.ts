@@ -6,23 +6,22 @@ export const dynamic = 'force-dynamic'
 // GET /api/golf/history — returns all completed tournaments with winner info
 export async function GET() {
   try {
-    const [results, cutResults] = await Promise.all([
-      db.golfTournamentResult.findMany({
-        where: { rank: 1, tournament: { status: 'COMPLETED' } },
-        include: {
-          user: { select: { name: true, email: true } },
-          tournament: { select: { id: true, name: true, season: true, tournamentType: true, entryFee: true } },
-        },
-        orderBy: [{ tournament: { season: 'desc' } }],
-      }),
-      db.golfTournamentResult.findMany({
-        where: { isUserCut: true, tournament: { status: 'COMPLETED' } },
-        include: {
-          user: { select: { name: true, email: true } },
-          tournament: { select: { name: true, season: true } },
-        },
-      }),
-    ])
+    const results = await db.golfTournamentResult.findMany({
+      where: { rank: 1, tournament: { status: 'COMPLETED' } },
+      include: {
+        user: { select: { name: true, email: true } },
+        tournament: { select: { id: true, name: true, season: true, tournamentType: true, entryFee: true } },
+      },
+      orderBy: [{ tournament: { season: 'desc' } }],
+    })
+
+    const cutResults = await db.golfTournamentResult.findMany({
+      where: { isUserCut: true, tournament: { status: 'COMPLETED' } },
+      include: {
+        user: { select: { name: true, email: true } },
+        tournament: { select: { name: true, season: true } },
+      },
+    })
 
     return NextResponse.json({
       winners: results.map((r) => ({
