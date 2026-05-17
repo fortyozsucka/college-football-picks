@@ -34,8 +34,10 @@ export async function calculateRoundPoints(roundId: string): Promise<void> {
   const prevByGolfer = new Map(prevRoundScores.map(rs => [rs.golferId, rs.totalScore]))
   const getPerRoundToPar = (rs: { golferId: string; totalScore: number | null }): number | null => {
     if (rs.totalScore === null) return null
+    if (round.roundNumber === 1) return rs.totalScore
     const prev = prevByGolfer.get(rs.golferId) ?? null
-    if (round.roundNumber === 1 || prev === null) return rs.totalScore
+    // No previous round record — exclude from scoring rather than using cumulative as per-round
+    if (prev === null) return null
     return rs.totalScore - prev
   }
 
