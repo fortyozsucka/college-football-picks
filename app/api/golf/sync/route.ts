@@ -16,6 +16,11 @@ function makeSlugId(name: string): string {
   return `slug:${name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
 }
 
+function normalizeLast(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return normalizeName(parts[parts.length - 1])
+}
+
 // POST /api/golf/sync — admin/cron: pull latest scores from ESPN and update DB
 // Body: { tournamentId } — uses the tournament's espnId to fetch from ESPN
 export async function POST(request: Request) {
@@ -65,6 +70,15 @@ export async function POST(request: Request) {
         const byName = golferByNorm.get(normalizedEntryName)
         if (byName && byName.espnId.startsWith('slug:')) {
           slugRecord = await db.golfer.findUnique({ where: { id: byName.id } })
+        }
+      }
+
+      // 3. Last-name fallback: handles middle names ("Jayden Trey Schaper" vs "Jayden Schaper")
+      if (!slugRecord) {
+        const entryLast = normalizeLast(entry.fullName)
+        if (entryLast.length >= 4) {
+          const match = allGolfers.find(g => g.espnId.startsWith('slug:') && normalizeLast(g.fullName) === entryLast)
+          if (match) slugRecord = await db.golfer.findUnique({ where: { id: match.id } })
         }
       }
 
