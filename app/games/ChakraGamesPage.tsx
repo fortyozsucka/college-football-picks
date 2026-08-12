@@ -41,6 +41,7 @@ import { Game, Pick } from '@/lib/types'
 import { useAuth } from '@/lib/context/AuthContext'
 import GameSideBets from '@/components/GameSideBets'
 import { determineBowlTier, BowlTier } from '@/lib/game-classification'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 interface SyncStatus {
   lastSync: string | null
@@ -85,8 +86,9 @@ export default function ChakraGamesPage() {
   const [gameStatus, setGameStatus] = useState('all')
 
   // Color mode values
-  const cardBg = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const cardBg = useColorModeValue('white', 'rgba(255,255,255,0.04)')
+  const borderColor = useColorModeValue('neutral.200', 'rgba(255,255,255,0.08)')
+  const filterLabelColor = useColorModeValue('neutral.600', 'neutral.400')
 
   const getSpreadWinner = (game: Game): string | null => {
     if (!game.completed || game.homeScore === null || game.awayScore === null) {
@@ -436,9 +438,7 @@ export default function ChakraGamesPage() {
     return (
       <Container maxW="7xl" py={8}>
         <VStack spacing={8}>
-          <Heading size="xl" textAlign="center">
-            ⚡ Weekly Games
-          </Heading>
+          <PageHeading eyebrow="College Football" title="Games" />
           <Spinner size="xl" color="football.500" thickness="4px" />
           <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading games...</Text>
         </VStack>
@@ -465,19 +465,17 @@ export default function ChakraGamesPage() {
       <VStack spacing={8} align="stretch">
         {/* Header */}
         <Box textAlign="center">
-          <Heading 
-            size="2xl" 
-            bgGradient={titleGradient}
-            bgClip="text"
-            mb={4}
-          >
-            ⚡ Weekly Games
-          </Heading>
-          <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
-            Make your weekly picks and track game results
-          </Text>
+          <PageHeading
+            eyebrow={
+              syncStatus?.activeWeeks?.[0]
+                ? `Week ${syncStatus.activeWeeks[0].week} · ${syncStatus.activeWeeks[0].season}`
+                : 'College Football'
+            }
+            title="Games"
+            subtitle="Make your picks and track game results"
+          />
           {lastUpdated && (
-            <Text fontSize="sm" color="neutral.500" mt={2}>
+            <Text fontSize="sm" color="neutral.500" mt={3}>
               <Icon as={TimeIcon} mr={1} />
               Last updated: {lastUpdated.toLocaleString()}
             </Text>
@@ -486,14 +484,14 @@ export default function ChakraGamesPage() {
 
         {/* Admin Controls */}
         {user?.isAdmin && (
-          <Card bg="orange.50" borderColor="orange.200" shadow="md">
+          <Card bg={useColorModeValue('orange.50', 'rgba(251,146,60,0.08)')} borderColor={useColorModeValue('orange.200', 'rgba(251,146,60,0.25)')} shadow="md">
             <CardBody>
               <HStack justify="space-between" wrap="wrap" spacing={4}>
                 <VStack align="start" spacing={1}>
-                  <Text fontWeight="semibold" color="orange.800">
+                  <Text fontWeight="semibold" color={useColorModeValue('orange.800', 'orange.300')}>
                     🛠️ Admin Controls
                   </Text>
-                  <Text fontSize="sm" color="orange.600">
+                  <Text fontSize="sm" color={useColorModeValue('orange.600', 'orange.400')}>
                     Manage game synchronization and system controls
                   </Text>
                 </VStack>
@@ -526,7 +524,7 @@ export default function ChakraGamesPage() {
         {/* Filters */}
         <Card bg={cardBg} shadow="md">
           <CardBody>
-            <Text fontWeight="semibold" mb={4} color="gray.700">
+            <Text fontWeight="semibold" mb={4} color={filterLabelColor}>
               🔍 Filter Games
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
@@ -732,8 +730,14 @@ const GameCard = ({
   getSpreadDisplay: (game: Game) => string
   getGameStatusDisplay: (game: Game) => { display: string; color: string; isLive: boolean }
 }) => {
-  const cardBg = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const cardBg = useColorModeValue('white', 'rgba(255,255,255,0.04)')
+  const cardBorderColor = useColorModeValue('neutral.200', 'rgba(255,255,255,0.08)')
+  const mutedColor = useColorModeValue('neutral.500', 'neutral.400')
+  const bowlBg = useColorModeValue('purple.50', 'rgba(128,90,213,0.12)')
+  const bowlBorderColor = useColorModeValue('purple.400', 'rgba(159,122,234,0.5)')
+  const bowlTextColor = useColorModeValue('purple.800', 'purple.200')
+  const vsColor = useColorModeValue('neutral.400', 'neutral.500')
+  const teamPickRowBg = useColorModeValue('neutral.50', 'rgba(255,255,255,0.04)')
 
   // Special games (Championship, Bowl, Playoff, Army-Navy) are automatically double-downs
   const isSpecialGame = game.gameType && game.gameType !== 'REGULAR'
@@ -747,13 +751,14 @@ const GameCard = ({
   }, [isSpecialGame])
 
   return (
-    <Card 
-      bg={cardBg} 
-      borderColor={borderColor} 
+    <Card
+      bg={cardBg}
+      backdropFilter="blur(16px)"
+      sx={{ WebkitBackdropFilter: 'blur(16px)', border: `1px solid ${cardBorderColor}` }}
       shadow="md"
       transform={isCelebrating ? 'scale(1.02)' : 'scale(1)'}
       transition="all 0.3s"
-      _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
+      _hover={{ shadow: 'xl', transform: 'translateY(-2px)' }}
     >
       <CardBody>
         <VStack spacing={4} align="stretch">
@@ -771,15 +776,15 @@ const GameCard = ({
                 return 'Live'
               })()}
             </Badge>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="sm" color={mutedColor}>
               {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </HStack>
 
           {/* Bowl/Playoff Game Name */}
           {game.notes && (game.gameType === 'BOWL' || game.gameType === 'PLAYOFF') && (
-            <Box bg="purple.50" p={2} borderRadius="md" borderLeft="4px" borderColor="purple.500">
-              <Text fontSize="sm" fontWeight="bold" color="purple.800">
+            <Box bg={bowlBg} p={2} borderRadius="md" borderLeft="4px" borderColor={bowlBorderColor}>
+              <Text fontSize="sm" fontWeight="bold" color={bowlTextColor}>
                 🏆 {game.notes}
               </Text>
             </Box>
@@ -800,7 +805,7 @@ const GameCard = ({
               </Text>
             </HStack>
 
-            <Text color="gray.500" fontSize="sm">@</Text>
+            <Text color={vsColor} fontSize="sm">@</Text>
 
             {/* Home Team */}
             <HStack justify="space-between" w="full">
@@ -960,7 +965,7 @@ const GameCard = ({
                   if (teamPicks.length === 0) return null
                   
                   return (
-                    <HStack key={team} justify="space-between" w="full" p={2} bg="gray.50" borderRadius="md">
+                    <HStack key={team} justify="space-between" w="full" p={2} bg={teamPickRowBg} borderRadius="md">
                       <Text fontWeight="semibold" fontSize="sm">{team}:</Text>
                       <Wrap spacing={1}>
                         {teamPicks.map((pick) => (

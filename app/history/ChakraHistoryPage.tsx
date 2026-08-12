@@ -36,6 +36,7 @@ import {
   Icon,
 } from '@chakra-ui/react'
 import { ArrowBackIcon, CalendarIcon, StarIcon } from '@chakra-ui/icons'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 interface HistoricalSeason {
   season: number
@@ -138,10 +139,7 @@ export default function ChakraHistoryPage() {
     return (
       <Container maxW="7xl" py={8}>
         <VStack spacing={8}>
-          <Heading size="xl" textAlign="center" display="flex" alignItems="center" justifyContent="center" gap={2}>
-            <Text fontSize="xl">📊</Text>
-            <Text>Historical Leaderboards</Text>
-          </Heading>
+          <PageHeading eyebrow="Performance" title="History" />
           <Spinner size="xl" color="football.500" thickness="4px" />
           <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading historical data...</Text>
         </VStack>
@@ -171,25 +169,11 @@ export default function ChakraHistoryPage() {
       <VStack spacing={8} align="stretch">
         {/* Header */}
         <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-          <VStack align="start" spacing={2}>
-            <Heading 
-              size="2xl"
-              display="flex"
-              alignItems="center"
-              gap={3}
-            >
-              <Text fontSize="2xl">📊</Text>
-              <Text 
-                bgGradient={titleGradient}
-                bgClip="text"
-              >
-                Historical Leaderboards
-              </Text>
-            </Heading>
-            <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
-              Season champions and final standings
-            </Text>
-          </VStack>
+          <PageHeading
+            eyebrow="Performance"
+            title="History"
+            subtitle="Season champions and final standings"
+          />
           
           {selectedSeason && (
             <Button

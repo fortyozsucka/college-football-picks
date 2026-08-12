@@ -38,6 +38,7 @@ import { Game, Pick } from '@/lib/types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 export default function ChakraPicksPage() {
   const { user } = useAuth()
@@ -52,6 +53,7 @@ export default function ChakraPicksPage() {
   const [removingPick, setRemovingPick] = useState<string | null>(null)
   const [availableWeeks, setAvailableWeeks] = useState<{week: number, season: number, gameCount: number}[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>('current') // 'current' or 'week-season' format
+  const [weekLabel, setWeekLabel] = useState<string>('College Football')
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -122,6 +124,7 @@ export default function ChakraPicksPage() {
         const [week, season] = mostCommonWeek.split('-').map(Number)
         activeWeek = week
         activeSeason = season
+        setWeekLabel(`Week ${week} · ${season}`)
       }
       
       // Determine picks URL based on selected week
@@ -300,17 +303,11 @@ export default function ChakraPicksPage() {
         <VStack spacing={8} align="stretch">
           {/* Header */}
           <Box textAlign="center">
-            <Heading 
-              size="2xl" 
-              bgGradient={titleGradient}
-              bgClip="text"
-              mb={4}
-            >
-              🏈 My Picks
-            </Heading>
-            <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")} mb={4}>
-              Track your weekly picks and performance
-            </Text>
+            <PageHeading
+              eyebrow={selectedWeek !== 'current' ? `Week ${selectedWeek.split('-')[0]} · ${selectedWeek.split('-')[1]}` : weekLabel}
+              title="My Picks"
+              subtitle="Track your weekly picks and performance"
+            />
             
             {/* Week Selection */}
             <Flex justify="center" align="center" gap={4} mb={selectedWeek !== 'current' ? 4 : 0}>
@@ -339,7 +336,7 @@ export default function ChakraPicksPage() {
             {/* Historical View Badge */}
             {selectedWeek !== 'current' && (
               <Badge colorScheme="purple" fontSize="sm" p={2} borderRadius="md">
-                📅 Viewing Historical Picks - {selectedWeek.replace('-', ' Season ')}
+                Historical — {selectedWeek.replace('-', ' · Season ')}
               </Badge>
             )}
           </Box>
@@ -348,7 +345,7 @@ export default function ChakraPicksPage() {
           <Card bg="linear-gradient(to-r, var(--chakra-colors-brand-50), var(--chakra-colors-accent-50))" shadow="md">
             <CardBody>
               <Text fontWeight="semibold" mb={4} color="brand.800">
-                📊 Your Performance - {stats.weekInfo}
+                Your Performance — {stats.weekInfo}
               </Text>
               <StatGroup>
                 <Stat>
@@ -487,10 +484,10 @@ export default function ChakraPicksPage() {
 }
 
 // Pick Card Component
-const PickCard = ({ 
-  pick, 
-  game, 
-  canRemove, 
+const PickCard = ({
+  pick,
+  game,
+  canRemove,
   isRemoving,
   onRemove,
   getSpreadDisplay
@@ -502,19 +499,21 @@ const PickCard = ({
   onRemove: () => void
   getSpreadDisplay: (game: Game) => string
 }) => {
-  const cardBg = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const cardBg = useColorModeValue('rgba(255,255,255,0.75)', 'rgba(255,255,255,0.04)')
+  const cardBorderColor = useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.08)')
+  const pickHighlightBg = useColorModeValue('rgba(106,222,156,0.12)', 'rgba(106,222,156,0.08)')
+  const pickHighlightBorder = useColorModeValue('brand.200', 'rgba(106,222,156,0.25)')
+  const mutedColor = useColorModeValue('neutral.500', 'neutral.400')
+  const textColor = useColorModeValue('neutral.800', 'neutral.100')
+  const teamLogoPlaceholderBg = useColorModeValue('neutral.200', 'neutral.700')
+  const vsDividerColor = useColorModeValue('neutral.200', 'rgba(255,255,255,0.08)')
+  const winBg = useColorModeValue('rgba(106,222,156,0.15)', 'rgba(106,222,156,0.1)')
+  const lossBg = useColorModeValue('rgba(239,68,68,0.1)', 'rgba(239,68,68,0.1)')
+  const pushBg = useColorModeValue('rgba(0,0,0,0.04)', 'rgba(255,255,255,0.04)')
 
   const getPickResult = () => {
     if (pick.points === null) return null
-    
-    
-    // Always use the result field if it exists and is not null/undefined
-    if (pick.result && pick.result !== null && pick.result !== undefined) {
-      return pick.result
-    }
-    
-    // Fallback to points-based logic for older picks without result field
+    if (pick.result) return pick.result
     if (pick.points > 0) return 'win'
     if (pick.points === 0) return 'push'
     return 'loss'
@@ -523,171 +522,236 @@ const PickCard = ({
   const pickResult = getPickResult()
   const gameStarted = new Date(game.startTime) <= new Date()
 
+  const showDoubleDown = pick.isDoubleDown && (() => {
+    if (game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF') return true
+    const notes = game.notes?.toLowerCase() || ''
+    return notes.includes('playoff') || notes.includes('national championship') ||
+      notes.includes('semifinal') || notes.includes('rose bowl') ||
+      notes.includes('sugar bowl') || notes.includes('orange bowl') ||
+      notes.includes('cotton bowl') || notes.includes('fiesta bowl') ||
+      notes.includes('peach bowl')
+  })()
+
+  const resultAccentColor =
+    pickResult === 'win' ? '#6ade9c' :
+    pickResult === 'loss' ? '#fc8181' :
+    pickResult === 'push' ? '#a3a3a3' :
+    'transparent'
+
+  const resultBg = pickResult === 'win' ? winBg : pickResult === 'loss' ? lossBg : pushBg
+
+  const lockedSpreadDisplay = pick.lockedSpread > 0
+    ? `${game.awayTeam} -${pick.lockedSpread}`
+    : pick.lockedSpread < 0
+    ? `${game.homeTeam} -${Math.abs(pick.lockedSpread)}`
+    : 'Even'
+
   return (
-    <Card 
-      bg={cardBg} 
-      borderColor={borderColor} 
-      shadow="md"
-      border="2px"
-      borderStyle={
-        pickResult === 'win' ? 'solid' : 
-        pickResult === 'loss' ? 'solid' : 
-        'solid'
-      }
-      borderWidth={pickResult ? '2px' : '1px'}
-      _hover={{ shadow: 'lg', transform: 'translateY(-1px)' }}
-      transition="all 0.2s"
+    <Card
+      bg={cardBg}
+      backdropFilter="blur(16px)"
+      sx={{
+        WebkitBackdropFilter: 'blur(16px)',
+        boxShadow: `inset 4px 0 0 ${resultAccentColor}, 0 4px 20px rgba(0,0,0,0.1)`,
+        border: `1px solid ${cardBorderColor}`,
+      }}
+      overflow="hidden"
+      transition="all 0.2s ease"
+      _hover={{ transform: 'translateY(-2px)', shadow: 'xl' }}
     >
-      <CardBody>
-        <VStack spacing={4} align="stretch">
-          {/* Header */}
-          <HStack justify="space-between">
-            <HStack>
+      <CardBody p={4}>
+        <VStack spacing={3} align="stretch">
+          {/* Header row */}
+          <HStack justify="space-between" flexWrap="wrap" gap={1}>
+            <HStack spacing={2} flexWrap="wrap">
               <Badge
-                colorScheme={
-                  game.completed ? 'green' :
-                  gameStarted ? 'orange' : 'blue'
-                }
+                colorScheme={game.completed ? 'green' : gameStarted ? 'orange' : 'blue'}
+                borderRadius="full"
+                px={2}
+                fontSize="11px"
+                fontWeight="700"
+                letterSpacing="0.04em"
+                textTransform="uppercase"
               >
                 {game.completed ? 'Final' : gameStarted ? 'Live' : 'Upcoming'}
               </Badge>
-              {/* Show "DOUBLE DOWN" badge for +2/-1 scoring games (Regular DD, Championship, Playoff, Premium Bowls/NY6) */}
-              {pick.isDoubleDown && (() => {
-                // Show for all non-bowl games
-                if (game.gameType !== 'BOWL' && game.gameType !== 'PLAYOFF') return true
-                // For bowl/playoff games, only show if notes indicate it's premium (contains playoff keywords or NY6 bowl names)
-                const notes = game.notes?.toLowerCase() || ''
-                const isPremium = notes.includes('playoff') || notes.includes('national championship') ||
-                                 notes.includes('semifinal') || notes.includes('rose bowl') ||
-                                 notes.includes('sugar bowl') || notes.includes('orange bowl') ||
-                                 notes.includes('cotton bowl') || notes.includes('fiesta bowl') ||
-                                 notes.includes('peach bowl')
-                return isPremium
-              })() && (
-                <Badge colorScheme="orange" variant="solid">
-                  <Icon as={StarIcon} mr={1} />
-                  Double Down
+              {showDoubleDown && (
+                <Badge
+                  colorScheme="orange"
+                  variant="solid"
+                  borderRadius="full"
+                  px={2}
+                  fontSize="11px"
+                  fontWeight="700"
+                >
+                  2× DD
                 </Badge>
               )}
             </HStack>
-            
-            <Text fontSize="sm" color="gray.500">
-              {new Date(game.startTime).toLocaleDateString()} {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <Text fontSize="xs" color={mutedColor} flexShrink={0}>
+              {new Date(game.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+              {' · '}
+              {new Date(game.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </HStack>
 
-          {/* Teams and Scores */}
-          <VStack spacing={3}>
-            <HStack justify="space-between" w="full">
-              <HStack>
-                {game.awayTeamLogo && (
-                  <Image src={game.awayTeamLogo} alt={game.awayTeam} boxSize="28px" />
+          {/* Matchup */}
+          <VStack spacing={1}>
+            {/* Away Team */}
+            <HStack
+              justify="space-between"
+              w="full"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              bg={pick.pickedTeam === game.awayTeam ? pickHighlightBg : 'transparent'}
+              border="1px solid"
+              borderColor={pick.pickedTeam === game.awayTeam ? pickHighlightBorder : 'transparent'}
+              transition="all 0.15s ease"
+            >
+              <HStack spacing={3}>
+                {game.awayTeamLogo ? (
+                  <Image src={game.awayTeamLogo} alt={game.awayTeam} boxSize="36px" objectFit="contain" flexShrink={0} />
+                ) : (
+                  <Box w="36px" h="36px" borderRadius="md" bg={teamLogoPlaceholderBg} flexShrink={0} />
                 )}
-                <Text fontWeight="semibold" fontSize="sm">{game.awayTeam}</Text>
+                <VStack align="start" spacing={0}>
+                  <Text
+                    fontWeight={pick.pickedTeam === game.awayTeam ? '700' : '500'}
+                    fontSize="sm"
+                    color={pick.pickedTeam === game.awayTeam ? textColor : mutedColor}
+                    lineHeight="1.3"
+                  >
+                    {game.awayTeam}
+                  </Text>
+                  <Text fontSize="11px" color={mutedColor} letterSpacing="0.06em" textTransform="uppercase">Away</Text>
+                </VStack>
               </HStack>
-              <Text fontWeight="bold">
-                {game.awayScore !== null ? game.awayScore : '-'}
-              </Text>
-            </HStack>
-
-            <Text color="gray.500" fontSize="xs">@</Text>
-
-            <HStack justify="space-between" w="full">
-              <HStack>
-                {game.homeTeamLogo && (
-                  <Image src={game.homeTeamLogo} alt={game.homeTeam} boxSize="28px" />
+              <HStack spacing={2} align="center">
+                {game.awayScore !== null && (
+                  <Text fontWeight="800" fontSize="xl" color={textColor} letterSpacing="-0.02em">
+                    {game.awayScore}
+                  </Text>
                 )}
-                <Text fontWeight="semibold" fontSize="sm">{game.homeTeam}</Text>
-              </HStack>
-              <Text fontWeight="bold">
-                {game.homeScore !== null ? game.homeScore : '-'}
-              </Text>
-            </HStack>
-          </VStack>
-
-          <Divider />
-
-          {/* Pick Info */}
-          <VStack spacing={3}>
-            <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Your Pick:</Text>
-              <HStack>
-                <Text fontWeight="bold" color="brand.600">
-                  {pick.pickedTeam}
-                </Text>
-                {pick.pickedTeam === pick.pickedTeam && (
+                {pick.pickedTeam === game.awayTeam && (
                   <CheckIcon color="brand.500" boxSize={3} />
                 )}
               </HStack>
             </HStack>
 
-            <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Spread:</Text>
-              <Text fontSize="sm" fontWeight="medium">
-                {getSpreadDisplay(game)}
-              </Text>
+            {/* VS Divider */}
+            <HStack px={3} spacing={2}>
+              <Box flex={1} h="1px" bg={vsDividerColor} />
+              <Text fontSize="11px" color={mutedColor} fontWeight="700" letterSpacing="0.1em">VS</Text>
+              <Box flex={1} h="1px" bg={vsDividerColor} />
             </HStack>
 
-            <HStack justify="space-between" w="full">
-              <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Locked Spread:</Text>
-              <Text fontSize="sm" fontWeight="medium">
-                {pick.lockedSpread > 0 ? `${game.awayTeam} -${pick.lockedSpread}` :
-                 pick.lockedSpread < 0 ? `${game.homeTeam} -${Math.abs(pick.lockedSpread)}` :
-                 'Even'}
-              </Text>
+            {/* Home Team */}
+            <HStack
+              justify="space-between"
+              w="full"
+              px={3}
+              py={2}
+              borderRadius="lg"
+              bg={pick.pickedTeam === game.homeTeam ? pickHighlightBg : 'transparent'}
+              border="1px solid"
+              borderColor={pick.pickedTeam === game.homeTeam ? pickHighlightBorder : 'transparent'}
+              transition="all 0.15s ease"
+            >
+              <HStack spacing={3}>
+                {game.homeTeamLogo ? (
+                  <Image src={game.homeTeamLogo} alt={game.homeTeam} boxSize="36px" objectFit="contain" flexShrink={0} />
+                ) : (
+                  <Box w="36px" h="36px" borderRadius="md" bg={teamLogoPlaceholderBg} flexShrink={0} />
+                )}
+                <VStack align="start" spacing={0}>
+                  <Text
+                    fontWeight={pick.pickedTeam === game.homeTeam ? '700' : '500'}
+                    fontSize="sm"
+                    color={pick.pickedTeam === game.homeTeam ? textColor : mutedColor}
+                    lineHeight="1.3"
+                  >
+                    {game.homeTeam}
+                  </Text>
+                  <Text fontSize="11px" color={mutedColor} letterSpacing="0.06em" textTransform="uppercase">Home</Text>
+                </VStack>
+              </HStack>
+              <HStack spacing={2} align="center">
+                {game.homeScore !== null && (
+                  <Text fontWeight="800" fontSize="xl" color={textColor} letterSpacing="-0.02em">
+                    {game.homeScore}
+                  </Text>
+                )}
+                {pick.pickedTeam === game.homeTeam && (
+                  <CheckIcon color="brand.500" boxSize={3} />
+                )}
+              </HStack>
             </HStack>
           </VStack>
 
-          {/* Result */}
-          {pick.points !== null && (
-            <VStack spacing={2}>
-              <Divider />
-              <HStack justify="space-between" w="full">
-                <Text fontSize="sm" color={useColorModeValue("neutral.600", "neutral.300")}>Result:</Text>
-                <Badge
-                  colorScheme={
-                    pick.points > 0 ? 'green' : 
-                    pick.points === 0 ? 'gray' : 'red'
-                  }
-                  variant="solid"
-                  fontSize="sm"
-                  px={2}
-                  py={1}
-                >
-                  {pick.points > 0 ? `+${pick.points} pts` : 
-                   pickResult === 'push' ? 'Push' : `${pick.points} pts`}
-                </Badge>
-              </HStack>
-            </VStack>
-          )}
-
-          {/* Actions */}
-          {canRemove && (
-            <VStack spacing={2}>
-              <Divider />
-              <Button
-                size="sm"
-                variant="ghost"
-                colorScheme="red"
-                leftIcon={<CloseIcon />}
-                onClick={onRemove}
-                isLoading={isRemoving}
-                loadingText="Removing..."
-                w="full"
-              >
-                Remove Pick
-              </Button>
-              <Text fontSize="xs" color="gray.500" textAlign="center">
-                You can change your pick until the game starts
+          {/* Spread info */}
+          <HStack justify="space-between" px={1} flexWrap="wrap" gap={1}>
+            <Text fontSize="xs" color={mutedColor}>
+              Spread:{' '}
+              <Text as="span" fontWeight="600" color={textColor}>
+                {getSpreadDisplay(game)}
               </Text>
-            </VStack>
+            </Text>
+            {pick.lockedSpread !== 0 && (
+              <Text fontSize="xs" color={mutedColor}>
+                Locked:{' '}
+                <Text as="span" fontWeight="600" color={textColor}>
+                  {lockedSpreadDisplay}
+                </Text>
+              </Text>
+            )}
+          </HStack>
+
+          {/* Result block */}
+          {pick.points !== null && (
+            <Box px={3} py={2} borderRadius="lg" bg={resultBg} textAlign="center">
+              <Text
+                fontWeight="800"
+                fontSize="sm"
+                letterSpacing="0.06em"
+                textTransform="uppercase"
+                color={
+                  pick.points > 0 ? 'brand.500' :
+                  pickResult === 'push' ? mutedColor :
+                  'red.400'
+                }
+              >
+                {pick.points > 0
+                  ? `Win  ·  +${pick.points} pts`
+                  : pickResult === 'push'
+                  ? 'Push  ·  ±0 pts'
+                  : `Loss  ·  ${pick.points} pts`}
+              </Text>
+            </Box>
           )}
 
-          {gameStarted && !game.completed && (
-            <Alert status="info" size="sm" borderRadius="md">
-              <AlertIcon />
-              <Text fontSize="xs">Game has started - pick is locked</Text>
-            </Alert>
+          {/* Remove action */}
+          {canRemove && (
+            <Button
+              size="sm"
+              variant="ghost"
+              colorScheme="red"
+              leftIcon={<CloseIcon boxSize="9px" />}
+              onClick={onRemove}
+              isLoading={isRemoving}
+              loadingText="Removing..."
+              w="full"
+              fontSize="xs"
+              mt={1}
+            >
+              Remove Pick
+            </Button>
+          )}
+
+          {gameStarted && !game.completed && !canRemove && (
+            <Text fontSize="xs" color={mutedColor} textAlign="center" letterSpacing="0.02em">
+              Game in progress — pick locked
+            </Text>
           )}
         </VStack>
       </CardBody>

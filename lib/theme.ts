@@ -81,21 +81,22 @@ const components = {
   Card: {
     baseStyle: (props: any) => ({
       container: {
-        bg: props.colorMode === 'dark' ? 'neutral.800' : 'white',
-        boxShadow: props.colorMode === 'dark' 
-          ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
-          : '0 1px 3px rgba(0, 0, 0, 0.1)',
+        bg: props.colorMode === 'dark' ? 'rgba(255,255,255,0.04)' : 'white',
+        boxShadow: props.colorMode === 'dark'
+          ? '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)'
+          : '0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
         border: '1px solid',
-        borderColor: props.colorMode === 'dark' ? 'neutral.700' : 'neutral.200',
-        borderRadius: 'lg',
+        borderColor: props.colorMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'neutral.200',
+        borderRadius: 'xl',
         overflow: 'hidden',
+        backdropFilter: 'blur(16px)',
         transition: 'all 0.2s ease',
         _hover: {
           transform: 'translateY(-2px)',
           boxShadow: props.colorMode === 'dark'
-            ? '0 4px 12px rgba(0, 0, 0, 0.4)'
-            : '0 4px 12px rgba(0, 0, 0, 0.15)',
-          borderColor: props.colorMode === 'dark' ? 'neutral.600' : 'neutral.300',
+            ? '0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)'
+            : '0 8px 24px rgba(0,0,0,0.12)',
+          borderColor: props.colorMode === 'dark' ? 'rgba(255,255,255,0.14)' : 'neutral.300',
         },
       },
     }),
@@ -131,7 +132,7 @@ const fonts = {
 const styles = {
   global: (props: any) => ({
     body: {
-      bg: props.colorMode === 'dark' ? 'neutral.900' : 'neutral.50',
+      bg: props.colorMode === 'dark' ? '#0b0f0b' : 'neutral.50',
       color: props.colorMode === 'dark' ? 'neutral.50' : 'neutral.900',
       fontSize: '16px',
       lineHeight: '1.6',

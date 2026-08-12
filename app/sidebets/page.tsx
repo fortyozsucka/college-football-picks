@@ -24,6 +24,7 @@ import { useAuth } from '@/lib/context/AuthContext'
 import { useSideBets, SideBet } from '@/lib/hooks/useSideBets'
 import Link from 'next/link'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 export default function SideBetsPage() {
   const { user } = useAuth()
@@ -105,19 +106,11 @@ export default function SideBetsPage() {
         <Container maxW="6xl">
           <VStack spacing={8} align="stretch">
             {/* Header */}
-            <Box textAlign="center">
-              <Heading 
-                size="2xl" 
-                bgGradient={titleGradient}
-                bgClip="text"
-                mb={4}
-              >
-                💰 Side Bets Central
-              </Heading>
-              <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
-                Browse open side bets, manage your active bets, and track your betting history
-              </Text>
-            </Box>
+            <PageHeading
+              eyebrow="Challenge Friends"
+              title="Side Bets"
+              subtitle="Browse open bets, manage your active bets, and track history"
+            />
 
             {/* Quick Stats */}
             <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4}>
@@ -167,7 +160,7 @@ export default function SideBetsPage() {
                   <CardBody>
                     <VStack spacing={4} align="stretch">
                       <HStack justify="space-between">
-                        <Heading size="lg">🔥 Open Side Bets</Heading>
+                        <Heading size="lg">Open Side Bets</Heading>
                         <Badge colorScheme="green" size="lg">
                           {openBets.length} available
                         </Badge>
@@ -270,7 +263,7 @@ export default function SideBetsPage() {
                     <CardBody>
                       <VStack spacing={4} align="stretch">
                         <HStack justify="space-between">
-                          <Heading size="lg">⏰ Expired Side Bets</Heading>
+                          <Heading size="lg">Expired Side Bets</Heading>
                           <Badge colorScheme="red" size="lg">
                             {expiredBets.length} expired
                           </Badge>
@@ -337,7 +330,7 @@ export default function SideBetsPage() {
                   <Card>
                     <CardBody>
                       <VStack spacing={4} align="stretch">
-                        <Heading size="lg">🎯 Your Side Bets</Heading>
+                        <Heading size="lg">Your Side Bets</Heading>
                         
                         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                           {userBets.map((bet) => (
@@ -419,7 +412,7 @@ export default function SideBetsPage() {
                         Head over to the games page to create your own side bets or accept existing ones!
                       </Text>
                       <Button as={Link} href="/games" colorScheme="blue" size="lg">
-                        🏈 Browse Games & Create Bets
+                        Browse Games & Create Bets
                       </Button>
                     </VStack>
                   </CardBody>

@@ -60,7 +60,7 @@ export default function ChakraPage() {
             bgClip="text"
             fontWeight="extrabold"
           >
-            🎯 Squad College Football Picks
+            Squad College Football Picks
           </Heading>
         </VStack>
 
@@ -141,7 +141,7 @@ export default function ChakraPage() {
                       </HStack>
                       
                       <VStack align="start" spacing={2}>
-                        <Text fontSize="md" fontWeight="semibold" color="gray.800">🏆 Special Rules:</Text>
+                        <Text fontSize="md" fontWeight="semibold" color="gray.800">Special Rules:</Text>
                         <Text fontSize="sm">• Conference Championship games</Text>
                         <Text fontSize="sm" color="purple.600" fontWeight="bold">• ALL picks are mandatory double-downs</Text>
                         <Text fontSize="sm">• Up to 5 championship games</Text>
@@ -173,7 +173,7 @@ export default function ChakraPage() {
                       </HStack>
 
                       <VStack align="start" spacing={2}>
-                        <Text fontSize="md" fontWeight="semibold" color="gray.800">🏈 Bowl Rules:</Text>
+                        <Text fontSize="md" fontWeight="semibold" color="gray.800">Bowl Rules:</Text>
                         <Text fontSize="sm" color="orange.600" fontWeight="bold">• Must pick ALL bowl games</Text>
                         <Text fontSize="sm">• Tier-based scoring system</Text>
                         <Text fontSize="sm">• Don&apos;t count toward 5-game weekly limit</Text>
@@ -187,7 +187,7 @@ export default function ChakraPage() {
 
                         <Box w="full" p={2} bg="orange.50" borderRadius="md">
                           <Text fontSize="xs" fontWeight="bold" color="orange.900" mb={1}>
-                            🏆 Premium Bowls (NY6 Bowls):
+                            Premium Bowls (NY6 Bowls):
                           </Text>
                           <Text fontSize="xs" color="gray.700">
                             Rose, Sugar, Orange, Cotton, Fiesta, Peach
@@ -203,7 +203,7 @@ export default function ChakraPage() {
 
                         <Box w="full" p={2} bg="blue.50" borderRadius="md">
                           <Text fontSize="xs" fontWeight="bold" color="blue.900" mb={1}>
-                            🎯 Standard Bowls (All Other Bowls):
+                            Standard Bowls (All Other Bowls):
                           </Text>
                           <HStack justify="space-between" mt={1}>
                             <Text fontSize="sm" color="green.600" fontWeight="bold">Win: +1 pt</Text>
@@ -271,7 +271,7 @@ export default function ChakraPage() {
               <Divider />
 
               <VStack spacing={4} textAlign="center">
-                <Heading size="md" color="gray.800">🎯 Strategy Tips</Heading>
+                <Heading size="md" color="gray.800">Strategy Tips</Heading>
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} w="full">
                   <Card bg={useColorModeValue("blue.50", "blue.900")} border="1px" borderColor={useColorModeValue("blue.200", "blue.700")}>
                     <CardBody py={3}>
@@ -308,23 +308,23 @@ export default function ChakraPage() {
             </HStack>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
               <UpdateCard 
-                title="🔔 Smart Notifications" 
+                title="Smart Notifications"
                 description="Get alerts for game starts, pick deadlines, results, and weekly summaries" 
               />
               <UpdateCard 
-                title="⚙️ Personal Settings" 
+                title="Personal Settings"
                 description="Customize your notification preferences and account settings" 
               />
               <UpdateCard 
-                title="🎯 Side Bets" 
+                title="Side Bets"
                 description="Challenge friends with custom side bets and mini-competitions" 
               />
               <UpdateCard 
-                title="📊 Historical Analysis" 
+                title="Historical Analysis"
                 description="Review your picking history and performance trends by week" 
               />
               <UpdateCard 
-                title="🏆 Achievement System" 
+                title="Achievement System"
                 description="Earn badges for perfect weeks and hitting milestones" 
               />
               <UpdateCard 
@@ -332,7 +332,7 @@ export default function ChakraPage() {
                 description="Fully responsive design works seamlessly on any device" 
               />
               <UpdateCard 
-                title="⚡ Real-time Updates" 
+                title="Real-time Updates" 
                 description="Live game scores and automatic point calculations" 
               />
               <UpdateCard 

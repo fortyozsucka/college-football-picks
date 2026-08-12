@@ -46,6 +46,7 @@ import {
 } from '@chakra-ui/react'
 import { StarIcon, InfoIcon } from '@chakra-ui/icons'
 import { useAuth } from '@/lib/context/AuthContext'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 interface LeaderboardEntry {
   id: string
@@ -77,13 +78,13 @@ export default function ChakraLeaderboardPage() {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   // Color mode values
-  const cardBg = useColorModeValue('white', 'gray.800')
-  const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const cardBg = useColorModeValue('white', 'rgba(255,255,255,0.04)')
+  const borderColor = useColorModeValue('neutral.200', 'rgba(255,255,255,0.08)')
   const titleGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
-  const oddRowBg = useColorModeValue('gray.50', 'gray.700')
-  const weeklyItemBg = useColorModeValue('gray.50', 'gray.700')
-  const weeklyItemHoverBg = useColorModeValue('gray.100', 'gray.600')
-  const mutedTextColor = useColorModeValue('neutral.600', 'neutral.300')
+  const oddRowBg = useColorModeValue('neutral.50', 'rgba(255,255,255,0.03)')
+  const weeklyItemBg = useColorModeValue('neutral.50', 'rgba(255,255,255,0.04)')
+  const weeklyItemHoverBg = useColorModeValue('neutral.100', 'rgba(255,255,255,0.08)')
+  const mutedTextColor = useColorModeValue('neutral.600', 'neutral.400')
 
   useEffect(() => {
     fetchLeaderboard()
@@ -128,9 +129,7 @@ export default function ChakraLeaderboardPage() {
     return (
       <Container maxW="7xl" py={8}>
         <VStack spacing={8}>
-          <Heading size="xl" textAlign="center">
-            🔥 Leaderboard
-          </Heading>
+          <PageHeading eyebrow="College Football" title="Leaderboard" />
           <Spinner size="xl" color="football.500" thickness="4px" />
           <Text color={useColorModeValue("neutral.600", "neutral.300")}>Loading leaderboard...</Text>
         </VStack>
@@ -156,26 +155,18 @@ export default function ChakraLeaderboardPage() {
     <Container maxW="7xl" py={8}>
       <VStack spacing={8} align="stretch">
         {/* Header */}
-        <Box textAlign="center">
-          <Heading 
-            size="2xl" 
-            bgGradient={titleGradient}
-            bgClip="text"
-            mb={4}
-          >
-            🔥 Leaderboard
-          </Heading>
-          <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
-            See how you stack up against the competition
-          </Text>
-        </Box>
+        <PageHeading
+          eyebrow="College Football"
+          title="Leaderboard"
+          subtitle="See how you stack up against the competition"
+        />
 
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
           <Card bg="linear-gradient(to-r, var(--chakra-colors-football-50), var(--chakra-colors-orange-50))" shadow="lg">
             <CardBody>
               <Text fontWeight="bold" mb={6} textAlign="center" color="football.800" fontSize="lg">
-                🏆 Top Performers
+                Top Performers
               </Text>
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
                 {leaderboard.slice(0, 3).map((entry, index) => (
@@ -240,8 +231,8 @@ export default function ChakraLeaderboardPage() {
         <Card bg={cardBg} shadow="md">
           <CardBody p={0}>
             <Box p={6} pb={4}>
-              <Text fontWeight="bold" color="gray.700" fontSize="lg">
-                📊 Complete Rankings
+              <Text fontWeight="bold" color={useColorModeValue('neutral.800', 'neutral.100')} fontSize="lg">
+                Rankings
               </Text>
             </Box>
             <TableContainer>
@@ -283,7 +274,7 @@ export default function ChakraLeaderboardPage() {
                             <Text fontWeight="medium" fontSize="sm">
                               {entry.name || 'No Name'}
                             </Text>
-                            <Text fontSize="xs" color="gray.500">
+                            <Text fontSize="xs" color={mutedTextColor}>
                               {entry.email}
                             </Text>
                           </VStack>
@@ -329,7 +320,7 @@ export default function ChakraLeaderboardPage() {
                               {entry.doubleDowns}
                             </Text>
                           </HStack>
-                          <Text fontSize="xs" color="gray.500">
+                          <Text fontSize="xs" color={mutedTextColor}>
                             {entry.doubleDownWins} wins
                           </Text>
                         </VStack>
@@ -376,7 +367,7 @@ export default function ChakraLeaderboardPage() {
               <Avatar name={selectedUser?.name || selectedUser?.email} />
               <VStack align="start" spacing={0}>
                 <Text>{selectedUser?.name || 'No Name'}</Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color={mutedTextColor}>
                   {selectedUser?.email}
                 </Text>
               </VStack>
@@ -389,7 +380,7 @@ export default function ChakraLeaderboardPage() {
                 {/* Overall Stats */}
                 <Card>
                   <CardBody>
-                    <Text fontWeight="semibold" mb={4}>📊 Season Statistics</Text>
+                    <Text fontWeight="semibold" mb={4}>Season Statistics</Text>
                     <SimpleGrid columns={2} spacing={4}>
                       <Stat>
                         <StatLabel>Total Points</StatLabel>
@@ -452,7 +443,7 @@ export default function ChakraLeaderboardPage() {
                 {selectedUser.weeklyStats && selectedUser.weeklyStats.length > 0 && (
                   <Card>
                     <CardBody>
-                      <Text fontWeight="semibold" mb={4}>📅 Weekly Performance</Text>
+                      <Text fontWeight="semibold" mb={4}>Weekly Performance</Text>
                       <VStack spacing={3} align="stretch">
                         {selectedUser.weeklyStats
                           .sort((a, b) => b.season - a.season || b.week - a.week)

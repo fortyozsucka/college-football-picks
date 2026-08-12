@@ -7,6 +7,7 @@ export async function GET() {
   try {
     // Get all users with their picks (we'll calculate and sort by score afterwards)
     const leaderboard = await db.user.findMany({
+      where: { playFootball: true },
       select: {
         id: true,
         name: true,

@@ -193,15 +193,18 @@ export default function GameSideBets({ game, onBetAction }: GameSideBetsProps) {
     <Box>
       <Button
         size="sm"
-        variant={openBets > 0 ? "solid" : "ghost"}
-        colorScheme={openBets > 0 ? "green" : "gray"}
+        variant={openBets > 0 ? "solid" : "outline"}
+        colorScheme={openBets > 0 ? "green" : "whiteAlpha"}
         onClick={onToggle}
         rightIcon={isOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
         w="full"
         justifyContent="space-between"
+        color={useColorModeValue(openBets > 0 ? undefined : 'neutral.600', openBets > 0 ? undefined : 'neutral.300')}
+        borderColor={useColorModeValue(openBets > 0 ? undefined : 'neutral.300', openBets > 0 ? undefined : 'rgba(255,255,255,0.2)')}
         _hover={{
           transform: openBets > 0 ? "scale(1.02)" : undefined,
-          shadow: openBets > 0 ? "md" : undefined
+          shadow: openBets > 0 ? "md" : undefined,
+          bg: useColorModeValue('neutral.100', 'rgba(255,255,255,0.08)'),
         }}
         transition="all 0.2s"
       >

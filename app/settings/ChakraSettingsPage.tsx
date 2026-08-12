@@ -12,6 +12,7 @@ import {
 import ProtectedRoute from '@/components/ProtectedRoute'
 import NotificationSettings from '@/components/NotificationSettings'
 import UserProfileSettings from '@/components/UserProfileSettings'
+import { PageHeading } from '@/components/ui/PageHeading'
 
 export default function ChakraSettingsPage() {
   const bgGradient = useColorModeValue('linear(to-br, gray.50, football.50)', 'linear(to-br, gray.900, football.900)')
@@ -23,19 +24,11 @@ export default function ChakraSettingsPage() {
         <Container maxW="4xl">
           <VStack spacing={8} align="stretch">
             {/* Header */}
-            <Box textAlign="center">
-              <Heading 
-                size="2xl" 
-                bgGradient={titleGradient}
-                bgClip="text"
-                mb={4}
-              >
-                ⚙️ Settings
-              </Heading>
-              <Text fontSize="lg" color={useColorModeValue("neutral.600", "neutral.300")}>
-                Manage your account preferences and notifications
-              </Text>
-            </Box>
+            <PageHeading
+              eyebrow="Your Account"
+              title="Settings"
+              subtitle="Manage your account preferences and notifications"
+            />
 
             {/* Settings Grid */}
             <SimpleGrid columns={{ base: 1, lg: 1 }} spacing={6}>

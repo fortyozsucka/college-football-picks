@@ -28,33 +28,36 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { DarkModeToggle } from './DarkModeToggle'
 
-const NavLink = ({ children, href, isActive = false }: { 
-  children: React.ReactNode, 
-  href: string, 
-  isActive?: boolean 
+const NavLink = ({ children, href, isActive = false }: {
+  children: React.ReactNode,
+  href: string,
+  isActive?: boolean
 }) => {
-  const linkColor = useColorModeValue(
-    isActive ? 'brand.500' : 'neutral.600',
-    isActive ? 'brand.400' : 'neutral.300'
-  )
-  const hoverBg = useColorModeValue('neutral.100', 'neutral.700')
+  const activeBg = useColorModeValue('rgba(106,222,156,0.12)', 'rgba(106,222,156,0.14)')
+  const activeBorder = useColorModeValue('rgba(106,222,156,0.35)', 'rgba(106,222,156,0.3)')
+  const activeColor = useColorModeValue('brand.700', 'brand.300')
+  const inactiveColor = useColorModeValue('neutral.600', 'neutral.300')
+  const hoverBg = useColorModeValue('neutral.100', 'rgba(255,255,255,0.07)')
   const hoverColor = useColorModeValue('neutral.900', 'white')
 
   return (
     <ChakraLink
       as={Link}
       href={href}
-      px={2}
-      py={2}
-      rounded={'md'}
-      color={linkColor}
+      px={3}
+      py={1.5}
+      rounded="full"
+      color={isActive ? activeColor : inactiveColor}
       fontWeight={isActive ? '600' : '500'}
       fontSize="sm"
       whiteSpace="nowrap"
+      bg={isActive ? activeBg : 'transparent'}
+      border="1px solid"
+      borderColor={isActive ? activeBorder : 'transparent'}
       _hover={{
         textDecoration: 'none',
-        bg: hoverBg,
-        color: hoverColor,
+        bg: isActive ? activeBg : hoverBg,
+        color: isActive ? activeColor : hoverColor,
       }}
       transition="all 0.2s ease"
     >
@@ -69,8 +72,8 @@ export default function ChakraNavigationFixed() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const pathname = usePathname()
-  const navBg = useColorModeValue('white', 'neutral.800')
-  const navBorder = useColorModeValue('neutral.200', 'neutral.700')
+  const navBg = useColorModeValue('rgba(255, 255, 255, 0.82)', 'rgba(11, 15, 11, 0.82)')
+  const navBorder = useColorModeValue('rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.06)')
   const logoGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
 
   // Fix hydration by ensuring client-side rendering
@@ -95,19 +98,17 @@ export default function ChakraNavigationFixed() {
   // Use consistent content during SSR
   if (loading || !isClient) {
     return (
-      <Box bg={navBg} boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor={navBorder} mb={8}>
+      <Box bg={navBg} backdropFilter="blur(20px)" sx={{ WebkitBackdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1000 }} boxShadow="0 1px 20px rgba(0, 0, 0, 0.08)" borderBottom="1px" borderColor={navBorder} mb={8}>
         <Container maxW="7xl">
           <Flex h={16} alignItems="center" justifyContent="space-between">
             <HStack spacing={8} alignItems="center">
               <ChakraLink as={Link} href="/" _hover={{ textDecoration: 'none' }}>
-                <Text 
-                  fontWeight="bold" 
-                  fontSize="xl" 
-                  bgGradient={logoGradient}
-                  bgClip="text"
-                >
-                  Squad Sports
-                </Text>
+                <HStack spacing={2} align="center">
+                  <img src="/logo-a.svg" alt="Squad Sports" width="32" height="32" style={{ display: 'block', borderRadius: '8px' }} />
+                  <Text fontWeight="bold" fontSize="xl" bgGradient={logoGradient} bgClip="text">
+                    Squad Sports
+                  </Text>
+                </HStack>
               </ChakraLink>
             </HStack>
             <Skeleton height="20px" width="80px" />
@@ -118,34 +119,37 @@ export default function ChakraNavigationFixed() {
   }
 
   return (
-    <Box bg={navBg} boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)" borderBottom="1px" borderColor={navBorder} mb={{ base: 4, sm: 8 }}>
+    <Box bg={navBg} backdropFilter="blur(20px)" sx={{ WebkitBackdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1000 }} boxShadow="0 1px 20px rgba(0, 0, 0, 0.08)" borderBottom="1px" borderColor={navBorder} mb={{ base: 4, sm: 8 }}>
       <Container maxW="7xl">
         <Flex h={16} alignItems="center" justifyContent="space-between">
           {/* Logo */}
           <HStack spacing={8} alignItems="center">
             <ChakraLink as={Link} href="/" _hover={{ textDecoration: 'none' }}>
-              <Text 
-                fontWeight="bold" 
-                fontSize={{ base: 'lg', sm: 'xl' }} 
-                bgGradient={logoGradient}
-                bgClip="text"
-              >
-                Squad Sports
-              </Text>
+              <HStack spacing={2} align="center">
+                <img src="/logo-a.svg" alt="Squad Sports" width="32" height="32" style={{ display: 'block', borderRadius: '8px' }} />
+                <Text
+                  fontWeight="bold"
+                  fontSize={{ base: 'lg', sm: 'xl' }}
+                  bgGradient={logoGradient}
+                  bgClip="text"
+                >
+                  Squad Sports
+                </Text>
+              </HStack>
             </ChakraLink>
             
             {/* Desktop Navigation */}
             <HStack as="nav" spacing={2} display={{ base: 'none', md: 'flex' }}>
               {user && (
                 <>
-                  <NavLink href="/picks">Picks</NavLink>
-                  <NavLink href="/games">Games</NavLink>
-                  <NavLink href="/sidebets">💰 Side Bets</NavLink>
-                  <NavLink href="/leaderboard">Leaderboard</NavLink>
-                  <NavLink href="/history">History</NavLink>
-                  <NavLink href="/settings">Settings</NavLink>
+                  <NavLink href="/picks" isActive={pathname === '/picks'}>Picks</NavLink>
+                  <NavLink href="/games" isActive={pathname === '/games'}>Games</NavLink>
+                  <NavLink href="/sidebets" isActive={pathname === '/sidebets'}>Side Bets</NavLink>
+                  <NavLink href="/leaderboard" isActive={pathname === '/leaderboard'}>Leaderboard</NavLink>
+                  <NavLink href="/history" isActive={pathname === '/history'}>History</NavLink>
+                  <NavLink href="/settings" isActive={pathname === '/settings'}>Settings</NavLink>
                   {user.isAdmin && (
-                    <NavLink href="/admin">
+                    <NavLink href="/admin" isActive={pathname === '/admin'}>
                       <HStack spacing={1}>
                         <Text>Admin</Text>
                         <Badge colorScheme="red" size="sm">ADMIN</Badge>
@@ -232,7 +236,7 @@ export default function ChakraNavigationFixed() {
               </Flex>
               <NavLink href="/picks">Picks</NavLink>
               <NavLink href="/games">Games</NavLink>
-              <NavLink href="/sidebets">💰 Side Bets</NavLink>
+              <NavLink href="/sidebets">Side Bets</NavLink>
               <NavLink href="/leaderboard">Leaderboard</NavLink>
               <NavLink href="/history">History</NavLink>
               <NavLink href="/settings">Settings</NavLink>
