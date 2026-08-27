@@ -78,7 +78,6 @@ export default function ChakraLeaderboardPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
-  const [currentSeason, setCurrentSeason] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null)
@@ -105,7 +104,6 @@ export default function ChakraLeaderboardPage() {
       }
       const data = await response.json()
       setLeaderboard(data.leaderboard)
-      setCurrentSeason(data.season)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

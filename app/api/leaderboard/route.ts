@@ -3,12 +3,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-function getCurrentSeason(): number {
-  const now = new Date()
-  const year = now.getFullYear()
-  return now.getMonth() >= 7 ? year : year - 1
-}
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
