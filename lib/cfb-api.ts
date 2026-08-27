@@ -93,6 +93,28 @@ export class CFBAPIClient {
   async getTeams(): Promise<any[]> {
     return this.fetchFromAPI('/teams/fbs')
   }
+
+  async getRankings(year: number, week: number, seasonType: 'regular' | 'postseason' = 'regular'): Promise<Map<string, number>> {
+    try {
+      const data = await this.fetchFromAPI(`/rankings?year=${year}&week=${week}&seasonType=${seasonType}`)
+      const rankMap = new Map<string, number>()
+
+      for (const weekData of data) {
+        const apPoll = weekData.polls?.find((p: any) => p.poll === 'AP Top 25')
+        if (apPoll) {
+          for (const entry of apPoll.ranks) {
+            rankMap.set(entry.school, entry.rank)
+          }
+          break
+        }
+      }
+
+      return rankMap
+    } catch {
+      // Rankings aren't critical — return empty map if fetch fails
+      return new Map()
+    }
+  }
 }
 
 export const cfbApi = new CFBAPIClient(process.env.CFB_API_KEY!)

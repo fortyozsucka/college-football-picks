@@ -119,6 +119,7 @@ export default function ChakraAdminPage() {
   const [syncingGames, setSyncingGames] = useState(false)
   const [syncingNewWeeks, setSyncingNewWeeks] = useState(false)
   const [syncingPostseason, setSyncingPostseason] = useState(false)
+  const [backfillingMetadata, setBackfillingMetadata] = useState(false)
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [apiLoading, setApiLoading] = useState(false)
   const [seasonInfo, setSeasonInfo] = useState<{availableSeasons: number[], archivedSeasons: number[]} | null>(null)
@@ -463,6 +464,28 @@ export default function ChakraAdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to sync postseason games')
     } finally {
       setSyncingPostseason(false)
+    }
+  }
+
+  const backfillGameMetadata = async () => {
+    const now = new Date()
+    const guessedSeason = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+    const input = window.prompt('Which season to backfill? (enter the year the season started)', String(guessedSeason - 1))
+    if (!input) return
+    const season = parseInt(input)
+    if (isNaN(season)) { alert('Invalid season'); return }
+
+    setBackfillingMetadata(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/admin/backfill-game-metadata?season=${season}`, { method: 'POST' })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Backfill failed')
+      alert(`Backfill complete for ${result.season}!\n\nGames updated: ${result.updated}\nGames skipped (no data): ${result.skipped}\nWeeks processed: ${result.weeksProcessed?.join(', ')}\nConferences loaded: ${result.conferencesLoaded}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Backfill failed')
+    } finally {
+      setBackfillingMetadata(false)
     }
   }
 
@@ -870,6 +893,18 @@ export default function ChakraAdminPage() {
                         fontWeight="bold"
                       >
                         Sync Postseason
+                      </Button>
+
+                      <Button
+                        leftIcon={<Text>🧬</Text>}
+                        onClick={backfillGameMetadata}
+                        isLoading={backfillingMetadata}
+                        loadingText="Backfilling..."
+                        colorScheme="purple"
+                        variant="outline"
+                        size="sm"
+                      >
+                        Backfill Conference & Rank
                       </Button>
                     </SimpleGrid>
                   </VStack>

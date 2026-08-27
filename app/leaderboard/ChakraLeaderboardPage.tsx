@@ -43,10 +43,16 @@ import {
   useDisclosure,
   Flex,
   Icon,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
 } from '@chakra-ui/react'
 import { StarIcon, InfoIcon } from '@chakra-ui/icons'
 import { useAuth } from '@/lib/context/AuthContext'
 import { PageHeading } from '@/components/ui/PageHeading'
+import PickingDNA from '@/components/PickingDNA'
 
 interface LeaderboardEntry {
   id: string
@@ -72,6 +78,7 @@ export default function ChakraLeaderboardPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [currentSeason, setCurrentSeason] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null)
@@ -97,7 +104,8 @@ export default function ChakraLeaderboardPage() {
         throw new Error('Failed to fetch leaderboard')
       }
       const data = await response.json()
-      setLeaderboard(data)
+      setLeaderboard(data.leaderboard)
+      setCurrentSeason(data.season)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -158,7 +166,7 @@ export default function ChakraLeaderboardPage() {
         <PageHeading
           eyebrow="College Football"
           title="Leaderboard"
-          subtitle="See how you stack up against the competition"
+          subtitle={currentSeason ? `${currentSeason} Season` : 'See how you stack up against the competition'}
         />
 
         {/* Top 3 Podium */}
@@ -359,10 +367,10 @@ export default function ChakraLeaderboardPage() {
       </VStack>
 
       {/* User Details Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>
+          <ModalHeader pb={2}>
             <HStack>
               <Avatar name={selectedUser?.name || selectedUser?.email} />
               <VStack align="start" spacing={0}>
@@ -376,119 +384,130 @@ export default function ChakraLeaderboardPage() {
           <ModalCloseButton />
           <ModalBody pb={6}>
             {selectedUser && (
-              <VStack spacing={6} align="stretch">
-                {/* Overall Stats */}
-                <Card>
-                  <CardBody>
-                    <Text fontWeight="semibold" mb={4}>Season Statistics</Text>
-                    <SimpleGrid columns={2} spacing={4}>
-                      <Stat>
-                        <StatLabel>Total Points</StatLabel>
-                        <StatNumber color={selectedUser.totalScore >= 0 ? 'green.600' : 'red.600'}>
-                          {selectedUser.totalScore >= 0 ? '+' : ''}{selectedUser.totalScore}
-                        </StatNumber>
-                      </Stat>
-                      <Stat>
-                        <StatLabel>Total Picks</StatLabel>
-                        <StatNumber>{selectedUser.totalPicks}</StatNumber>
-                      </Stat>
-                      <Stat>
-                        <StatLabel>Win Percentage</StatLabel>
-                        <StatNumber color="green.600">{selectedUser.winPercentage.toFixed(2)}%</StatNumber>
-                        <Progress 
-                          value={selectedUser.winPercentage} 
-                          colorScheme="green" 
-                          size="sm" 
-                          mt={2}
-                          borderRadius="full"
-                        />
-                      </Stat>
-                      <Stat>
-                        <StatLabel>Record</StatLabel>
-                        <StatHelpText fontSize="md" mt={2}>
-                          <Text as="span" color="green.600" fontWeight="bold">{selectedUser.wins}</Text>
-                          {' - '}
-                          <Text as="span" color="red.600" fontWeight="bold">{selectedUser.losses}</Text>
-                          {' - '}
-                          <Text as="span" color={mutedTextColor}>{selectedUser.pushes}</Text>
-                        </StatHelpText>
-                      </Stat>
-                    </SimpleGrid>
+              <Tabs colorScheme="green" variant="soft-rounded" size="sm">
+                <TabList mb={4}>
+                  <Tab fontWeight="600">Season Stats</Tab>
+                  <Tab fontWeight="600">Picking DNA</Tab>
+                  <Tab fontWeight="600">Weekly</Tab>
+                </TabList>
+                <TabPanels>
+                  {/* Season Stats */}
+                  <TabPanel px={0}>
+                    <VStack spacing={4} align="stretch">
+                      <Card>
+                        <CardBody>
+                          <SimpleGrid columns={2} spacing={4}>
+                            <Stat>
+                              <StatLabel>Total Points</StatLabel>
+                              <StatNumber color={selectedUser.totalScore >= 0 ? 'green.600' : 'red.600'}>
+                                {selectedUser.totalScore >= 0 ? '+' : ''}{selectedUser.totalScore}
+                              </StatNumber>
+                            </Stat>
+                            <Stat>
+                              <StatLabel>Total Picks</StatLabel>
+                              <StatNumber>{selectedUser.totalPicks}</StatNumber>
+                            </Stat>
+                            <Stat>
+                              <StatLabel>Win Percentage</StatLabel>
+                              <StatNumber color="green.600">{selectedUser.winPercentage.toFixed(2)}%</StatNumber>
+                              <Progress
+                                value={selectedUser.winPercentage}
+                                colorScheme="green"
+                                size="sm"
+                                mt={2}
+                                borderRadius="full"
+                              />
+                            </Stat>
+                            <Stat>
+                              <StatLabel>Record</StatLabel>
+                              <StatHelpText fontSize="md" mt={2}>
+                                <Text as="span" color="green.600" fontWeight="bold">{selectedUser.wins}</Text>
+                                {' - '}
+                                <Text as="span" color="red.600" fontWeight="bold">{selectedUser.losses}</Text>
+                                {' - '}
+                                <Text as="span" color={mutedTextColor}>{selectedUser.pushes}</Text>
+                              </StatHelpText>
+                            </Stat>
+                          </SimpleGrid>
+                          <Divider my={4} />
+                          <SimpleGrid columns={2} spacing={4}>
+                            <Stat>
+                              <StatLabel>Double Downs</StatLabel>
+                              <StatNumber color="orange.600">{selectedUser.doubleDowns}</StatNumber>
+                              <StatHelpText>{selectedUser.doubleDownWins} wins</StatHelpText>
+                            </Stat>
+                            <Stat>
+                              <StatLabel>DD Success Rate</StatLabel>
+                              <StatNumber color="orange.600">
+                                {selectedUser.doubleDowns > 0
+                                  ? Math.round((selectedUser.doubleDownWins / selectedUser.doubleDowns) * 100)
+                                  : 0}%
+                              </StatNumber>
+                            </Stat>
+                          </SimpleGrid>
+                        </CardBody>
+                      </Card>
+                    </VStack>
+                  </TabPanel>
 
-                    <Divider my={4} />
+                  {/* Picking DNA */}
+                  <TabPanel px={0}>
+                    <PickingDNA userId={selectedUser.id} />
+                  </TabPanel>
 
-                    <SimpleGrid columns={2} spacing={4}>
-                      <Stat>
-                        <StatLabel>Double Downs</StatLabel>
-                        <StatNumber color="orange.600">
-                          {selectedUser.doubleDowns}
-                        </StatNumber>
-                        <StatHelpText>
-                          {selectedUser.doubleDownWins} wins
-                        </StatHelpText>
-                      </Stat>
-                      <Stat>
-                        <StatLabel>DD Success Rate</StatLabel>
-                        <StatNumber color="orange.600">
-                          {selectedUser.doubleDowns > 0 
-                            ? Math.round((selectedUser.doubleDownWins / selectedUser.doubleDowns) * 100)
-                            : 0}%
-                        </StatNumber>
-                      </Stat>
-                    </SimpleGrid>
-                  </CardBody>
-                </Card>
-
-                {/* Weekly Performance */}
-                {selectedUser.weeklyStats && selectedUser.weeklyStats.length > 0 && (
-                  <Card>
-                    <CardBody>
-                      <Text fontWeight="semibold" mb={4}>Weekly Performance</Text>
-                      <VStack spacing={3} align="stretch">
-                        {selectedUser.weeklyStats
-                          .sort((a, b) => b.season - a.season || b.week - a.week)
-                          .map((week, index) => (
-                          <Flex
-                            key={index}
-                            justify="space-between"
-                            align="center"
-                            p={3}
-                            bg={weeklyItemBg}
-                            borderRadius="md"
-                            cursor="pointer"
-                            onClick={() => {
-                              router.push(`/weekly-picks/${selectedUser.id}/${week.season}/${week.week}`)
-                            }}
-                            _hover={{
-                              bg: weeklyItemHoverBg,
-                              transform: 'translateX(4px)'
-                            }}
-                            transition="all 0.2s"
-                          >
-                            <VStack align="start" spacing={0}>
-                              <Text fontWeight="semibold" fontSize="sm">
-                                Week {week.week}, {week.season}
-                              </Text>
-                              <Text fontSize="xs" color={mutedTextColor}>
-                                {week.picks} picks made • Click to view details
-                              </Text>
-                            </VStack>
-                            <Badge
-                              colorScheme={week.points >= 0 ? 'green' : 'red'}
-                              variant="solid"
-                              fontSize="sm"
-                              px={2}
-                              py={1}
-                            >
-                              {week.points >= 0 ? '+' : ''}{week.points} pts
-                            </Badge>
-                          </Flex>
-                        ))}
-                      </VStack>
-                    </CardBody>
-                  </Card>
-                )}
-              </VStack>
+                  {/* Weekly Performance */}
+                  <TabPanel px={0}>
+                    {selectedUser.weeklyStats && selectedUser.weeklyStats.length > 0 ? (
+                      <Card>
+                        <CardBody>
+                          <VStack spacing={3} align="stretch">
+                            {selectedUser.weeklyStats
+                              .sort((a, b) => b.season - a.season || b.week - a.week)
+                              .map((week, index) => (
+                                <Flex
+                                  key={index}
+                                  justify="space-between"
+                                  align="center"
+                                  p={3}
+                                  bg={weeklyItemBg}
+                                  borderRadius="md"
+                                  cursor="pointer"
+                                  onClick={() => {
+                                    router.push(`/weekly-picks/${selectedUser.id}/${week.season}/${week.week}`)
+                                  }}
+                                  _hover={{ bg: weeklyItemHoverBg, transform: 'translateX(4px)' }}
+                                  transition="all 0.2s"
+                                >
+                                  <VStack align="start" spacing={0}>
+                                    <Text fontWeight="semibold" fontSize="sm">
+                                      Week {week.week}, {week.season}
+                                    </Text>
+                                    <Text fontSize="xs" color={mutedTextColor}>
+                                      {week.picks} picks made • Click to view details
+                                    </Text>
+                                  </VStack>
+                                  <Badge
+                                    colorScheme={week.points >= 0 ? 'green' : 'red'}
+                                    variant="solid"
+                                    fontSize="sm"
+                                    px={2}
+                                    py={1}
+                                  >
+                                    {week.points >= 0 ? '+' : ''}{week.points} pts
+                                  </Badge>
+                                </Flex>
+                              ))}
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    ) : (
+                      <Text fontSize="sm" color={mutedTextColor} textAlign="center" py={6}>
+                        No weekly data available yet.
+                      </Text>
+                    )}
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             )}
           </ModalBody>
         </ModalContent>

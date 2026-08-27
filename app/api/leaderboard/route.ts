@@ -1,11 +1,20 @@
 export const dynamic = 'force-dynamic'
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function GET() {
+function getCurrentSeason(): number {
+  const now = new Date()
+  const year = now.getFullYear()
+  return now.getMonth() >= 7 ? year : year - 1
+}
+
+export async function GET(request: NextRequest) {
   try {
-    // Get all users with their picks (we'll calculate and sort by score afterwards)
+    const { searchParams } = new URL(request.url)
+    const season = parseInt(searchParams.get('season') || getCurrentSeason().toString())
+
+    // Get all users with their picks filtered to the requested season
     const leaderboard = await db.user.findMany({
       where: { playFootball: true },
       select: {
@@ -26,9 +35,8 @@ export async function GET() {
             }
           },
           where: {
-            points: {
-              not: null
-            }
+            points: { not: null },
+            game: { season }
           }
         }
       }
@@ -109,7 +117,7 @@ export async function GET() {
     // Sort by calculated total score (instead of cached user.totalScore)
     const sortedLeaderboard = leaderboardWithStats.sort((a, b) => b.totalScore - a.totalScore)
 
-    return NextResponse.json(sortedLeaderboard)
+    return NextResponse.json({ season, leaderboard: sortedLeaderboard })
   } catch (error) {
     console.error('Error fetching leaderboard:', error)
     return NextResponse.json(

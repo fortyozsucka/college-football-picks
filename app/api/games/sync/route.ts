@@ -53,17 +53,25 @@ export async function POST(request: NextRequest) {
       cfbLines = [...cfbLines, ...postseasonLines]
     }
 
-    // Fetch team data for logos
+    // Fetch team data for logos and conferences
     const teams = await cfbApi.getTeams()
     console.log(`Fetched ${teams.length} teams from CFB API`)
-    
-    // Create team lookup map
+
+    // Create team lookup map (by ID for logo/conference, by name for conference fallback)
     const teamsMap = new Map()
+    const teamsByName = new Map<string, { conference: string | null }>()
     teams.forEach(team => {
-      teamsMap.set(team.id.toString(), {
-        logo: team.logos && team.logos.length > 0 ? team.logos[0] : null
-      })
+      const entry = {
+        logo: team.logos && team.logos.length > 0 ? team.logos[0] : null,
+        conference: team.conference || null,
+      }
+      teamsMap.set(team.id.toString(), entry)
+      teamsByName.set(team.school, entry)
     })
+
+    // Fetch AP Top 25 rankings for this week
+    const rankMap = await cfbApi.getRankings(season, week, week >= 14 ? 'postseason' : 'regular')
+    console.log(`Loaded AP rankings: ${rankMap.size} ranked teams`)
 
     // Preferred sportsbook order (most to least preferred)
     const preferredProviders = ['DraftKings', 'ESPN Bet', 'Bovada']
@@ -123,8 +131,12 @@ export async function POST(request: NextRequest) {
       // Get team data from teams map
       const homeTeamId = cfbGame.homeId?.toString()
       const awayTeamId = cfbGame.awayId?.toString()
-      const homeTeamData = homeTeamId ? teamsMap.get(homeTeamId) : null
-      const awayTeamData = awayTeamId ? teamsMap.get(awayTeamId) : null
+      const homeTeamData = (homeTeamId ? teamsMap.get(homeTeamId) : null) ?? teamsByName.get(homeTeam) ?? null
+      const awayTeamData = (awayTeamId ? teamsMap.get(awayTeamId) : null) ?? teamsByName.get(awayTeam) ?? null
+
+      // AP rankings (null = unranked)
+      const homeRank = rankMap.get(homeTeam) ?? null
+      const awayRank = rankMap.get(awayTeam) ?? null
 
       // Classify the game type using our classification system
       // Pass the notes field from CFB API - this is the primary way to identify championship games
@@ -145,6 +157,10 @@ export async function POST(request: NextRequest) {
         awayTeamId: awayTeamId || null,
         homeTeamLogo: homeTeamData?.logo || null,
         awayTeamLogo: awayTeamData?.logo || null,
+        homeConference: homeTeamData?.conference || null,
+        awayConference: awayTeamData?.conference || null,
+        homeRank: homeRank,
+        awayRank: awayRank,
         startTime,
         spread: lineData?.spread || 0,
         overUnder: lineData?.overUnder || null,

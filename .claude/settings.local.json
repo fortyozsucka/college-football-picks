@@ -35,7 +35,12 @@
       "Bash(npx tsc:*)",
       "Bash(head -5 app/api/golf/tournaments/[id]/route.ts)",
       "Bash(cp /tmp/run-scoring.js scripts/run-scoring.js)",
-      "Bash(node -e \"require\\(''./scripts/run-scoring.js''\\)\")"
+      "Bash(node -e \"require\\(''./scripts/run-scoring.js''\\)\")",
+      "Bash(git push:*)",
+      "Bash(npm run *)",
+      "Bash(echo \"Dev server PID: $!\")",
+      "Bash(cat /tmp/dev-server.log 2>&1 | head -30)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
     "ask": []
