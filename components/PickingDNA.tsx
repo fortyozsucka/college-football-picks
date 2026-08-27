@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import {
   Box, VStack, HStack, Text, Progress, SimpleGrid,
-  Badge, Spinner, useColorModeValue, Divider, Flex,
+  Spinner, useColorModeValue, Divider, Flex, ButtonGroup, Button,
 } from '@chakra-ui/react'
 
 interface RecordData {
@@ -70,23 +70,42 @@ interface SituationCellProps {
 
 const MIN_PICKS = 3
 
+function getCurrentSeason(): number {
+  const now = new Date()
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+}
+
 export default function PickingDNA({ userId }: { userId: string }) {
   const [data, setData] = useState<DNAData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const [seasonFilter, setSeasonFilter] = useState<'all' | 'current'>('all')
 
+  const currentSeason = getCurrentSeason()
   const isDark = useColorModeValue(false, true)
   const cellBg = useColorModeValue('neutral.50', 'rgba(255,255,255,0.04)')
   const cellBorder = useColorModeValue('neutral.200', 'rgba(255,255,255,0.08)')
   const labelColor = useColorModeValue('neutral.500', 'neutral.400')
   const sectionLabelColor = useColorModeValue('neutral.700', 'neutral.300')
   const mutedText = useColorModeValue('neutral.500', 'neutral.400')
+  const toggleBg = useColorModeValue('neutral.100', 'rgba(255,255,255,0.06)')
+  const activeBtn = useColorModeValue('white', 'rgba(255,255,255,0.12)')
 
   useEffect(() => {
-    fetch(`/api/users/${userId}/picking-dna`)
-      .then(r => r.json())
+    setLoading(true)
+    setData(null)
+    setFetchError(false)
+    const url = seasonFilter === 'current'
+      ? `/api/users/${userId}/picking-dna?season=${currentSeason}`
+      : `/api/users/${userId}/picking-dna`
+    fetch(url)
+      .then(r => {
+        if (!r.ok) throw new Error('API error')
+        return r.json()
+      })
       .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [userId])
+      .catch(() => { setFetchError(true); setLoading(false) })
+  }, [userId, seasonFilter])
 
   if (loading) {
     return (
@@ -97,11 +116,23 @@ export default function PickingDNA({ userId }: { userId: string }) {
     )
   }
 
+  if (fetchError) {
+    return (
+      <Box textAlign="center" py={8}>
+        <Text fontSize="sm" color={mutedText}>
+          Could not load DNA data. Make sure the database migration has been deployed.
+        </Text>
+      </Box>
+    )
+  }
+
   if (!data || data.insufficient) {
     return (
       <Box textAlign="center" py={8}>
         <Text fontSize="sm" color={mutedText}>
-          Not enough data yet — need at least 5 completed picks to generate DNA.
+          {seasonFilter === 'current'
+            ? `Not enough picks this season yet — need at least 5 completed picks.`
+            : `Not enough data yet — need at least 5 completed picks to generate DNA.`}
         </Text>
       </Box>
     )
@@ -212,6 +243,38 @@ export default function PickingDNA({ userId }: { userId: string }) {
 
   return (
     <VStack spacing={5} align="stretch">
+      {/* Season toggle */}
+      <Flex justify="center">
+        <Box bg={toggleBg} borderRadius="xl" p={1} display="inline-flex">
+          <ButtonGroup size="sm" spacing={0}>
+            <Button
+              variant="ghost"
+              borderRadius="lg"
+              px={4}
+              bg={seasonFilter === 'all' ? activeBtn : 'transparent'}
+              fontWeight={seasonFilter === 'all' ? '700' : '500'}
+              color={seasonFilter === 'all' ? sectionLabelColor : mutedText}
+              onClick={() => setSeasonFilter('all')}
+              _hover={{ bg: activeBtn }}
+            >
+              All Time
+            </Button>
+            <Button
+              variant="ghost"
+              borderRadius="lg"
+              px={4}
+              bg={seasonFilter === 'current' ? activeBtn : 'transparent'}
+              fontWeight={seasonFilter === 'current' ? '700' : '500'}
+              color={seasonFilter === 'current' ? sectionLabelColor : mutedText}
+              onClick={() => setSeasonFilter('current')}
+              _hover={{ bg: activeBtn }}
+            >
+              {currentSeason} Season
+            </Button>
+          </ButtonGroup>
+        </Box>
+      </Flex>
+
       {/* Overall ATS */}
       <Box textAlign="center" py={2}>
         <Text fontSize="xs" fontWeight="700" color={labelColor} textTransform="uppercase" letterSpacing="0.1em" mb={1}>

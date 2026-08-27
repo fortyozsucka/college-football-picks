@@ -166,7 +166,7 @@ export default function ChakraLeaderboardPage() {
         <PageHeading
           eyebrow="College Football"
           title="Leaderboard"
-          subtitle={currentSeason ? `${currentSeason} Season` : 'See how you stack up against the competition'}
+          subtitle="See how you stack up against the competition"
         />
 
         {/* Top 3 Podium */}

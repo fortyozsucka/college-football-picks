@@ -22,6 +22,12 @@ function fmt(r: RecordData) {
   return r.pushes > 0 ? `${r.wins}-${r.losses}-${r.pushes}` : `${r.wins}-${r.losses}`
 }
 
+function getCurrentSeason(): number {
+  const now = new Date()
+  const year = now.getFullYear()
+  return now.getMonth() >= 7 ? year : year - 1
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -30,22 +36,54 @@ export async function GET(
     const currentUser = await getCurrentUser()
     if (!currentUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const picks = await db.pick.findMany({
-      where: { userId: params.id, result: { in: ['WIN', 'LOSS', 'PUSH'] } },
-      include: {
-        game: {
-          select: {
-            homeTeam: true,
-            awayTeam: true,
-            gameType: true,
-            homeConference: true,
-            awayConference: true,
-            homeRank: true,
-            awayRank: true,
+    const { searchParams } = new URL(request.url)
+    const seasonParam = searchParams.get('season')
+    const season = seasonParam ? parseInt(seasonParam) : null
+
+    // Try to fetch with conference/rank fields (requires migration). Fall back without them.
+    let picks: Array<any>
+    try {
+      picks = await db.pick.findMany({
+        where: {
+          userId: params.id,
+          result: { in: ['WIN', 'LOSS', 'PUSH'] },
+          ...(season !== null ? { game: { season } } : {}),
+        },
+        include: {
+          game: {
+            select: {
+              homeTeam: true,
+              awayTeam: true,
+              gameType: true,
+              season: true,
+              homeConference: true,
+              awayConference: true,
+              homeRank: true,
+              awayRank: true,
+            }
           }
         }
-      }
-    })
+      })
+    } catch {
+      // Columns not yet migrated in this environment — fall back to base fields
+      picks = await db.pick.findMany({
+        where: {
+          userId: params.id,
+          result: { in: ['WIN', 'LOSS', 'PUSH'] },
+          ...(season !== null ? { game: { season } } : {}),
+        },
+        include: {
+          game: {
+            select: {
+              homeTeam: true,
+              awayTeam: true,
+              gameType: true,
+              season: true,
+            }
+          }
+        }
+      })
+    }
 
     if (picks.length < 5) {
       return NextResponse.json({ insufficient: true, totalPicks: picks.length })

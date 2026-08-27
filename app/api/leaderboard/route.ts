@@ -12,9 +12,10 @@ function getCurrentSeason(): number {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const season = parseInt(searchParams.get('season') || getCurrentSeason().toString())
+    const seasonParam = searchParams.get('season')
+    const season = seasonParam ? parseInt(seasonParam) : null
 
-    // Get all users with their picks filtered to the requested season
+    // Get all users with their picks — filtered by season if provided, otherwise all-time
     const leaderboard = await db.user.findMany({
       where: { playFootball: true },
       select: {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
           },
           where: {
             points: { not: null },
-            game: { season }
+            ...(season !== null ? { game: { season } } : {}),
           }
         }
       }
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
     // Sort by calculated total score (instead of cached user.totalScore)
     const sortedLeaderboard = leaderboardWithStats.sort((a, b) => b.totalScore - a.totalScore)
 
-    return NextResponse.json({ season, leaderboard: sortedLeaderboard })
+    return NextResponse.json({ season: season ?? 'all', leaderboard: sortedLeaderboard })
   } catch (error) {
     console.error('Error fetching leaderboard:', error)
     return NextResponse.json(
