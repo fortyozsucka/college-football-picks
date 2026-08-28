@@ -247,7 +247,7 @@ export async function GET(
       biggestLeak,
       totalPicks: picks.length,
       hasConferenceData: byConference.length > 0,
-      hasRankData: byRanked.total > 0 || byUnranked.total > 0,
+      hasRankData: byRanked.total > 0,
     })
   } catch (error) {
     console.error('Error computing picking DNA:', error)

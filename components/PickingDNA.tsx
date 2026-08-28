@@ -433,7 +433,7 @@ export default function PickingDNA({ userId }: { userId: string }) {
               </Text>
             </HStack>
             <Text fontSize="sm" color={mutedText}>
-              Not enough data per conference yet — run the backfill or sync more games.
+              Conference data unavailable — an admin needs to run the season backfill.
             </Text>
           </Box>
         )}
