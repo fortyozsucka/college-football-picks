@@ -9,18 +9,19 @@ interface PageHeadingProps {
 }
 
 export function PageHeading({ eyebrow, title, subtitle }: PageHeadingProps) {
-  const eyebrowColor = useColorModeValue('neutral.500', 'neutral.400')
+  const eyebrowColor = useColorModeValue('brand.600', 'brand.400')
   const titleGradient = useColorModeValue(
-    'linear(to-r, neutral.900, brand.600)',
-    'linear(to-r, neutral.100, brand.400)'
+    'linear(135deg, #171717 0%, #3a9860 55%, #6ade9c 100%)',
+    'linear(135deg, #ffffff 0%, #93E9BE 50%, #6ade9c 100%)'
   )
+  const subtitleColor = useColorModeValue('neutral.500', 'neutral.400')
 
   return (
     <Box textAlign="center">
       <Text
         fontSize="xs"
-        fontWeight="700"
-        letterSpacing="0.14em"
+        fontWeight="800"
+        letterSpacing="0.18em"
         textTransform="uppercase"
         color={eyebrowColor}
         mb={2}
@@ -31,14 +32,14 @@ export function PageHeading({ eyebrow, title, subtitle }: PageHeadingProps) {
         size="2xl"
         bgGradient={titleGradient}
         bgClip="text"
-        fontWeight="800"
-        letterSpacing="-0.02em"
-        lineHeight="1.15"
+        fontWeight="900"
+        letterSpacing="-0.03em"
+        lineHeight="1.1"
       >
         {title}
       </Heading>
       {subtitle && (
-        <Text fontSize="lg" color={eyebrowColor} mt={3}>
+        <Text fontSize="md" fontWeight="500" color={subtitleColor} mt={3} letterSpacing="0.01em">
           {subtitle}
         </Text>
       )}

@@ -499,8 +499,8 @@ const PickCard = ({
   onRemove: () => void
   getSpreadDisplay: (game: Game) => string
 }) => {
-  const cardBg = useColorModeValue('rgba(255,255,255,0.75)', 'rgba(255,255,255,0.04)')
-  const cardBorderColor = useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.08)')
+  const cardBg = useColorModeValue('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.05)')
+  const cardBorderColor = useColorModeValue('rgba(0,0,0,0.08)', 'rgba(255,255,255,0.10)')
   const pickHighlightBg = useColorModeValue('rgba(106,222,156,0.12)', 'rgba(106,222,156,0.08)')
   const pickHighlightBorder = useColorModeValue('brand.200', 'rgba(106,222,156,0.25)')
   const mutedColor = useColorModeValue('neutral.500', 'neutral.400')
@@ -549,10 +549,14 @@ const PickCard = ({
   return (
     <Card
       bg={cardBg}
-      backdropFilter="blur(16px)"
+      backdropFilter="blur(20px)"
       sx={{
-        WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: `inset 4px 0 0 ${resultAccentColor}, 0 4px 20px rgba(0,0,0,0.1)`,
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: pickResult === 'win'
+          ? `inset 5px 0 0 ${resultAccentColor}, 0 4px 24px rgba(106,222,156,0.15), 0 1px 0 rgba(255,255,255,0.8)`
+          : pickResult === 'loss'
+          ? `inset 5px 0 0 ${resultAccentColor}, 0 4px 24px rgba(252,129,129,0.12), 0 1px 0 rgba(255,255,255,0.8)`
+          : `inset 5px 0 0 ${resultAccentColor}, 0 4px 20px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.8)`,
         border: `1px solid ${cardBorderColor}`,
       }}
       overflow="hidden"

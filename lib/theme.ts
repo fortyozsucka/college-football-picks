@@ -81,22 +81,24 @@ const components = {
   Card: {
     baseStyle: (props: any) => ({
       container: {
-        bg: props.colorMode === 'dark' ? 'rgba(255,255,255,0.04)' : 'white',
+        bg: props.colorMode === 'dark'
+          ? 'rgba(106,222,156,0.04)'
+          : 'rgba(255,255,255,0.72)',
         boxShadow: props.colorMode === 'dark'
-          ? '0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)'
-          : '0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+          ? '0 2px 16px rgba(0,0,0,0.6), 0 0 0 1px rgba(106,222,156,0.12), inset 0 1px 0 rgba(255,255,255,0.07)'
+          : '0 2px 12px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,1)',
         border: '1px solid',
-        borderColor: props.colorMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'neutral.200',
+        borderColor: props.colorMode === 'dark' ? 'rgba(106,222,156,0.12)' : 'rgba(0,0,0,0.07)',
         borderRadius: 'xl',
         overflow: 'hidden',
-        backdropFilter: 'blur(16px)',
-        transition: 'all 0.2s ease',
+        backdropFilter: 'blur(20px)',
+        transition: 'all 0.25s ease',
         _hover: {
           transform: 'translateY(-2px)',
           boxShadow: props.colorMode === 'dark'
-            ? '0 8px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)'
-            : '0 8px 24px rgba(0,0,0,0.12)',
-          borderColor: props.colorMode === 'dark' ? 'rgba(255,255,255,0.14)' : 'neutral.300',
+            ? '0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(106,222,156,0.15), 0 0 0 1px rgba(106,222,156,0.2), inset 0 1px 0 rgba(255,255,255,0.10)'
+            : '0 8px 28px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,1)',
+          borderColor: props.colorMode === 'dark' ? 'rgba(106,222,156,0.25)' : 'rgba(106,222,156,0.3)',
         },
       },
     }),

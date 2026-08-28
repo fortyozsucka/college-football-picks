@@ -72,8 +72,8 @@ export default function ChakraNavigationFixed() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const pathname = usePathname()
-  const navBg = useColorModeValue('rgba(255, 255, 255, 0.82)', 'rgba(11, 15, 11, 0.82)')
-  const navBorder = useColorModeValue('rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.06)')
+  const navBg = useColorModeValue('rgba(255, 255, 255, 0.55)', 'rgba(11, 15, 11, 0.55)')
+  const navBorder = useColorModeValue('rgba(106, 222, 156, 0.2)', 'rgba(106, 222, 156, 0.15)')
   const logoGradient = useColorModeValue('linear(to-r, neutral.900, brand.600)', 'linear(to-r, neutral.100, brand.400)')
 
   // Fix hydration by ensuring client-side rendering
@@ -98,7 +98,7 @@ export default function ChakraNavigationFixed() {
   // Use consistent content during SSR
   if (loading || !isClient) {
     return (
-      <Box bg={navBg} backdropFilter="blur(20px)" sx={{ WebkitBackdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1000 }} boxShadow="0 1px 20px rgba(0, 0, 0, 0.08)" borderBottom="1px" borderColor={navBorder} mb={8}>
+      <Box bg={navBg} backdropFilter="blur(24px)" sx={{ WebkitBackdropFilter: 'blur(24px)', position: 'sticky', top: 0, zIndex: 1000, boxShadow: '0 1px 0 rgba(106,222,156,0.15), 0 4px 24px rgba(0,0,0,0.08)' }} borderBottom="1px" borderColor={navBorder} mb={8}>
         <Container maxW="7xl">
           <Flex h={16} alignItems="center" justifyContent="space-between">
             <HStack spacing={8} alignItems="center">
@@ -119,7 +119,7 @@ export default function ChakraNavigationFixed() {
   }
 
   return (
-    <Box bg={navBg} backdropFilter="blur(20px)" sx={{ WebkitBackdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1000 }} boxShadow="0 1px 20px rgba(0, 0, 0, 0.08)" borderBottom="1px" borderColor={navBorder} mb={{ base: 4, sm: 8 }}>
+    <Box bg={navBg} backdropFilter="blur(24px)" sx={{ WebkitBackdropFilter: 'blur(24px)', position: 'sticky', top: 0, zIndex: 1000, boxShadow: '0 1px 0 rgba(106,222,156,0.15), 0 4px 24px rgba(0,0,0,0.08)' }} borderBottom="1px" borderColor={navBorder} mb={{ base: 4, sm: 8 }}>
       <Container maxW="7xl">
         <Flex h={16} alignItems="center" justifyContent="space-between">
           {/* Logo */}
