@@ -78,6 +78,7 @@ export default function ChakraLeaderboardPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [activeSeason, setActiveSeason] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null)
@@ -104,6 +105,7 @@ export default function ChakraLeaderboardPage() {
       }
       const data = await response.json()
       setLeaderboard(data.leaderboard)
+      setActiveSeason(data.season ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -164,7 +166,7 @@ export default function ChakraLeaderboardPage() {
         <PageHeading
           eyebrow="College Football"
           title="Leaderboard"
-          subtitle="See how you stack up against the competition"
+          subtitle={activeSeason ? `${activeSeason} Season` : 'All Time'}
         />
 
         {/* Top 3 Podium */}

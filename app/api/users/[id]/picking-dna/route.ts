@@ -11,9 +11,9 @@ interface RecordData {
 }
 
 function buildRecord(picks: Array<{ result: string | null }>): RecordData {
-  const wins = picks.filter(p => p.result === 'WIN').length
-  const losses = picks.filter(p => p.result === 'LOSS').length
-  const pushes = picks.filter(p => p.result === 'PUSH').length
+  const wins = picks.filter(p => p.result === 'win').length
+  const losses = picks.filter(p => p.result === 'loss').length
+  const pushes = picks.filter(p => p.result === 'push').length
   const decided = wins + losses
   return { wins, losses, pushes, total: picks.length, pct: decided > 0 ? (wins / decided) * 100 : 0 }
 }
@@ -46,7 +46,7 @@ export async function GET(
       picks = await db.pick.findMany({
         where: {
           userId: params.id,
-          result: { in: ['WIN', 'LOSS', 'PUSH'] },
+          result: { in: ['win', 'loss', 'push'] },
           ...(season !== null ? { game: { season } } : {}),
         },
         include: {
@@ -69,7 +69,7 @@ export async function GET(
       picks = await db.pick.findMany({
         where: {
           userId: params.id,
-          result: { in: ['WIN', 'LOSS', 'PUSH'] },
+          result: { in: ['win', 'loss', 'push'] },
           ...(season !== null ? { game: { season } } : {}),
         },
         include: {

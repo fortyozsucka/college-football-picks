@@ -3,13 +3,30 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+function getCurrentSeason(): number {
+  const now = new Date()
+  const year = now.getFullYear()
+  return now.getMonth() >= 7 ? year : year - 1
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const seasonParam = searchParams.get('season')
-    const season = seasonParam ? parseInt(seasonParam) : null
 
-    // Get all users with their picks — filtered by season if provided, otherwise all-time
+    let season: number | null
+    if (seasonParam) {
+      season = parseInt(seasonParam)
+    } else {
+      // Auto-detect: use current season if it has any picks, otherwise all-time
+      const currentSeason = getCurrentSeason()
+      const currentSeasonPicks = await db.pick.count({
+        where: { game: { season: currentSeason } }
+      })
+      season = currentSeasonPicks > 0 ? currentSeason : null
+    }
+
+    // Get all users with their picks — filtered by season if active, otherwise all-time
     const leaderboard = await db.user.findMany({
       where: { playFootball: true },
       select: {
@@ -112,7 +129,7 @@ export async function GET(request: NextRequest) {
     // Sort by calculated total score (instead of cached user.totalScore)
     const sortedLeaderboard = leaderboardWithStats.sort((a, b) => b.totalScore - a.totalScore)
 
-    return NextResponse.json({ season: season ?? 'all', leaderboard: sortedLeaderboard })
+    return NextResponse.json({ season, leaderboard: sortedLeaderboard })
   } catch (error) {
     console.error('Error fetching leaderboard:', error)
     return NextResponse.json(
