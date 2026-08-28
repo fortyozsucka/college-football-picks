@@ -1,15 +1,27 @@
-<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dark squircle badge background -->
-  <rect width="48" height="48" rx="12" fill="#0b0f0b"/>
-  <!-- Subtle top-left highlight for depth -->
-  <rect width="48" height="48" rx="12" fill="url(#sheen)" opacity="0.08"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="48" height="48">
   <defs>
     <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="white"/>
       <stop offset="40%" stop-color="white" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <!-- Bold S stroke: upper arc (right→left), cross diagonal, lower arc (right→left) -->
-  <path d="M33,13 C33,7 14,7 14,18 C14,24 33,24 33,30 C33,41 14,41 14,35"
-        stroke="#6ade9c" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Dark squircle background -->
+  <rect width="500" height="500" rx="125" fill="#0b0f0b"/>
+  <rect width="500" height="500" rx="125" fill="url(#sheen)" opacity="0.08"/>
+
+  <!-- Single continuous flowing path -->
+  <g fill="none" stroke="#6ade9c" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 285,365
+             L 435,425
+             A 20,20 0 0,0 455,400
+             L 270,55
+             A 25,25 0 0,0 230,55
+             L 45,400
+             A 20,20 0 0,0 65,425
+             L 215,365
+             C 215,365 240,320 280,310
+             C 340,295 320,250 250,255
+             C 170,260 210,185 310,185" />
+  </g>
 </svg>

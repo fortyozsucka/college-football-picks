@@ -67,15 +67,15 @@ const components = {
           color: 'neutral.900',
         },
       },
-      outline: {
-        borderColor: 'neutral.300',
-        color: 'neutral.700',
+      outline: (props: any) => ({
+        borderColor: props.colorMode === 'dark' ? 'neutral.600' : 'neutral.300',
+        color: props.colorMode === 'dark' ? 'neutral.100' : 'neutral.700',
         fontWeight: '500',
         _hover: {
-          bg: 'neutral.50',
-          borderColor: 'neutral.400',
+          bg: props.colorMode === 'dark' ? 'rgba(255,255,255,0.07)' : 'neutral.50',
+          borderColor: props.colorMode === 'dark' ? 'neutral.400' : 'neutral.400',
         },
-      },
+      }),
     },
   },
   Card: {

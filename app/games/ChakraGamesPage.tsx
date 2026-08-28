@@ -738,6 +738,8 @@ const GameCard = ({
   const bowlTextColor = useColorModeValue('purple.800', 'purple.200')
   const vsColor = useColorModeValue('neutral.400', 'neutral.500')
   const teamPickRowBg = useColorModeValue('neutral.50', 'rgba(255,255,255,0.04)')
+  const teamBtnColor = useColorModeValue('neutral.800', 'neutral.50')
+  const teamBtnBorderColor = useColorModeValue('neutral.300', 'rgba(255,255,255,0.25)')
 
   // Special games (Championship, Bowl, Playoff, Army-Navy) are automatically double-downs
   const isSpecialGame = game.gameType && game.gameType !== 'REGULAR'
@@ -894,6 +896,8 @@ const GameCard = ({
                         isLoading={isPicking}
                         colorScheme={isDoubleDown ? "orange" : "football"}
                         variant={isDoubleDown ? "solid" : "outline"}
+                        color={isDoubleDown ? undefined : teamBtnColor}
+                        borderColor={isDoubleDown ? undefined : teamBtnBorderColor}
                       >
                         {game.awayTeam}
                       </Button>
@@ -903,6 +907,8 @@ const GameCard = ({
                         isLoading={isPicking}
                         colorScheme={isDoubleDown ? "orange" : "football"}
                         variant={isDoubleDown ? "solid" : "outline"}
+                        color={isDoubleDown ? undefined : teamBtnColor}
+                        borderColor={isDoubleDown ? undefined : teamBtnBorderColor}
                       >
                         {game.homeTeam}
                       </Button>
