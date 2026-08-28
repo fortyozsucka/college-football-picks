@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
         wins,
         losses,
         pushes,
-        winPercentage: completedPicks.length > 0 ? ((wins / completedPicks.length) * 100) : 0,
+        winPercentage: (wins + losses) > 0 ? (wins / (wins + losses)) * 100 : 0,
         doubleDowns,
         doubleDownWins,
         weeklyStats: Object.values(weeklyStats).sort((a, b) => {
